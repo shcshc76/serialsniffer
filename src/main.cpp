@@ -50,8 +50,9 @@ const int syslog_port = 514;                  // Default UDP Syslog port
 //WiFiUDP ntpUDP;
 // 🔹 Create Syslog Client
 WiFiUDP udpClient;
+NTPClient timeClient(udpClient, "pool.ntp.org", 7200, 600000); //Refresh every 10 minutes
 Syslog syslog(udpClient, syslog_server, syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
-NTPClient timeClient(udpClient, "0.pool.ntp.org", 0, 600000); //Refresh every 10 minutes
+
 
 uint8_t outputLevel = 2; // Verbosity
 
@@ -74,40 +75,52 @@ String getDateTimeISO() {
         strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", ptm);
         char finalBuf[25];
         snprintf(finalBuf, sizeof(finalBuf), "%s.%03ld", buf, milliseconds);
-        return "NTP "+String(finalBuf);
+        //return "NTP "+String(finalBuf);
+        return "NTP "+timeClient.getFormattedTime();
     } else {
-        return "LOCAL" + String(millis());
+        return "LOCAL " + String(millis());
     }
 }
 
+void sendBuffer()
+{
+  if (wifiConnected && outBuffer.length() > 0)
+  {
 
-void sendBuffer() {
-  if (wifiConnected && outBuffer.length() > 0 && targetURL.length() > 0) {
-    
-    HTTPClient http;
-    http.begin(targetURL);
-    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    if (targetURL.length() > 0)
+    {
+      HTTPClient http;
+      http.begin(targetURL);
+      http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
-    String postBody = "data=" + urlEncode(outBuffer);
-    int httpResponseCode = http.POST(postBody);
+      String postBody = "data=" + urlEncode(outBuffer);
+      int httpResponseCode = http.POST(postBody);
 
-    http.end();
-    //@TODO
-    if (httpResponseCode > 0) {
-      if (outputLevel >= 4) {
-        Serial.println("#### HTTP data sent: " + outBuffer);
+      http.end();
+      //@TODO
+      if (httpResponseCode > 0)
+      {
+        if (outputLevel >= 4)
+        {
+          Serial.println("#### HTTP data sent: " + outBuffer);
+        }
       }
-    } else {
-      if (outputLevel >= 2) {
-        Serial.print("HTTP call failed - Error code: ");
-        Serial.println(httpResponseCode);
+      else
+      {
+        if (outputLevel >= 2)
+        {
+          Serial.print("HTTP call failed - Error code: ");
+          Serial.println(httpResponseCode);
+        }
       }
     }
     syslog.log(LOG_INFO, outBuffer.c_str());
-  } else if (outputLevel >= 4) {
+  }
+  else if (outputLevel >= 4)
+  {
     Serial.println("#### WiFi not connected or buffer empty, skipping send");
   }
-  
+
   outBuffer = ""; // Clear buffer
 }
 
@@ -290,7 +303,7 @@ void applySerialConfig(bool calc=false, bool init=false) {
 }
 
 void tryWiFiConnect() {
-  if (wifiSSID.length() > 0 && targetURL.length() > 0) {
+  if (wifiSSID.length() > 0 ) {
     if (WiFi.status() != WL_CONNECTED) {
       textOut("# Connecting to WiFi: " + wifiSSID);
       WiFi.mode(WIFI_STA);
