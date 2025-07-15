@@ -47,11 +47,11 @@ bool wifiConnected = false;
 const char *syslog_server = "SYSLOG_IP"; // Syslog Server IP
 const int syslog_port = 514;                  // Default UDP Syslog port
 
-WiFiUDP ntpUDP;
+//WiFiUDP ntpUDP;
 // 🔹 Create Syslog Client
 WiFiUDP udpClient;
 Syslog syslog(udpClient, syslog_server, syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 600000); //Refresh every 10 minutes
+NTPClient timeClient(udpClient, "0.pool.ntp.org", 0, 600000); //Refresh every 10 minutes
 
 uint8_t outputLevel = 2; // Verbosity
 
@@ -74,9 +74,9 @@ String getDateTimeISO() {
         strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", ptm);
         char finalBuf[25];
         snprintf(finalBuf, sizeof(finalBuf), "%s.%03ld", buf, milliseconds);
-        return String(finalBuf);
+        return "NTP "+String(finalBuf);
     } else {
-        return String(millis());
+        return "LOCAL" + String(millis());
     }
 }
 
