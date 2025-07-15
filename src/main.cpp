@@ -44,15 +44,14 @@ String targetURL = "";
 bool wifiConnected = false;
 
 // 🔹 Syslog Server Settings (Replace with your server IP)
-const char *syslog_server = "SYSLOG_IP"; // Syslog Server IP
-String syslog01 = "SYSLOG_IP"; // Syslog Server IP
+String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
 const int syslog_port = 514;                  // Default UDP Syslog port
 
 //WiFiUDP ntpUDP;
 // 🔹 Create Syslog Client wifiSSID.c_str()
 WiFiUDP udpClient;
 NTPClient timeClient(udpClient, "pool.ntp.org", 7200, 600000); //Refresh every 10 minutes 
-Syslog syslog(udpClient, syslog01.c_str(), syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
+Syslog syslog(udpClient, syslog_ip.c_str(), syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
 
 
 uint8_t outputLevel = 2; // Verbosity
