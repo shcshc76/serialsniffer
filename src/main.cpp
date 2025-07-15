@@ -37,7 +37,7 @@ bool txInvert = false;
 uint16_t timeout = 15;
 bool eolDetect = false;
 
-//WLAN configuration
+// WLAN configuration
 String wifiSSID = "WLAN_SSID";
 String wifiPass = "WLAN_PASSWD";
 String targetURL = "";
@@ -45,14 +45,13 @@ bool wifiConnected = false;
 
 // 🔹 Syslog Server Settings (Replace with your server IP)
 String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
-const int syslog_port = 514;                  // Default UDP Syslog port
+const int syslog_port = 514;         // Default UDP Syslog port
 
-//WiFiUDP ntpUDP;
-// 🔹 Create Syslog Client wifiSSID.c_str()
+// WiFiUDP ntpUDP;
+//  🔹 Create Syslog Client wifiSSID.c_str()
 WiFiUDP udpClient;
-NTPClient timeClient(udpClient, "pool.ntp.org", 7200, 600000); //Refresh every 10 minutes 
+NTPClient timeClient(udpClient, "pool.ntp.org", 7200, 600000); // Refresh every 10 minutes
 Syslog syslog(udpClient, syslog_ip.c_str(), syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
-
 
 uint8_t outputLevel = 2; // Verbosity
 
@@ -60,26 +59,30 @@ Preferences prefs;
 
 String outBuffer = "";
 
-String getDateTimeISO() {
-    if (timeClient.isTimeSet()) {
-        time_t epochTime;
-        struct timeval tv;
-        struct tm* ptm;
-        char buf[20];
-        
-        gettimeofday(&tv, NULL);
-        epochTime = tv.tv_sec;
-        long milliseconds = tv.tv_usec / 1000;
-    
-        ptm = localtime(&epochTime);
-        strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", ptm);
-        char finalBuf[25];
-        snprintf(finalBuf, sizeof(finalBuf), "%s.%03ld", buf, milliseconds);
-        //return "NTP "+String(finalBuf);
-        return "NTP "+timeClient.getFormattedTime();
-    } else {
-        return "LOCAL " + String(millis());
-    }
+String getDateTimeISO()
+{
+  if (timeClient.isTimeSet())
+  {
+    time_t epochTime;
+    struct timeval tv;
+    struct tm *ptm;
+    char buf[20];
+
+    gettimeofday(&tv, NULL);
+    epochTime = tv.tv_sec;
+    long milliseconds = tv.tv_usec / 1000;
+
+    ptm = localtime(&epochTime);
+    strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", ptm);
+    char finalBuf[25];
+    snprintf(finalBuf, sizeof(finalBuf), "%s.%03ld", buf, milliseconds);
+    // return "NTP "+String(finalBuf);
+    return "NTP " + timeClient.getFormattedTime();
+  }
+  else
+  {
+    return "LOCAL " + String(millis());
+  }
 }
 
 void sendBuffer()
@@ -124,24 +127,30 @@ void sendBuffer()
   outBuffer = ""; // Clear buffer
 }
 
-void textOutln(String text="", uint8_t level=1) {
-  if (level > outputLevel) return;
+void textOutln(String text = "", uint8_t level = 1)
+{
+  if (level > outputLevel)
+    return;
   Serial.println(text);
   outBuffer += text + "\n";
   sendBuffer();
 }
 
-void textOut(String text="", uint8_t level=1) {
-  if (level > outputLevel) return;
+void textOut(String text = "", uint8_t level = 1)
+{
+  if (level > outputLevel)
+    return;
   Serial.print(text);
   outBuffer += text;
-  if (outBuffer.length() > 1024) { // Limit buffer size to prevent overflow
+  if (outBuffer.length() > 1024)
+  { // Limit buffer size to prevent overflow
     Serial.println("# Output buffer overflow, clearing...");
     sendBuffer();
   }
 }
 
-void saveSerialConfig() {
+void saveSerialConfig()
+{
   prefs.begin("serialsniff", false);
   prefs.putUInt("baud", currentBaud);
   prefs.putUChar("bits", currentDataBits);
@@ -159,9 +168,11 @@ void saveSerialConfig() {
   textOutln("# Config saved");
 }
 
-bool loadSerialConfig() {
+bool loadSerialConfig()
+{
   prefs.begin("serialsniff", true);
-  if (!prefs.isKey("baud")) {
+  if (!prefs.isKey("baud"))
+  {
     prefs.end();
     textOutln("# Keine Daten gespeichert");
     return false;
@@ -183,114 +194,203 @@ bool loadSerialConfig() {
   return true;
 }
 
-SerialConfig calcSerialConfig(void) {  // Calculate current serial config based on data bits, parity and stop bits
-  if (currentDataBits == 5) {
-      if (currentStopBits == 1) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_5N1;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_5E1;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_5O1;
-        } else {
-          textOutln("# Invalid parity");
-        }
-      } else if (currentStopBits == 2) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_5N2;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_5E2;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_5O2;
-        } else {
-          textOutln("# Invalid parity");
-        }
-      } else {
-        textOutln("# Invalid stop bits");
+SerialConfig calcSerialConfig(void)
+{ // Calculate current serial config based on data bits, parity and stop bits
+  if (currentDataBits == 5)
+  {
+    if (currentStopBits == 1)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_5N1;
       }
-    } else if (currentDataBits == 6) {
-      if (currentStopBits == 1) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_6N1;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_6E1;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_6O1;
-        } else {
-          textOutln("# Invalid parity");
-        }        
-      } else if (currentStopBits == 2) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_6N2;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_6E2;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_6O2;
-        } else {
-          textOutln("# Invalid parity");
-        } 
-      } else {
-        textOutln("# Invalid stop bits");
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_5E1;
       }
-    } else if (currentDataBits == 7) {
-      if (currentStopBits == 1) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_7N1;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_7E1;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_7O1;
-        } else {
-          textOutln("# Invalid parity");
-        }        
-      } else if (currentStopBits == 2) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_7N2;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_7E2;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_7O2;
-        } else {
-          textOutln("# Invalid parity");
-        } 
-      } else {
-        textOutln("# Invalid stop bits");
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_5O1;
       }
-    } else if (currentDataBits == 8) {
-      if (currentStopBits == 1) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_8N1;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_8E1;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_8O1;
-        } else {
-          textOutln("# Invalid parity");
-        }        
-      } else if (currentStopBits == 2) {
-        if (currentParity == 'N') {
-          currentContig = SERIAL_8N2;
-        } else if (currentParity == 'E') {
-          currentContig = SERIAL_8E2;
-        } else if (currentParity == 'O') {
-          currentContig = SERIAL_8O2;
-        } else {
-          textOutln("# Invalid parity");
-        } 
-      } else {
-        textOutln("# Invalid stop bits");
+      else
+      {
+        textOutln("# Invalid parity");
       }
-    } else {
-      textOutln("# Invalid data bits");
     }
-    return currentContig;
+    else if (currentStopBits == 2)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_5N2;
+      }
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_5E2;
+      }
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_5O2;
+      }
+      else
+      {
+        textOutln("# Invalid parity");
+      }
+    }
+    else
+    {
+      textOutln("# Invalid stop bits");
+    }
+  }
+  else if (currentDataBits == 6)
+  {
+    if (currentStopBits == 1)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_6N1;
+      }
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_6E1;
+      }
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_6O1;
+      }
+      else
+      {
+        textOutln("# Invalid parity");
+      }
+    }
+    else if (currentStopBits == 2)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_6N2;
+      }
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_6E2;
+      }
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_6O2;
+      }
+      else
+      {
+        textOutln("# Invalid parity");
+      }
+    }
+    else
+    {
+      textOutln("# Invalid stop bits");
+    }
+  }
+  else if (currentDataBits == 7)
+  {
+    if (currentStopBits == 1)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_7N1;
+      }
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_7E1;
+      }
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_7O1;
+      }
+      else
+      {
+        textOutln("# Invalid parity");
+      }
+    }
+    else if (currentStopBits == 2)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_7N2;
+      }
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_7E2;
+      }
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_7O2;
+      }
+      else
+      {
+        textOutln("# Invalid parity");
+      }
+    }
+    else
+    {
+      textOutln("# Invalid stop bits");
+    }
+  }
+  else if (currentDataBits == 8)
+  {
+    if (currentStopBits == 1)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_8N1;
+      }
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_8E1;
+      }
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_8O1;
+      }
+      else
+      {
+        textOutln("# Invalid parity");
+      }
+    }
+    else if (currentStopBits == 2)
+    {
+      if (currentParity == 'N')
+      {
+        currentContig = SERIAL_8N2;
+      }
+      else if (currentParity == 'E')
+      {
+        currentContig = SERIAL_8E2;
+      }
+      else if (currentParity == 'O')
+      {
+        currentContig = SERIAL_8O2;
+      }
+      else
+      {
+        textOutln("# Invalid parity");
+      }
+    }
+    else
+    {
+      textOutln("# Invalid stop bits");
+    }
+  }
+  else
+  {
+    textOutln("# Invalid data bits");
+  }
+  return currentContig;
 }
 
-void applySerialConfig(bool calc=false, bool init=false) {
-  if (calc) {
+void applySerialConfig(bool calc = false, bool init = false)
+{
+  if (calc)
+  {
     calcSerialConfig();
   }
-  if(!init) {
+  if (!init)
+  {
     SerialRX.end();
     SerialTX.end();
   }
@@ -302,197 +402,351 @@ void applySerialConfig(bool calc=false, bool init=false) {
   textOutln("## Serial ports reconfigured", 2);
 }
 
-void tryWiFiConnect() {
-  if (wifiSSID.length() > 0 ) {
-    if (WiFi.status() != WL_CONNECTED) {
+void tryWiFiConnect()
+{
+  if (wifiSSID.length() > 0)
+  {
+    if (WiFi.status() != WL_CONNECTED)
+    {
       textOut("# Connecting to WiFi: " + wifiSSID);
       WiFi.mode(WIFI_STA);
       WiFi.begin(wifiSSID.c_str(), wifiPass.c_str());
       unsigned long start = millis();
-      while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+      while (WiFi.status() != WL_CONNECTED && millis() - start < 10000)
+      {
         delay(500);
         textOut(".");
       }
-      if (WiFi.status() == WL_CONNECTED) {
+      if (WiFi.status() == WL_CONNECTED)
+      {
         wifiConnected = true;
         delay(250); // DNS might fail otherwise
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
-        
+
         timeClient.begin();
         timeClient.forceUpdate();
-        if (timeClient.isTimeSet()) {
+        if (timeClient.isTimeSet())
+        {
           textOutln("### NTP time synced successfully", 3);
-        } else {
+        }
+        else
+        {
           textOutln("### NTP time NOT synced.", 2);
         }
-      } else {
+      }
+      else
+      {
         textOutln("ERR");
         wifiConnected = false;
       }
-    } else {
+    }
+    else
+    {
       wifiConnected = true;
     }
-  } else {
+  }
+  else
+  {
     textOutln("## WiFi SSID or URL target IP/port not set, skipping network connection", 2);
     wifiConnected = false;
   }
 }
 
-void appendHex(String &str, uint8_t val) {
+void appendHex(String &str, uint8_t val)
+{
   char buf[6]; // "0x" + 2 digits + null = 5, 6 for safety
   snprintf(buf, sizeof(buf), "0x%02X", val);
   str += buf;
 }
 
-void printBuffer(const char* type, uint8_t* buf, size_t len) {
+void printBuffer(const char *type, uint8_t *buf, size_t len)
+{
   // Print time and type
   String line;
   char code[8];
   line += getDateTimeISO() + ';' + String(type) + ';';
   // Print HEX
-  for (size_t i = 0; i < len; i++) {
-    if (i) line += " ";
+  for (size_t i = 0; i < len; i++)
+  {
+    if (i)
+      line += " ";
     appendHex(line, buf[i]);
   }
   line += ";";
   // Print ASCII
-  for (size_t i = 0; i < len; i++) {
-    if (buf[i] >= 32 && buf[i] <= 126) {
+  for (size_t i = 0; i < len; i++)
+  {
+    if (buf[i] >= 32 && buf[i] <= 126)
+    {
       line += (String((char)buf[i]));
-    } else if (buf[i] >= 0xA0) {
+    }
+    else if (buf[i] >= 0xA0)
+    {
       line += (String((char)buf[i]));
-    } else if (buf[i] == 0x00) {
+    }
+    else if (buf[i] == 0x00)
+    {
       line += ("<NUL>");
-    } else if (buf[i] == 0x01) {
+    }
+    else if (buf[i] == 0x01)
+    {
       line += ("<SOH>");
-    } else if (buf[i] == 0x02) {
+    }
+    else if (buf[i] == 0x02)
+    {
       line += ("<STX>");
-    } else if (buf[i] == 0x03) {
+    }
+    else if (buf[i] == 0x03)
+    {
       line += ("<ETX>");
-    } else if (buf[i] == 0x04) {
+    }
+    else if (buf[i] == 0x04)
+    {
       line += ("<EOT>");
-    } else if (buf[i] == 0x05) {
+    }
+    else if (buf[i] == 0x05)
+    {
       line += ("<ENQ>");
-    } else if (buf[i] == 0x06) {
+    }
+    else if (buf[i] == 0x06)
+    {
       line += ("<ACK>");
-    } else if (buf[i] == 0x07) {
+    }
+    else if (buf[i] == 0x07)
+    {
       line += ("<BEL>");
-    } else if (buf[i] == 0x08) {
+    }
+    else if (buf[i] == 0x08)
+    {
       line += ("<BS>");
-    } else if (buf[i] == 0x09) {
+    }
+    else if (buf[i] == 0x09)
+    {
       line += ("<HT>");
-    } else if (buf[i] == 0x0A) {
+    }
+    else if (buf[i] == 0x0A)
+    {
       line += ("<LF>");
-    } else if (buf[i] == 0x0B) {
+    }
+    else if (buf[i] == 0x0B)
+    {
       line += ("<VT>");
-    } else if (buf[i] == 0x0C) {
+    }
+    else if (buf[i] == 0x0C)
+    {
       line += ("<FF>");
-    } else if (buf[i] == 0x0D) {
+    }
+    else if (buf[i] == 0x0D)
+    {
       line += ("<CR>");
-    } else if (buf[i] == 0x0E) {
+    }
+    else if (buf[i] == 0x0E)
+    {
       line += ("<SO>");
-    } else if (buf[i] == 0x0F) {
+    }
+    else if (buf[i] == 0x0F)
+    {
       line += ("<SI>");
-    } else if (buf[i] == 0x10) {
+    }
+    else if (buf[i] == 0x10)
+    {
       line += ("<DLE>");
-    } else if (buf[i] == 0x11) {
+    }
+    else if (buf[i] == 0x11)
+    {
       line += ("<DC1>");
-    } else if (buf[i] == 0x12) {
+    }
+    else if (buf[i] == 0x12)
+    {
       line += ("<DC2>");
-    } else if (buf[i] == 0x13) {
+    }
+    else if (buf[i] == 0x13)
+    {
       line += ("<DC3>");
-    } else if (buf[i] == 0x14) {
+    }
+    else if (buf[i] == 0x14)
+    {
       line += ("<DC4>");
-    } else if (buf[i] == 0x15) {
+    }
+    else if (buf[i] == 0x15)
+    {
       line += ("<NAK>");
-    } else if (buf[i] == 0x16) {
+    }
+    else if (buf[i] == 0x16)
+    {
       line += ("<SYN>");
-    } else if (buf[i] == 0x17) {
+    }
+    else if (buf[i] == 0x17)
+    {
       line += ("<ETB>");
-    } else if (buf[i] == 0x18) {
+    }
+    else if (buf[i] == 0x18)
+    {
       line += ("<CAN>");
-    } else if (buf[i] == 0x19) {
+    }
+    else if (buf[i] == 0x19)
+    {
       line += ("<EM>");
-    } else if (buf[i] == 0x1A) {
+    }
+    else if (buf[i] == 0x1A)
+    {
       line += ("<SUB>");
-    } else if (buf[i] == 0x1B) {
+    }
+    else if (buf[i] == 0x1B)
+    {
       line += ("<ESC>");
-    } else if (buf[i] == 0x1C) {
+    }
+    else if (buf[i] == 0x1C)
+    {
       line += ("<FS>");
-    } else if (buf[i] == 0x1D) {
+    }
+    else if (buf[i] == 0x1D)
+    {
       line += ("<GS>");
-    } else if (buf[i] == 0x1E) {
+    }
+    else if (buf[i] == 0x1E)
+    {
       line += ("<RS>");
-    } else if (buf[i] == 0x1F) {
+    }
+    else if (buf[i] == 0x1F)
+    {
       line += ("<US>");
-    } else if (buf[i] == 0x7F) {
+    }
+    else if (buf[i] == 0x7F)
+    {
       line += ("<DEL>");
-    } else if (buf[i] == 0x80) {
+    }
+    else if (buf[i] == 0x80)
+    {
       line += ("<PAD>");
-    } else if (buf[i] == 0x81) {
+    }
+    else if (buf[i] == 0x81)
+    {
       line += ("<HOP>");
-    } else if (buf[i] == 0x82) {
+    }
+    else if (buf[i] == 0x82)
+    {
       line += ("<BPH>");
-    } else if (buf[i] == 0x83) {
+    }
+    else if (buf[i] == 0x83)
+    {
       line += ("<NBH>");
-    } else if (buf[i] == 0x84) {
+    }
+    else if (buf[i] == 0x84)
+    {
       line += ("<IND>");
-    } else if (buf[i] == 0x85) {
+    }
+    else if (buf[i] == 0x85)
+    {
       line += ("<NEL>");
-    } else if (buf[i] == 0x86) {
+    }
+    else if (buf[i] == 0x86)
+    {
       line += ("<SSA>");
-    } else if (buf[i] == 0x87) {
+    }
+    else if (buf[i] == 0x87)
+    {
       line += ("<ESA>");
-    } else if (buf[i] == 0x88) {
+    }
+    else if (buf[i] == 0x88)
+    {
       line += ("<HTS>");
-    } else if (buf[i] == 0x89) {
+    }
+    else if (buf[i] == 0x89)
+    {
       line += ("<HTJ>");
-    } else if (buf[i] == 0x8A) {
+    }
+    else if (buf[i] == 0x8A)
+    {
       line += ("<VTS>");
-    } else if (buf[i] == 0x8B) {
+    }
+    else if (buf[i] == 0x8B)
+    {
       line += ("<PLD>");
-    } else if (buf[i] == 0x8C) {
+    }
+    else if (buf[i] == 0x8C)
+    {
       line += ("<PLU>");
-    } else if (buf[i] == 0x8D) {
+    }
+    else if (buf[i] == 0x8D)
+    {
       line += ("<RI>");
-    } else if (buf[i] == 0x8E) {
+    }
+    else if (buf[i] == 0x8E)
+    {
       line += ("<SS2>");
-    } else if (buf[i] == 0x8F) {
+    }
+    else if (buf[i] == 0x8F)
+    {
       line += ("<SS3>");
-    } else if (buf[i] == 0x90) {
+    }
+    else if (buf[i] == 0x90)
+    {
       line += ("<DCS>");
-    } else if (buf[i] == 0x91) {
+    }
+    else if (buf[i] == 0x91)
+    {
       line += ("<PU1>");
-    } else if (buf[i] == 0x92) {
+    }
+    else if (buf[i] == 0x92)
+    {
       line += ("<PU2>");
-    } else if (buf[i] == 0x93) {
+    }
+    else if (buf[i] == 0x93)
+    {
       line += ("<STS>");
-    } else if (buf[i] == 0x94) {
+    }
+    else if (buf[i] == 0x94)
+    {
       line += ("<CCH>");
-    } else if (buf[i] == 0x95) {
+    }
+    else if (buf[i] == 0x95)
+    {
       line += ("<MW>");
-    } else if (buf[i] == 0x96) {
+    }
+    else if (buf[i] == 0x96)
+    {
       line += ("<SPA>");
-    } else if (buf[i] == 0x97) {
+    }
+    else if (buf[i] == 0x97)
+    {
       line += ("<EPA>");
-    } else if (buf[i] == 0x98) {
+    }
+    else if (buf[i] == 0x98)
+    {
       line += ("<SOS>");
-    } else if (buf[i] == 0x99) {
+    }
+    else if (buf[i] == 0x99)
+    {
       line += ("<SGCI>");
-    } else if (buf[i] == 0x9A) {
+    }
+    else if (buf[i] == 0x9A)
+    {
       line += ("<SCI>");
-    } else if (buf[i] == 0x9B) {
+    }
+    else if (buf[i] == 0x9B)
+    {
       line += ("<CSI>");
-    } else if (buf[i] == 0x9C) {
+    }
+    else if (buf[i] == 0x9C)
+    {
       line += ("<ST>");
-    } else if (buf[i] == 0x9D) {
+    }
+    else if (buf[i] == 0x9D)
+    {
       line += ("<OSC>");
-    } else if (buf[i] == 0x9E) {
+    }
+    else if (buf[i] == 0x9E)
+    {
       line += ("<PM>");
-    } else if (buf[i] == 0x9F) {
+    }
+    else if (buf[i] == 0x9F)
+    {
       line += ("<APC>");
-    } else {
+    }
+    else
+    {
       char code[8];
       snprintf(code, sizeof(code), "<%02X>", buf[i]);
       line += code;
@@ -501,57 +755,81 @@ void printBuffer(const char* type, uint8_t* buf, size_t len) {
   textOutln(line, 0);
 }
 
-void parseSerialCommand(String cmd) {
+void parseSerialCommand(String cmd)
+{
   cmd.trim();
-  if (cmd.length() < 1) return;
+  if (cmd.length() < 1)
+    return;
   char c = cmd[0];
   String val = cmd.substring(1);
-  if (c == 'b') { //Set baud rate
+  if (c == 'b')
+  { // Set baud rate
     unsigned long baud = val.toInt();
-    if (baud > 0) {
+    if (baud > 0)
+    {
       currentBaud = baud;
       applySerialConfig();
       textOutln("# Baudrate changed to " + String(currentBaud));
     }
-  } else if (c == 'B') { // Set data bits
+  }
+  else if (c == 'B')
+  { // Set data bits
     int bits = val.toInt();
-    if (bits >= 5 && bits <= 8) {
+    if (bits >= 5 && bits <= 8)
+    {
       currentDataBits = bits;
       applySerialConfig(true);
       textOutln("# Data bits set to " + String(currentDataBits));
     }
-  } else if (c == 's') { // Set stop bits
+  }
+  else if (c == 's')
+  { // Set stop bits
     int stops = val.toInt();
-    if (stops == 1 || stops == 2) {
+    if (stops == 1 || stops == 2)
+    {
       currentStopBits = stops;
       applySerialConfig(true);
       textOutln("# Stop bits set to " + String(currentStopBits));
     }
-  } else if (c == 'N' || c == 'E' || c == 'O') { // Set parity
+  }
+  else if (c == 'N' || c == 'E' || c == 'O')
+  { // Set parity
     currentParity = c;
     applySerialConfig(true);
     textOutln("# Parity set to " + String(c));
-  } else if (cmd == "Ri" || cmd == "RI") { // Disable RX pin inversion
-    if (cmd == "Ri") {
+  }
+  else if (cmd == "Ri" || cmd == "RI")
+  { // Disable RX pin inversion
+    if (cmd == "Ri")
+    {
       rxInvert = false;
       applySerialConfig(true);
       textOutln("# RX pin inversion disabled");
-    } else {
+    }
+    else
+    {
       rxInvert = true;
       applySerialConfig(true);
       textOutln("# RX pin inversion enabled");
     }
-  } else if (cmd == "Ti" || cmd == "TI") { // Disable TX pin inversion
-    if (cmd == "Ti") {
+  }
+  else if (cmd == "Ti" || cmd == "TI")
+  { // Disable TX pin inversion
+    if (cmd == "Ti")
+    {
       txInvert = false;
       applySerialConfig(true);
       textOutln("# TX pin inversion disabled");
-    } else {
+    }
+    else
+    {
       txInvert = true;
       applySerialConfig(true);
       textOutln("# TX pin inversion enabled");
     }
-  } else if (c == 'p') { // Print current config
+  }
+  else if (c == 'p')
+  { // Print current config
     textOut("# Current Config: ");
     textOut("Baud: " + String(currentBaud) + ", ");
     textOut("Data Bits: " + String(currentDataBits) + ", ");
@@ -561,15 +839,21 @@ void parseSerialCommand(String cmd) {
     textOut("TX Invert: " + String(txInvert ? "Enabled" : "Disabled"));
     textOutln();
     textOut("# WiFi SSID: " + wifiSSID + ", ");
-    if( wifiPass.length() > 0) {
+    if (wifiPass.length() > 0)
+    {
       textOut("WiFi Password: Set, ");
-    } else {
+    }
+    else
+    {
       textOut("WiFi Password: Not Set, ");
     }
     textOut("URL Target: " + targetURL + ", ");
-    if (wifiConnected) {
+    if (wifiConnected)
+    {
       textOut(" (Connected: " + WiFi.localIP().toString() + ")");
-    } else {
+    }
+    else
+    {
       textOut(" (Not Connected)");
     }
     textOutln();
@@ -577,51 +861,76 @@ void parseSerialCommand(String cmd) {
     textOut("Timeout: " + String(timeout) + " ms, ");
     textOut("EOL Detection: " + String(eolDetect ? "Enabled" : "Disabled"));
     textOutln();
-  } else if (c == 'f') { // Flush buffers
+  }
+  else if (c == 'f')
+  { // Flush buffers
     rxLen = 0;
     txLen = 0;
     rxLast = millis();
     txLast = millis();
     textOutln("# Buffers flushed");
-  } else if (c == 'r') { // Reset Serial
+  }
+  else if (c == 'r')
+  { // Reset Serial
     textOutln("# Resetting Serial...");
     applySerialConfig(false); // Reapply config
     rxLen = 0;
     txLen = 0;
     rxLast = millis();
     txLast = millis();
-  } else if (c == 'W') { // Set WiFi SSID
+  }
+  else if (c == 'W')
+  { // Set WiFi SSID
     wifiSSID = val;
     textOutln("# WiFi SSID set to: " + wifiSSID);
     tryWiFiConnect();
-  } else if (c == 'w') { // Set WiFi password
+  }
+  else if (c == 'w')
+  { // Set WiFi password
     wifiPass = val;
     textOutln("# WiFi password set");
     tryWiFiConnect();
-  } else if (c == 'U') { // Set target URL
+  }
+  else if (c == 'U')
+  { // Set target URL
     targetURL = val;
     textOutln("# URL target set to: " + targetURL);
     tryWiFiConnect();
-  } else if (c == 'D') { // Debug mode on
+  }
+  else if (c == 'D')
+  { // Debug mode on
     outputLevel = val.toInt();
     textOutln("# Debug level " + String(outputLevel));
-  } else if (c == 't') { // Set timeout
+  }
+  else if (c == 't')
+  { // Set timeout
     unsigned long newTimeout = val.toInt();
-    if (newTimeout > 0) {
+    if (newTimeout > 0)
+    {
       timeout = newTimeout;
       textOutln("# Timeout set to " + String(timeout) + " ms");
-    } else {
+    }
+    else
+    {
       textOutln("# Invalid timeout value");
     }
-  } else if (c == 'L') { // Enable EOL detection
+  }
+  else if (c == 'L')
+  { // Enable EOL detection
     eolDetect = true;
     textOutln("# EOL detection enabled");
-  } else if (c == 'l') { // Disable EOL detection
+  }
+  else if (c == 'l')
+  { // Disable EOL detection
     eolDetect = false;
     textOutln("# EOL detection disabled");
-  } else if (c == 'S') { // Save config
+  }
+  else if (c == 'S')
+  { // Save config
     saveSerialConfig();
-  } else if (c == '?' || c == 'h') { // Print help
+  }
+  else if (c == '?' || c == 'h')
+  { // Print help
     textOutln("# Serial Sniffer Commands:");
     textOutln("# b<baud> - Set baud rate (e.g., b9600)");
     textOutln("# B<data_bits> - Set data bits (5-8, e.g., B8)");
@@ -642,38 +951,50 @@ void parseSerialCommand(String cmd) {
     textOutln("# L   - Enable EOL detection");
     textOutln("# l   - Disable EOL detection");
     textOutln("# S   - Save current configuration");
+    textOutln("# X   - Restart Device");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
-  } else {
+  }
+  else if (c == 'X')
+  { // Restart Device
+    textOutln("# Restarting device...");
+    ESP.restart();
+  }
+  else
+  {
     textOutln("# Unknown command: '" + cmd + "' - '?' or 'h' for help");
   }
 }
 
-bool isEOLChar(uint8_t c) {
+bool isEOLChar(uint8_t c)
+{
   // Check if character is something indicating a data end
-  if (c == 0x00 || c == 0x03 || c == 0x04 || c == 0x05 || c == 0x06 || 
-      c == 0x0A || c == 0x0C || c == 0x0D || c == 0x15 || c == 0x17 || 
-      c == 0x18 || c == 0x19 || c == 0x1C || c == 0x1D || c == 0x1E || 
-      c == 0x1F) {
-        return true;
-      }
-  
+  if (c == 0x00 || c == 0x03 || c == 0x04 || c == 0x05 || c == 0x06 ||
+      c == 0x0A || c == 0x0C || c == 0x0D || c == 0x15 || c == 0x17 ||
+      c == 0x18 || c == 0x19 || c == 0x1C || c == 0x1D || c == 0x1E ||
+      c == 0x1F)
+  {
+    return true;
+  }
+
   return false;
 }
 
 String serialCmd = "";
 
-void setup() {
+void setup()
+{
   Serial.begin(115200); // Initialize USB console
-  delay(5000); // allow USB to initialize
+  delay(5000);          // allow USB to initialize
   textOutln("# Serial Sniffer log");
-  //saveSerialConfig(); // Save initial config if not already done
-  if (loadSerialConfig()) {
+  // saveSerialConfig(); // Save initial config if not already done
+  if (loadSerialConfig())
+  {
     tryWiFiConnect();
     calcSerialConfig();
   }
   applySerialConfig(false, true); // Apply initial serial configuration
-  parseSerialCommand("p"); // Print initial config
+  parseSerialCommand("p");        // Print initial config
   textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
   textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
 }
@@ -683,46 +1004,56 @@ void handleSerial(
     const char *type,
     uint8_t *buf,
     size_t &len,
-    unsigned long &last
-) {
-    while (serial.available()) {
-        char c = serial.read();
-        last = millis();
+    unsigned long &last)
+{
+  while (serial.available())
+  {
+    char c = serial.read();
+    last = millis();
 
-        if (len == MON_BUF_SIZE-2 || // Buffer is almost full
-            (eolDetect &&
-             len > 1 &&
-             (isEOLChar(buf[len-1]) && !isEOLChar(c)))
-        ) {
-            printBuffer(type, buf, len);
-            len = 0;
-        }
-
-        if (len < MON_BUF_SIZE) buf[len++] = c;
+    if (len == MON_BUF_SIZE - 2 || // Buffer is almost full
+        (eolDetect &&
+         len > 1 &&
+         (isEOLChar(buf[len - 1]) && !isEOLChar(c))))
+    {
+      printBuffer(type, buf, len);
+      len = 0;
     }
 
-    if (len > 0 && (millis() - last > timeout)) {
-        printBuffer(type, buf, len);
-        len = 0;
-    }
+    if (len < MON_BUF_SIZE)
+      buf[len++] = c;
+  }
+
+  if (len > 0 && (millis() - last > timeout))
+  {
+    printBuffer(type, buf, len);
+    len = 0;
+  }
 }
 
-void loop() {
-  if(wifiConnected && WiFi.status() != WL_CONNECTED) {
+void loop()
+{
+  if (wifiConnected && WiFi.status() != WL_CONNECTED)
+  {
     textOutln("### Wifi connection dropped. Reconnecting.", 3);
     tryWiFiConnect();
   }
 
-  if(wifiConnected && WiFi.status() == WL_CONNECTED) {
+  if (wifiConnected && WiFi.status() == WL_CONNECTED)
+  {
     timeClient.update();
   }
 
-  while (Serial.available()) {
+  while (Serial.available())
+  {
     char sc = Serial.read();
-    if (sc == '\n') {
+    if (sc == '\n')
+    {
       parseSerialCommand(serialCmd);
       serialCmd = "";
-    } else if (sc != '\r') {
+    }
+    else if (sc != '\r')
+    {
       serialCmd += sc;
     }
   }
