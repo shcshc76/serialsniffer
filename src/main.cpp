@@ -958,6 +958,7 @@ void parseSerialCommand(String cmd)
   else if (c == 'X')
   { // Restart Device
     textOutln("# Restarting device...");
+    saveSerialConfig();
     ESP.restart();
   }
   else
