@@ -35,8 +35,8 @@ bool txInvert = false;
 uint16_t timeout = 15;
 bool eolDetect = false;
 
-String wifiSSID = "";
-String wifiPass = "";
+String wifiSSID = "WLAN_SSID";
+String wifiPass = "WLAN_PASSWD";
 String targetURL = "";
 bool wifiConnected = false;
 
