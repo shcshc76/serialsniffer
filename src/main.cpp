@@ -9,18 +9,18 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
-#define MON_RX 2 // RX pin
-#define MON_TX 3 // TX pin
+#define MON_RX 17 // RX pin
+#define MON_TX 16 // TX pin
 
 #define MON_BAUD 9600 // initial baud rate
 
 #define MON_BUF_SIZE 128
 
-#define DUMMY_PIN1 0 // Dummy pin for unused TX
-#define DUMMY_PIN2 1 // Dummy pin for unused TX
+#define DUMMY_PIN1 13 // Dummy pin for unused TX
+#define DUMMY_PIN2 14 // Dummy pin for unused TX
 
-HardwareSerial SerialRX(0); // Receiver RX
-HardwareSerial SerialTX(1); // Receiver TX
+HardwareSerial SerialRX(1); // Receiver RX
+HardwareSerial SerialTX(2); // Receiver TX
 
 uint8_t rxBuf[MON_BUF_SIZE], txBuf[MON_BUF_SIZE];
 size_t rxLen = 0, txLen = 0;
@@ -150,6 +150,7 @@ bool loadSerialConfig() {
   prefs.begin("serialsniff", true);
   if (!prefs.isKey("baud")) {
     prefs.end();
+    textOutln("# Keine Daten gespeichert");
     return false;
   }
   currentBaud = prefs.getUInt("baud", MON_BAUD);
@@ -650,9 +651,10 @@ bool isEOLChar(uint8_t c) {
 String serialCmd = "";
 
 void setup() {
-  Serial.begin(921600); // Initialize USB console
+  Serial.begin(115200); // Initialize USB console
   delay(5000); // allow USB to initialize
   textOutln("# Serial Sniffer log");
+  //saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig()) {
     tryWiFiConnect();
     calcSerialConfig();
