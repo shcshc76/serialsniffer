@@ -161,6 +161,7 @@ void saveSerialConfig()
   prefs.putString("ssid", wifiSSID);
   prefs.putString("wpass", wifiPass);
   prefs.putString("url", targetURL);
+  prefs.putString("syslog_ip", syslog_ip);
   prefs.putUShort("debug", outputLevel);
   prefs.putUInt("timeout", timeout);
   prefs.putBool("eoldetect", eolDetect);
@@ -186,6 +187,7 @@ bool loadSerialConfig()
   wifiSSID = prefs.getString("ssid", "");
   wifiPass = prefs.getString("wpass", "");
   targetURL = prefs.getString("url", "");
+  syslog_ip = prefs.getString("syslog_ip", "SYSLOG_IP");
   outputLevel = prefs.getUShort("debug", 2);
   timeout = prefs.getUInt("timeout", 15);
   eolDetect = prefs.getBool("eoldetect", false);
@@ -838,7 +840,10 @@ void parseSerialCommand(String cmd)
     textOut("RX Invert: " + String(rxInvert ? "Enabled" : "Disabled") + ", ");
     textOut("TX Invert: " + String(txInvert ? "Enabled" : "Disabled"));
     textOutln();
+    textOut("# Syslog IP: " + syslog_ip);
+    textOutln();
     textOut("# WiFi SSID: " + wifiSSID + ", ");
+    
     if (wifiPass.length() > 0)
     {
       textOut("WiFi Password: Set, ");
