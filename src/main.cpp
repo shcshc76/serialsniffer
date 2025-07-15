@@ -2,6 +2,8 @@
 #include <HardwareSerial.h>
 #include <Preferences.h>
 #include <WiFi.h>
+#include <WiFiUdp.h>
+#include <Syslog.h>
 #include <HTTPClient.h>
 #include <UrlEncode.h>
 #include <WiFiUdp.h>
@@ -35,12 +37,20 @@ bool txInvert = false;
 uint16_t timeout = 15;
 bool eolDetect = false;
 
+//WLAN configuration
 String wifiSSID = "WLAN_SSID";
 String wifiPass = "WLAN_PASSWD";
 String targetURL = "";
 bool wifiConnected = false;
 
+// 🔹 Syslog Server Settings (Replace with your server IP)
+const char *syslog_server = "SYSLOG_IP"; // Syslog Server IP
+const int syslog_port = 514;                  // Default UDP Syslog port
+
 WiFiUDP ntpUDP;
+// 🔹 Create Syslog Client
+WiFiUDP udpClient;
+Syslog syslog(udpClient, syslog_server, syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 600000); //Refresh every 10 minutes
 
 uint8_t outputLevel = 2; // Verbosity
@@ -93,6 +103,7 @@ void sendBuffer() {
         Serial.println(httpResponseCode);
       }
     }
+    syslog.log(LOG_INFO, outBuffer.c_str());
   } else if (outputLevel >= 4) {
     Serial.println("#### WiFi not connected or buffer empty, skipping send");
   }
