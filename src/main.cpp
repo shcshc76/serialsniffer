@@ -902,6 +902,12 @@ void parseSerialCommand(String cmd)
     textOutln("# URL target set to: " + targetURL);
     tryWiFiConnect();
   }
+   else if (c == 'Y')
+  { // Set target URL
+    syslog_ip = val;
+    textOutln("# syslog target set to: " + syslog_ip);
+    textOutln("# Please restart the device with X to apply syslog changes");
+  }
   else if (c == 'D')
   { // Debug mode on
     outputLevel = val.toInt();
@@ -957,6 +963,7 @@ void parseSerialCommand(String cmd)
     textOutln("# l   - Disable EOL detection");
     textOutln("# S   - Save current configuration");
     textOutln("# X   - Restart Device");
+    textOutln("# Y<SYSLOG> - Set syslog target (e.g., YSYSLOG_IP)");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
