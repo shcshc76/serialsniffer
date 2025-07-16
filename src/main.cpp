@@ -62,32 +62,7 @@ Preferences prefs;
 
 String outBuffer = "";
 
-String getDateTimeISO()
-{
-  if (timeClient.isTimeSet())
-  {
-    time_t epochTime;
-    struct timeval tv;
-    struct tm *ptm;
-    char buf[20];
-
-    gettimeofday(&tv, NULL);
-    epochTime = tv.tv_sec;
-    long milliseconds = tv.tv_usec / 1000;
-
-    ptm = localtime(&epochTime);
-    strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", ptm);
-    char finalBuf[25];
-    snprintf(finalBuf, sizeof(finalBuf), "%s.%03ld", buf, milliseconds);
-    // return "NTP "+String(finalBuf);
-    return "NTP " + timeClient.getFormattedTime();
-  }
-  else
-  {
-    return "LOCAL " + String(millis());
-  }
-}
-
+// Function to get current date and time as a formatted string
 String getDateTimeString()
 {
   if (timeClient.isTimeSet())
@@ -518,7 +493,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   // Print time and type
   String line;
   char code[8];
-  // line += getDateTimeISO() + ';' + String(type) + ';';
+  
   line += getDateTimeString() + ';' + String(type) + ';';
 
   // Print HEX
