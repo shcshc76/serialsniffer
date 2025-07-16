@@ -1,3 +1,10 @@
+// Mit einem ESP32 getestet.
+// Die Daten werden an einen Syslog-Server gesendet.
+// Die Daten können auch an eine URL gesendet werden, z.B. an einen Webserver.
+// Die Konfiguration wird in den Preferences gespeichert und beim Start geladen.
+// Die Baudrate, Datenbits, Parität und Stoppbits können konfiguriert werden.
+// Über h oder ? wird eine Hilfe angezeigt.
+
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include <Preferences.h>
