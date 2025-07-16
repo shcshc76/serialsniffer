@@ -50,7 +50,10 @@ const int syslog_port = 514;         // Default UDP Syslog port
 // WiFiUDP ntpUDP;
 //  🔹 Create Syslog Client wifiSSID.c_str()
 WiFiUDP udpClient;
-NTPClient timeClient(udpClient, "pool.ntp.org", 7200, 600000); // Refresh every 10 minutes
+NTPClient timeClient(udpClient, "pool.ntp.org", 0, 600000); // Refresh every 10 minutes
+const long standardOffset = 3600;                           // GMT+1
+const long daylightOffset = 7200;                           // GMT+2
+// Create Syslog client
 Syslog syslog(udpClient, syslog_ip.c_str(), syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
 
 uint8_t outputLevel = 2; // Verbosity
@@ -78,6 +81,54 @@ String getDateTimeISO()
     snprintf(finalBuf, sizeof(finalBuf), "%s.%03ld", buf, milliseconds);
     // return "NTP "+String(finalBuf);
     return "NTP " + timeClient.getFormattedTime();
+  }
+  else
+  {
+    return "LOCAL " + String(millis());
+  }
+}
+
+String getDateTimeString()
+{
+  if (timeClient.isTimeSet())
+  {
+    time_t rawTime = timeClient.getEpochTime();
+    struct tm *timeInfo = gmtime(&rawTime);
+
+    int day = timeInfo->tm_mday;
+    int month = timeInfo->tm_mon + 1;
+    int weekday = timeInfo->tm_wday;
+
+    // DST logic: Central Europe (last Sunday of March to last Sunday of October)
+    bool dstActive = false;
+    if (month > 3 && month < 10)
+    {
+      dstActive = true;
+    }
+    else if (month == 3 || month == 10)
+    {
+      int lastSunday = 31 - ((weekday + 31 - day) % 7);
+      if (month == 3 && day >= lastSunday)
+        dstActive = true;
+      if (month == 10 && day < lastSunday)
+        dstActive = true;
+    }
+
+    // Apply correct offset
+    long offset = dstActive ? daylightOffset : standardOffset;
+    timeInfo->tm_hour += offset / 3600;
+
+    // Format string
+    char buffer[30];
+    snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d %02d:%02d:%02d",
+             timeInfo->tm_year + 1900,
+             timeInfo->tm_mon + 1,
+             timeInfo->tm_mday,
+             timeInfo->tm_hour,
+             timeInfo->tm_min,
+             timeInfo->tm_sec);
+
+    return "NTP "+ String(buffer);
   }
   else
   {
@@ -467,7 +518,9 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   // Print time and type
   String line;
   char code[8];
-  line += getDateTimeISO() + ';' + String(type) + ';';
+  // line += getDateTimeISO() + ';' + String(type) + ';';
+  line += getDateTimeString() + ';' + String(type) + ';';
+
   // Print HEX
   for (size_t i = 0; i < len; i++)
   {
@@ -843,7 +896,7 @@ void parseSerialCommand(String cmd)
     textOut("# Syslog IP: " + syslog_ip);
     textOutln();
     textOut("# WiFi SSID: " + wifiSSID + ", ");
-    
+
     if (wifiPass.length() > 0)
     {
       textOut("WiFi Password: Set, ");
@@ -902,7 +955,7 @@ void parseSerialCommand(String cmd)
     textOutln("# URL target set to: " + targetURL);
     tryWiFiConnect();
   }
-   else if (c == 'Y')
+  else if (c == 'Y')
   { // Set target URL
     syslog_ip = val;
     textOutln("# syslog target set to: " + syslog_ip);
