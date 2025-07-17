@@ -1,3 +1,0 @@
-# Beispiel in .gitattributes
-main.cpp filter=secrets
-main.cpp filter=ssid
