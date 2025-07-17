@@ -46,7 +46,7 @@ bool eolDetect = false;
 
 // WLAN configuration
 String wifiSSID = "WLAN_SSID";
-String wifiPass = ***REDACTED***
+String wifiPass = "WLAN_PASSWD";
 String targetURL = "";
 bool wifiConnected = false;
 
@@ -55,19 +55,19 @@ String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
 const int syslog_port = 514;         // Default UDP Syslog port
 
 // WiFiUDP ntpUDP;
-
 WiFiUDP udpClient;
 NTPClient timeClient(udpClient, "pool.ntp.org", 0, 600000); // Refresh every 10 minutes
 
 // Timezone offsets for Central Europe
-const long standardOffset = 3600;                           // GMT+1
-const long daylightOffset = 7200;                           // GMT+2
+const long standardOffset = 3600; // GMT+1
+const long daylightOffset = 7200; // GMT+2
 
 //  🔹 Create Syslog Client wifiSSID.c_str()
 Syslog syslog(udpClient, syslog_ip.c_str(), syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
 
 uint8_t outputLevel = 2; // Verbosity
 
+// Preferences for saving configuration
 Preferences prefs;
 
 String outBuffer = "";
@@ -113,7 +113,7 @@ String getDateTimeString()
              timeInfo->tm_min,
              timeInfo->tm_sec);
 
-    return "NTP "+ String(buffer);
+    return "NTP " + String(buffer);
   }
   else
   {
@@ -125,7 +125,6 @@ void sendBuffer()
 {
   if (wifiConnected && outBuffer.length() > 0)
   {
-
     if (targetURL.length() > 0)
     {
       HTTPClient http;
@@ -221,7 +220,7 @@ bool loadSerialConfig()
   rxInvert = prefs.getBool("rxInvert", false);
   txInvert = prefs.getBool("txInvert", false);
   wifiSSID = prefs.getString("ssid", "");
-  wifiPass = ***REDACTED***
+  wifiPass = prefs.getString("wpass", "");
   targetURL = prefs.getString("url", "");
   syslog_ip = prefs.getString("syslog_ip", "SYSLOG_IP");
   outputLevel = prefs.getUShort("debug", 2);
@@ -503,7 +502,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   // Print time and type
   String line;
   char code[8];
-  
+
   line += getDateTimeString() + ';' + String(type) + ';';
 
   // Print HEX
@@ -930,7 +929,7 @@ void parseSerialCommand(String cmd)
   }
   else if (c == 'w')
   { // Set WiFi password
-    wifiPass = ***REDACTED***
+    wifiPass = val;
     textOutln("# WiFi password set");
     tryWiFiConnect();
   }
