@@ -184,7 +184,7 @@ void textOut(String text = "", uint8_t level = 1)
   }
 }
 
-void saveSerialConfig()
+void saveSerialConfig() // Save alle Data
 {
   prefs.begin("serialsniff", false);
   prefs.putUInt("baud", currentBaud);
