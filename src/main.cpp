@@ -45,7 +45,7 @@ uint16_t timeout = 15;
 bool eolDetect = false;
 
 // WLAN configuration
-String wifiSSID = "SSID";
+String wifiSSID = "WLAN_SSID";
 String wifiPass = "WLAN_PASS";
 String targetURL = "";
 bool wifiConnected = false;
