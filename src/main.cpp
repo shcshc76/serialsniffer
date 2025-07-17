@@ -1001,7 +1001,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# l   - Disable EOL detection");
     textOutln("# S   - Save current configuration");
     textOutln("# X   - Restart Device");
-    textOutln("# Y<SYSLOG> - Set syslog target (e.g., YSYSLOG_IP)");
+    textOutln("# Y<SYSLOG> - Set syslog target (e.g., YMySyslogServer)");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
