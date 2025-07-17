@@ -125,7 +125,7 @@ void sendBuffer()
 {
   if (wifiConnected && outBuffer.length() > 0)
   {
-    if (targetURL.length() > 0)
+    if (targetURL.length() > 0) // Send Data to URL
     {
       HTTPClient http;
       http.begin(targetURL);
