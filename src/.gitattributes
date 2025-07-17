@@ -1,0 +1,2 @@
+# Beispiel in .gitattributes
+main.cpp filter=secrets
