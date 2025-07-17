@@ -497,7 +497,7 @@ void appendHex(String &str, uint8_t val)
   str += buf;
 }
 
-void printBuffer(const char *type, uint8_t *buf, size_t len)
+void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer with time, type, HEX and ASCII representation
 {
   // Print time and type
   String line;
