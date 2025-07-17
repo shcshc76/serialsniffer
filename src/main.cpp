@@ -45,8 +45,8 @@ uint16_t timeout = 15;
 bool eolDetect = false;
 
 // WLAN configuration
-String wifiSSID = "WLAN_SSID";
-String wifiPass = ***WLAN-PASS***
+String wifiSSID = ***WLAN-SSID***
+String wifiPass = "WLAN_PASSWD";
 String targetURL = "";
 bool wifiConnected = false;
 
@@ -439,7 +439,7 @@ void applySerialConfig(bool calc = false, bool init = false)
   textOutln("## Serial ports reconfigured", 2);
 }
 
-void tryWiFiConnect()
+void tryWiFiConnect() // Connect to WiFi and NTP server
 {
   if (wifiSSID.length() > 0)
   {
