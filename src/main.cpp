@@ -46,7 +46,7 @@ bool eolDetect = false;
 
 // WLAN configuration
 String wifiSSID = "WLAN_SSID";
-String wifiPass = "WLAN_PASSWD";
+String wifiPass = ***WLAN-PASS***
 String targetURL = "";
 bool wifiConnected = false;
 
@@ -204,7 +204,7 @@ void saveSerialConfig() // Save alle Data
   textOutln("# Config saved");
 }
 
-bool loadSerialConfig()
+bool loadSerialConfig() // Load saved config
 {
   prefs.begin("serialsniff", true);
   if (!prefs.isKey("baud"))
@@ -220,7 +220,7 @@ bool loadSerialConfig()
   rxInvert = prefs.getBool("rxInvert", false);
   txInvert = prefs.getBool("txInvert", false);
   wifiSSID = prefs.getString("ssid", "");
-  wifiPass = prefs.getString("wpass", "");
+  wifiPass = ***WLAN-PASS***
   targetURL = prefs.getString("url", "");
   syslog_ip = prefs.getString("syslog_ip", "SYSLOG_IP");
   outputLevel = prefs.getUShort("debug", 2);
@@ -929,7 +929,7 @@ void parseSerialCommand(String cmd)
   }
   else if (c == 'w')
   { // Set WiFi password
-    wifiPass = val;
+    wifiPass = ***WLAN-PASS***
     textOutln("# WiFi password set");
     tryWiFiConnect();
   }
