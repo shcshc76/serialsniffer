@@ -46,7 +46,7 @@ bool eolDetect = false;
 
 // WLAN configuration
 String wifiSSID = "WLAN_SSID";
-String wifiPass = "WLAN_PASSWD";
+String wifiPass = ***REDACTED***
 String targetURL = "";
 bool wifiConnected = false;
 
@@ -55,12 +55,15 @@ String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
 const int syslog_port = 514;         // Default UDP Syslog port
 
 // WiFiUDP ntpUDP;
-//  🔹 Create Syslog Client wifiSSID.c_str()
+
 WiFiUDP udpClient;
 NTPClient timeClient(udpClient, "pool.ntp.org", 0, 600000); // Refresh every 10 minutes
+
+// Timezone offsets for Central Europe
 const long standardOffset = 3600;                           // GMT+1
 const long daylightOffset = 7200;                           // GMT+2
-// Create Syslog client
+
+//  🔹 Create Syslog Client wifiSSID.c_str()
 Syslog syslog(udpClient, syslog_ip.c_str(), syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
 
 uint8_t outputLevel = 2; // Verbosity
@@ -218,7 +221,7 @@ bool loadSerialConfig()
   rxInvert = prefs.getBool("rxInvert", false);
   txInvert = prefs.getBool("txInvert", false);
   wifiSSID = prefs.getString("ssid", "");
-  wifiPass = prefs.getString("wpass", "");
+  wifiPass = ***REDACTED***
   targetURL = prefs.getString("url", "");
   syslog_ip = prefs.getString("syslog_ip", "SYSLOG_IP");
   outputLevel = prefs.getUShort("debug", 2);
@@ -927,7 +930,7 @@ void parseSerialCommand(String cmd)
   }
   else if (c == 'w')
   { // Set WiFi password
-    wifiPass = val;
+    wifiPass = ***REDACTED***
     textOutln("# WiFi password set");
     tryWiFiConnect();
   }
