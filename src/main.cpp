@@ -152,7 +152,7 @@ void sendBuffer()
         }
       }
     }
-    syslog.log(LOG_INFO, outBuffer.c_str());
+    syslog.log(LOG_INFO, outBuffer.c_str()); // Send to Syslog server
   }
   else if (outputLevel >= 4)
   {
