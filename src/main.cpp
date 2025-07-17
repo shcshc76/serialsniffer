@@ -45,7 +45,7 @@ uint16_t timeout = 15;
 bool eolDetect = false;
 
 // WLAN configuration
-String wifiSSID = ***WLAN-SSID***
+String wifiSSID = "WLAN_SSID";
 String wifiPass = "WLAN_PASSWD";
 String targetURL = "";
 bool wifiConnected = false;
@@ -794,7 +794,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
   textOutln(line, 0);
 }
 
-void parseSerialCommand(String cmd)
+void parseSerialCommand(String cmd) // Parse and execute serial commands
 {
   cmd.trim();
   if (cmd.length() < 1)
