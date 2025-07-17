@@ -447,6 +447,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
     {
       textOut("# Connecting to WiFi: " + wifiSSID);
       WiFi.mode(WIFI_STA);
+      WiFi.setHostname("SerialSniffer"); // Set hostname for WiFi
       WiFi.begin(wifiSSID.c_str(), wifiPass.c_str());
       unsigned long start = millis();
       while (WiFi.status() != WL_CONNECTED && millis() - start < 10000)
