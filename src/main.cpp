@@ -220,7 +220,7 @@ bool loadSerialConfig() // Load saved config
   rxInvert = prefs.getBool("rxInvert", false);
   txInvert = prefs.getBool("txInvert", false);
   wifiSSID = prefs.getString("ssid", "");
-  wifiPass = ***WLAN-PASS***
+  wifiPass = prefs.getString("wpass", "");
   targetURL = prefs.getString("url", "");
   syslog_ip = prefs.getString("syslog_ip", "SYSLOG_IP");
   outputLevel = prefs.getUShort("debug", 2);
@@ -231,8 +231,8 @@ bool loadSerialConfig() // Load saved config
   return true;
 }
 
-SerialConfig calcSerialConfig(void)
-{ // Calculate current serial config based on data bits, parity and stop bits
+SerialConfig calcSerialConfig(void) // Calculate current serial config based on data bits, parity and stop bits
+{ 
   if (currentDataBits == 5)
   {
     if (currentStopBits == 1)
@@ -929,7 +929,7 @@ void parseSerialCommand(String cmd)
   }
   else if (c == 'w')
   { // Set WiFi password
-    wifiPass = ***WLAN-PASS***
+    wifiPass = val;
     textOutln("# WiFi password set");
     tryWiFiConnect();
   }
