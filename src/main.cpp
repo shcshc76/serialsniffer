@@ -45,8 +45,8 @@ uint16_t timeout = 15;
 bool eolDetect = false;
 
 // WLAN configuration
-String wifiSSID = "WLAN_SSID";
-String wifiPass = "WLAN_PASSWD";
+String wifiSSID = "SSID";
+String wifiPass = "WLAN_PASS";
 String targetURL = "";
 bool wifiConnected = false;
 
@@ -222,7 +222,7 @@ bool loadSerialConfig() // Load saved config
   wifiSSID = prefs.getString("ssid", "");
   wifiPass = prefs.getString("wpass", "");
   targetURL = prefs.getString("url", "");
-  syslog_ip = prefs.getString("syslog_ip", "SYSLOG_IP");
+  syslog_ip = prefs.getString("syslog_ip", "");
   outputLevel = prefs.getUShort("debug", 2);
   timeout = prefs.getUInt("timeout", 15);
   eolDetect = prefs.getBool("eoldetect", false);
