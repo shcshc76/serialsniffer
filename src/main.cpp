@@ -136,15 +136,23 @@ s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
 N              - No parity
 E              - Even parity
 O              - Odd parity
-Ti             - Enable timestamps
-RI             - Enable RX inversion
-RO             - Enable TX inversion
+Ri|RI          - Disable or enable RX pin inversion
+Ti|TI          - Disable or enable TX pin inversion
+p              - Print current serial configuration
+f              - Flush RX and TX buffers
+r              - Reinitialize serial ports
 Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
 U(url)         - Set HTTP target URL
-WSSID/PASS    - Set WiFi credentials
+D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
+t(timeout)     - Set timeout in ms (e.g., t1000)
+L              - Enable EOL detection
+l              - Disable EOL detection
+W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
+w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
 S              - Save config
 X              - Restart device
 ? or h         - Help
+Note: Commands are case-sensitive.
   </pre>
 </div>
 
