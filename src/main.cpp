@@ -107,19 +107,19 @@ const char index_html[] PROGMEM = R"rawliteral(
 <body>
   <div class="container">
     <h1 class="mb-4 text-center">ESP32 Serial Sniffer</h1>
-
-<h5>WLAN verbinden</h1>
+<div class="card p-3 mb-4">
+<h5 class="card-title">Connect to WLAN</h1>
   <form id="wifiForm">
     <label for="ssid">WLAN SSID</label>
-    <input type="text" id="ssid" name="ssid" placeholder="Netzwerkname" required />
+    <input type="text" id="ssid" name="ssid" placeholder="SSID" required />
 
     <label for="password">WLAN Passwort</label>
-    <input type="password" id="password" name="password" placeholder="Passwort" />
+    <input type="password" id="password" name="password" placeholder="Password" />
 
-    <button type="submit">Verbinden</button>
+    <button type="submit" class="btn btn-success">Connect</button>
   </form>
   <div class="info" id="responseMsg"></div>
-
+  </div>
   <script>
     const form = document.getElementById('wifiForm');
     const responseMsg = document.getElementById('responseMsg');
@@ -637,7 +637,12 @@ void startWebserver()
   status += ", Parity: " + String(currentParity);
   status += ", Stop Bits: " + String(currentStopBits);
   status += "\nRX Invert: " + String(rxInvert ? "Enabled" : "Disabled");
-  status += "\nTX Invert: " + String(txInvert ? "Enabled" : "Disabled");
+  status += ", TX Invert: " + String(txInvert ? "Enabled" : "Disabled");
+  status += "\nSyslog IP: " + syslog_ip;
+  status += ", Target URL: " + targetURL;
+  status += "\nOutput Level: " + String(outputLevel);
+  status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
+  status += "\nTimeout: " + String(timeout) + " ms";
   // weitere Infos
   request->send(200, "text/plain", status); });
 
@@ -708,7 +713,8 @@ void startWebserver()
 
     <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
       <div class="col-md-8">
-        <input type="text" id="cmdInput" class="form-control" placeholder="Kommando eingeben (z. B. 'b9600', 'h')" required>
+        <h5 class="card-title">Send Command</h5>
+        <input type="text" id="cmdInput" class="form-control" placeholder="Insert Command (e. g. 'b9600', 'h')" required>
       </div>
       <div class="col-md-4 d-grid">
         <button type="submit" class="btn btn-success">Send</button>
