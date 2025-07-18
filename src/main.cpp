@@ -15,6 +15,8 @@
 #include <UrlEncode.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
 #define MON_RX 17 // RX pin
 #define MON_TX 16 // TX pin
@@ -52,7 +54,7 @@ bool wifiConnected = false;
 
 // 🔹 Syslog Server Settings (Replace with your server IP)
 String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
-const int syslog_port = 514;         // Default UDP Syslog port
+const int syslog_port = 514;    // Default UDP Syslog port
 
 // WiFiUDP ntpUDP;
 WiFiUDP udpClient;
@@ -65,12 +67,35 @@ const long daylightOffset = 7200; // GMT+2
 //  🔹 Create Syslog Client wifiSSID.c_str()
 Syslog syslog(udpClient, syslog_ip.c_str(), syslog_port, "esp32", "serialsniffer", LOG_LOCAL0);
 
+//  🔹 Create AsyncWebServer instance
+AsyncWebServer server(80);
+const char *PARAM_INPUT_1 = "input1";
+// HTML web page to handle 3 input fields (input1)
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html><head>
+  <title>ESP Input Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+  <form action="/get">
+    Befehl: <input type="text" name="input1">
+    <input type="submit" value="Submit">
+  </form><br>
+</body></html>)rawliteral";
+
 uint8_t outputLevel = 2; // Verbosity
 
 // Preferences for saving configuration
 Preferences prefs;
 
 String outBuffer = "";
+
+void parseSerialCommand(String cmd); // Parse and execute serial commands
+
+// webserver request handler
+void notFound(AsyncWebServerRequest *request)
+{
+  request->send(404, "text/plain", "Not found");
+}
 
 // Function to get current date and time as a formatted string
 String getDateTimeString()
@@ -232,7 +257,7 @@ bool loadSerialConfig() // Load saved config
 }
 
 SerialConfig calcSerialConfig(void) // Calculate current serial config based on data bits, parity and stop bits
-{ 
+{
   if (currentDataBits == 5)
   {
     if (currentStopBits == 1)
@@ -462,6 +487,34 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
 
+        // Send web page with input fields to client
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+                  { request->send(200, "text/html", index_html); });
+
+        // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
+        server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
+                  {
+        String inputMessage;
+        String inputParam;
+        // GET input1 value on <ESP_IP>/get?input1=<inputMessage>
+        if (request->hasParam(PARAM_INPUT_1)) {
+          inputMessage = request->getParam(PARAM_INPUT_1)->value();
+          inputParam = PARAM_INPUT_1;
+        }
+        else {
+          inputMessage = "No message sent";
+          inputParam = "none";
+        }
+        // Serial.println(inputMessage);
+        parseSerialCommand(inputMessage);
+        request->send(200, "text/html", "HTTP GET request sent to your ESP on input field (" 
+                                     + inputParam + ") with value: " + inputMessage +
+                                     "<br><a href=\"/\">Return to Home Page</a>"); });
+        server.onNotFound(notFound);
+        server.begin();
+        textOutln("## Web server started on port 80", 2);
+
+        // Start the NTP client
         timeClient.begin();
         timeClient.forceUpdate();
         if (timeClient.isTimeSet())
