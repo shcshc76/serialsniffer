@@ -105,6 +105,9 @@ const char index_html[] PROGMEM = R"rawliteral(
   </form><br>
 </body></html>)rawliteral";
 
+String webLogBuffer = "";
+const size_t WEB_LOG_MAX = 8192; // max. Größe in Bytes
+
 uint8_t outputLevel = 2; // Verbosity
 
 // Preferences for saving configuration
@@ -200,11 +203,10 @@ void sendBuffer()
         }
       }
     }
-    if(syslog_ip.length() > 0) // Send Data to Syslog
+    if (syslog_ip.length() > 0) // Send Data to Syslog
     {
       syslog.log(LOG_INFO, outBuffer.c_str()); // Send to Syslog server
     }
-    
   }
   else if (outputLevel >= 4)
   {
@@ -220,6 +222,12 @@ void textOutln(String text = "", uint8_t level = 1)
     return;
   Serial.println(text);
   outBuffer += text + "\n";
+  // WebLog anhängen
+  webLogBuffer += text + "\n";
+  if (webLogBuffer.length() > WEB_LOG_MAX)
+  {
+    webLogBuffer.remove(0, webLogBuffer.length() / 2);
+  }
   sendBuffer();
 }
 
@@ -229,6 +237,14 @@ void textOut(String text = "", uint8_t level = 1)
     return;
   Serial.print(text);
   outBuffer += text;
+
+  // WebLog anhängen
+  webLogBuffer += text;
+  if (webLogBuffer.length() > WEB_LOG_MAX)
+  {
+    webLogBuffer.remove(0, webLogBuffer.length() / 2); // ältere Hälfte löschen
+  }
+
   if (outBuffer.length() > 1024)
   { // Limit buffer size to prevent overflow
     Serial.println("# Output buffer overflow, clearing...");
@@ -493,12 +509,21 @@ void applySerialConfig(bool calc = false, bool init = false)
 
 void startWebserver()
 {
-        // Send web page with input fields to client
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-                  { request->send(200, "text/html", index_html); });
-         // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
-        server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
-                  {
+  // Send web page with input fields to client
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "text/html", index_html); });
+
+  server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+  String html = "<!DOCTYPE html><html><head><title>ESP Log</title></head><body>";
+  html += "<h2>Serial Sniffer Log</h2><pre>";
+  html += webLogBuffer;
+  html += "</pre><br><a href=\"/\">Back</a></body></html>";
+  request->send(200, "text/html", html); });
+
+  // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
+  server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
         String inputMessage;
         String inputParam;
         // GET input1 value on <ESP_IP>/get?input1=<inputMessage>
@@ -515,9 +540,9 @@ void startWebserver()
         request->send(200, "text/html", "HTTP GET request sent to your ESP on input field (" 
                                      + inputParam + ") with value: " + inputMessage +
                                      "<br><a href=\"/\">Return to Home Page</a>"); });
-        server.onNotFound(notFound);
-        server.begin();
-        textOutln("## Web server started on port 80", 2);
+  server.onNotFound(notFound);
+  server.begin();
+  textOutln("## Web server started on port 80", 2);
 }
 
 void tryWiFiConnect() // Connect to WiFi and NTP server
@@ -543,7 +568,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
         startWebserver(); // Start web server
- 
+
         // Start the NTP client
         timeClient.begin();
         timeClient.forceUpdate();
@@ -1035,7 +1060,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   { // Set target URL
     syslog_ip = val;
     textOutln("# syslog target set to: " + syslog_ip);
-    //textOutln("# Please restart the device with X to apply syslog changes");
+    // textOutln("# Please restart the device with X to apply syslog changes");
     syslog.server(syslog_ip.c_str(), syslog_port); // aktualisiere Ziel-IP direkt
   }
   else if (c == 'D')
