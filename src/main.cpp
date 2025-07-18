@@ -109,27 +109,26 @@ const char index_html[] PROGMEM = R"rawliteral(
     <h1 class="mb-4 text-center">ESP32 Serial Sniffer</h1>
 
     <div class="card p-3 mb-4">
-      <h5 class="card-title">Gerätestatus</h5>
+      <h5 class="card-title">Device status</h5>
       <div id="status">Wird geladen...</div>
     </div>
 
     <div class="card p-3 mb-4">
-      <h5 class="card-title">Kommando senden</h5>
+      <h5 class="card-title">Send Command</h5>
       <form id="cmdForm" onsubmit="sendCommand(); return false;">
         <div class="input-group">
-          <input type="text" id="cmdInput" class="form-control" placeholder="z. B. b9600, Ti, X">
-          <button type="submit" class="btn btn-success">Senden</button>
+          <input type="text" id="cmdInput" class="form-control" placeholder="e. g. b9600, Ti, X">
+          <button type="submit" class="btn btn-success">Send</button>
         </div>
       </form>
     </div>
 
     <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-      <a href="/log" class="btn btn-outline-light">Live Log anzeigen</a>
-      <a href="/reset" class="btn btn-danger">Neustart</a>
+      <a href="/log" class="btn btn-outline-light">Show Live Log</a>
     </div>
 
     <div class="card p-3 mt-4">
-  <h5 class="card-title">Verfügbare Befehle</h5>
+  <h5 class="card-title">Available commands</h5>
   <pre style="color: #0f0; background-color: #000; padding: 1rem;">
 b(baud)        - Set baud rate (e.g., b9600)
 B(data_bits)   - Set data bits (5-8, e.g., B8)
@@ -587,6 +586,19 @@ void startWebserver()
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "text/html", index_html); });
 
+  server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+  String status = "IP: " + WiFi.localIP().toString();
+  status += "\nBaudrate: " + String(currentBaud);
+  status += "\nData Bits: " + String(currentDataBits);
+  status += "\nParity: " + String(currentParity);
+  status += "\nStop Bits: " + String(currentStopBits);
+  status += "\nRX Invert: " + String(rxInvert ? "Enabled" : "Disabled");
+  status += "\nTX Invert: " + String(txInvert ? "Enabled" : "Disabled");
+  // weitere Infos
+  request->send(200, "text/plain", status); });
+
+  // Serve the log data
   server.on("/logdata", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "text/plain", webLogBuffer); });
 
@@ -595,8 +607,8 @@ void startWebserver()
   webLogBuffer = "";
   request->send(200, "text/plain", "Log gelöscht."); });
 
-    server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+  server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
     String html = R"rawliteral(
       <!DOCTYPE html>
 <html lang="de">
@@ -681,9 +693,7 @@ void startWebserver()
 
     )rawliteral";
 
-    request->send(200, "text/html", html);
-  });
-
+    request->send(200, "text/html", html); });
 
   // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
