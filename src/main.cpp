@@ -76,30 +76,31 @@ const char index_html[] PROGMEM = R"rawliteral(
   <title>ESP Input Form</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   </head><body>
-  <h2>Serial Sniffer - Hilfe</h2>
+  <h2>Serial Sniffer - Help</h2>
   <pre>
-  b(baud) - Setze Baudrate (z.B. b9600)
-  B(data_bits) - Setze Datenbits (5-8)
-  s(stop_bits) - Setze Stoppbits (1 oder 2)
-  N / E / O - Parität: None / Even / Odd
-  Ri / RI - RX Invertierung AUS / EIN
-  Ti / TI - TX Invertierung AUS / EIN
-  p - Zeige aktuelle Konfiguration
-  f - RX/TX Puffer leeren
-  r - Seriellen Port neu initialisieren
-  W(SSID) - WLAN SSID setzen
-  w(PASS) - WLAN Passwort setzen
-  U(URL) - Ziel-URL für HTTP setzen
+  b(baud) - Set baud rate (e.g., b9600)
+  B(data_bits) - Set data bits (5-8, e.g., B8)
+  s(stop_bits) - Set stop bits (1 or 2, e.g., s1)
+  N / E / O - Set parity: None / Even / Odd
+  Ri / RI - Disable or enable RX pin inversion
+  Ti / TI - Disable or enable TX pin inversion
+  p - Print current serial configuration
+  f - Flush RX and TX buffers
+  r - Reinitialize serial ports
+  W(SSID) - Set WiFi SSID (e.g., WMyNetwork)
+  w(PASS) - Set WiFi password (e.g., wMyPassword)
+  U(URL) - Set URL target (e.g., Uhttp://example.com/data)
   Y(SYSLOG_IP) - Syslog-Server setzen
-  D(level) - Debug-Level setzen (0-4)
-  t(ms) - Timeout setzen
-  L / l - EOL-Erkennung EIN / AUS
-  S - Konfiguration speichern
-  X - Neustart des ESP
-  ? / h - Diese Hilfe anzeigen
+  D(level) - Set debug level (e.g. D1 for basic, D2 for verbose)
+  t(timeout) - Set timeout in ms (e.g., t1000)
+  L / l - EOL detection Enable / Disable
+  S - Save current configuration
+  X - Restart Device
+  ? / h - Show this help
+  Note: Commands are case-sensitive.
   </pre><br>
   <form action="/get">
-    Befehl: <input type="text" name="input1">
+    Command: <input type="text" name="input1">
     <input type="submit" value="Submit">
   </form><br>
 </body></html>)rawliteral";
