@@ -339,8 +339,8 @@ void sendBuffer()
   {
     Serial.println("#### WiFi not connected or buffer empty, skipping send");
   }
-
-  outBuffer = ""; // Clear buffer
+  
+  outBuffer = "";            // Clear buffer
 }
 
 void textOutln(String text = "", uint8_t level = 1)
@@ -356,6 +356,7 @@ void textOutln(String text = "", uint8_t level = 1)
     webLogBuffer.remove(0, webLogBuffer.length() / 2);
   }
   sendBuffer();
+  displayMessage(text); // Display message on OLED
 }
 
 void textOut(String text = "", uint8_t level = 1)
@@ -873,7 +874,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         textOutln("## WiFi connection failed, check SSID and password", 2);
         textOutln("## Please connect to the fallback AP and configure WiFi settings", 2);
         textOutln("## Use the web server to set WiFi SSID and password", 2);
-        displayMessage("NOK IP: " + IP.toString());
+        displayMessage("Fallback-AP (SerialSniffer_Config) gestartet. IP: " + IP.toString());
         startWebserver(); // Start web server
       }
     }
@@ -1438,7 +1439,7 @@ void displayMessage(String message)
   display.setCursor(0, 0);
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
-  display.println(message);
+  display.println(message.substring(0, 140)); // Display first 90 characters
   display.display();
 
   // Lösch-Timer setzen
@@ -1450,9 +1451,7 @@ void setup()
 {
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
-  textOutln("# Serial Sniffer log");
-
-  // Initialize OLED display
+ // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // 0x3C is the default I2C address
     Serial.println("SSD1306 allocation failed");
@@ -1468,6 +1467,10 @@ void setup()
     display.println("Serial Sniffer started");
     display.display();
   }
+
+  textOutln("# Serial Sniffer log");
+
+ 
 
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
@@ -1518,6 +1521,7 @@ void loop()
   if (wifiConnected && WiFi.status() != WL_CONNECTED)
   {
     textOutln("### Wifi connection dropped. Reconnecting.", 3);
+    displayMessage("Wifi connection dropped. Reconnecting.");
     tryWiFiConnect();
   }
 
