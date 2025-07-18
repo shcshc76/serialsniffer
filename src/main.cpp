@@ -526,57 +526,86 @@ void startWebserver()
   {
     String html = R"rawliteral(
       <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>ESP32 Log (Live)</title>
-        <style>
-          body { font-family: monospace; background: #111; color: #0f0; padding: 1rem; }
-          #log { white-space: pre-wrap; max-height: 70vh; overflow-y: scroll; background: #000; padding: 1rem; border: 1px solid #333; }
-          button, input { margin-top: 10px; font-size: 1rem; }
-        </style>
-      </head>
-      <body>
-        <h2>ESP32 Serial Log (Live)</h2>
-        <div id="log">Lade Log...</div>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Serial Log (Live)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0e0e0e;
+      color: #00ff00;
+      font-family: monospace;
+      padding: 2rem;
+    }
+    #log {
+      white-space: pre-wrap;
+      background-color: #000;
+      padding: 1rem;
+      border: 1px solid #333;
+      height: 60vh;
+      overflow-y: auto;
+      font-size: 0.95rem;
+    }
+    input.form-control {
+      background-color: #111;
+      color: #0f0;
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-4">ESP32 Serial Log</h1>
+    <div id="log">Lade Log...</div>
 
-        <form id="cmdForm" onsubmit="sendCommand(); return false;">
-          <input type="text" id="cmdInput" placeholder="Enter Command(e.g. p or b9600, h for help)" size="40">
-          <button type="submit">Send</button>
-        </form>
+    <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
+      <div class="col-md-8">
+        <input type="text" id="cmdInput" class="form-control" placeholder="Kommando eingeben (z. B. 'b9600', 'h')" required>
+      </div>
+      <div class="col-md-4 d-grid">
+        <button type="submit" class="btn btn-success">Send</button>
+      </div>
+    </form>
 
-        <button onclick="clearLog()">Clear LOG</button>
+    <div class="mt-3">
+      <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
+      <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
+    </div>
+  </div>
 
-        <script>
-          function fetchLog() {
-            fetch('/logdata')
-              .then(response => response.text())
-              .then(data => {
-                const logElem = document.getElementById('log');
-                logElem.textContent = data;
-                logElem.scrollTop = logElem.scrollHeight;
-              });
-          }
+  <script>
+    function fetchLog() {
+      fetch('/logdata')
+        .then(res => res.text())
+        .then(data => {
+          const logElem = document.getElementById('log');
+          logElem.textContent = data;
+          logElem.scrollTop = logElem.scrollHeight;
+        });
+    }
 
-          function clearLog() {
-            fetch('/clearlog').then(() => fetchLog());
-          }
+    function clearLog() {
+      fetch('/clearlog').then(() => fetchLog());
+    }
 
-          function sendCommand() {
-            const cmd = document.getElementById('cmdInput').value;
-            if (!cmd) return;
-            fetch('/get?input1=' + encodeURIComponent(cmd))
-              .then(() => {
-                document.getElementById('cmdInput').value = '';
-                fetchLog();
-              });
-          }
+    function sendCommand() {
+      const cmd = document.getElementById('cmdInput').value;
+      if (!cmd) return;
+      fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
+        document.getElementById('cmdInput').value = '';
+        fetchLog();
+      });
+    }
 
-          setInterval(fetchLog, 2000);
-          fetchLog();
-        </script>
-      </body>
-      </html>
+    setInterval(fetchLog, 2000);
+    fetchLog();
+  </script>
+</body>
+</html>
+
     )rawliteral";
 
     request->send(200, "text/html", html);
