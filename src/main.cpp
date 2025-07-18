@@ -464,6 +464,35 @@ void applySerialConfig(bool calc = false, bool init = false)
   textOutln("## Serial ports reconfigured", 2);
 }
 
+void startWebserver()
+{
+        // Send web page with input fields to client
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+                  { request->send(200, "text/html", index_html); });
+         // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
+        server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
+                  {
+        String inputMessage;
+        String inputParam;
+        // GET input1 value on <ESP_IP>/get?input1=<inputMessage>
+        if (request->hasParam(PARAM_INPUT_1)) {
+          inputMessage = request->getParam(PARAM_INPUT_1)->value();
+          inputParam = PARAM_INPUT_1;
+        }
+        else {
+          inputMessage = "No message sent";
+          inputParam = "none";
+        }
+        // Serial.println(inputMessage);
+        parseSerialCommand(inputMessage);
+        request->send(200, "text/html", "HTTP GET request sent to your ESP on input field (" 
+                                     + inputParam + ") with value: " + inputMessage +
+                                     "<br><a href=\"/\">Return to Home Page</a>"); });
+        server.onNotFound(notFound);
+        server.begin();
+        textOutln("## Web server started on port 80", 2);
+}
+
 void tryWiFiConnect() // Connect to WiFi and NTP server
 {
   if (wifiSSID.length() > 0)
@@ -486,34 +515,8 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         delay(250); // DNS might fail otherwise
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
-
-        // Send web page with input fields to client
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-                  { request->send(200, "text/html", index_html); });
-
-        // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
-        server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
-                  {
-        String inputMessage;
-        String inputParam;
-        // GET input1 value on <ESP_IP>/get?input1=<inputMessage>
-        if (request->hasParam(PARAM_INPUT_1)) {
-          inputMessage = request->getParam(PARAM_INPUT_1)->value();
-          inputParam = PARAM_INPUT_1;
-        }
-        else {
-          inputMessage = "No message sent";
-          inputParam = "none";
-        }
-        // Serial.println(inputMessage);
-        parseSerialCommand(inputMessage);
-        request->send(200, "text/html", "HTTP GET request sent to your ESP on input field (" 
-                                     + inputParam + ") with value: " + inputMessage +
-                                     "<br><a href=\"/\">Return to Home Page</a>"); });
-        server.onNotFound(notFound);
-        server.begin();
-        textOutln("## Web server started on port 80", 2);
-
+        startWebserver(); // Start web server
+ 
         // Start the NTP client
         timeClient.begin();
         timeClient.forceUpdate();
