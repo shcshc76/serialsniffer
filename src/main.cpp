@@ -9,7 +9,6 @@
 #include <HardwareSerial.h>
 #include <Preferences.h>
 #include <WiFi.h>
-#include <WiFiUdp.h>
 #include <Syslog.h>
 #include <HTTPClient.h>
 #include <UrlEncode.h>
@@ -45,6 +44,11 @@ HardwareSerial SerialTX(2); // Receiver TX
 uint8_t rxBuf[MON_BUF_SIZE], txBuf[MON_BUF_SIZE];
 size_t rxLen = 0, txLen = 0;
 unsigned long rxLast = 0, txLast = 0;
+
+// RX simulation state
+bool rxSimActive = false;
+unsigned long rxSimLastTime = 0;
+unsigned long rxSimInterval = 10000; // alle 10 Sekunden
 
 // Serial config state
 unsigned long currentBaud = MON_BAUD;
@@ -194,6 +198,7 @@ l              - Disable EOL detection
 W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
 w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
 S              - Save config
+z|Z            - Disable or enable RX simulation
 X              - Restart device
 ? or h         - Help
 Note: Commands are case-sensitive.
@@ -339,8 +344,8 @@ void sendBuffer()
   {
     Serial.println("#### WiFi not connected or buffer empty, skipping send");
   }
-  
-  outBuffer = "";            // Clear buffer
+
+  outBuffer = ""; // Clear buffer
 }
 
 void textOutln(String text = "", uint8_t level = 1)
@@ -763,6 +768,7 @@ l              - Disable EOL detection
 W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
 w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
 S              - Save config
+z|Z            - Disable or enable RX simulation
 X              - Restart device
 ? or h         - Help
 Note: Commands are case-sensitive.
@@ -1346,6 +1352,16 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     // textOutln("# Please restart the device with X to apply syslog changes");
     syslog.server(syslog_ip.c_str(), syslog_port); // aktualisiere Ziel-IP direkt
   }
+  else if (c == 'Z')
+  { // enable RX simulation
+    rxSimActive = true;
+    textOutln("RX simulation enabled");
+  }
+  else if (c == 'z')
+  { // disable RX simulation
+    rxSimActive = false;
+    textOutln("RX simulation disabled");
+  }
   else if (c == 'D')
   { // Debug mode on
     outputLevel = val.toInt();
@@ -1402,6 +1418,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# S   - Save current configuration");
     textOutln("# X   - Restart Device");
     textOutln("# Y<SYSLOG> - Set syslog target (e.g., YMySyslogServer)");
+    textOutln("# z|Z - Disable or enable RX simulation");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
@@ -1451,7 +1468,7 @@ void setup()
 {
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
- // Initialize OLED display
+                        // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // 0x3C is the default I2C address
     Serial.println("SSD1306 allocation failed");
@@ -1469,8 +1486,6 @@ void setup()
   }
 
   textOutln("# Serial Sniffer log");
-
- 
 
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
@@ -1550,6 +1565,16 @@ void loop()
     display.clearDisplay();
     display.display();
     displayClearScheduled = false;
+  }
+
+  // Simulierte RX-Daten senden
+  if (rxSimActive && millis() - rxSimLastTime >= rxSimInterval)
+  {
+    const char *simulatedData = "Simulierte RX-Nachricht\n";
+    size_t len = strlen(simulatedData);
+    memcpy(rxBuf, simulatedData, len);
+    printBuffer("RX", rxBuf, len);
+    rxSimLastTime = millis();
   }
 
   handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
