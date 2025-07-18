@@ -18,6 +18,7 @@
 #include <ESPAsyncWebServer.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <ArduinoJson.h>
 
 #define MON_RX 17 // RX pin
 #define MON_TX 16 // TX pin
