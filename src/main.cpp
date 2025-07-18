@@ -521,47 +521,66 @@ void startWebserver()
   webLogBuffer = "";
   request->send(200, "text/plain", "Log gelöscht."); });
 
-  server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
-  String html = R"rawliteral(
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>ESP32 Log (Live)</title>
-      <style>
-        body { font-family: monospace; background: #111; color: #0f0; padding: 1rem; }
-        #log { white-space: pre-wrap; max-height: 90vh; overflow-y: scroll; background: #000; padding: 1rem; border: 1px solid #333; }
-        button { margin-top: 10px; }
-      </style>
-    </head>
-    <body>
-      <h2>ESP32 Serial Log (Live)</h2>
-      <div id="log">Lade Log...</div>
-      <button onclick="clearLog()">Log löschen</button>
-      <script>
-        function fetchLog() {
-          fetch('/logdata')
-            .then(response => response.text())
-            .then(data => {
-              const logElem = document.getElementById('log');
-              logElem.textContent = data;
-              logElem.scrollTop = logElem.scrollHeight; // Auto-Scroll
-            });
-        }
+    server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    String html = R"rawliteral(
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>ESP32 Log (Live)</title>
+        <style>
+          body { font-family: monospace; background: #111; color: #0f0; padding: 1rem; }
+          #log { white-space: pre-wrap; max-height: 70vh; overflow-y: scroll; background: #000; padding: 1rem; border: 1px solid #333; }
+          button, input { margin-top: 10px; font-size: 1rem; }
+        </style>
+      </head>
+      <body>
+        <h2>ESP32 Serial Log (Live)</h2>
+        <div id="log">Lade Log...</div>
 
-        function clearLog() {
-          fetch('/clearlog').then(() => fetchLog());
-        }
+        <form id="cmdForm" onsubmit="sendCommand(); return false;">
+          <input type="text" id="cmdInput" placeholder="Befehl eingeben (z.B. p oder b9600)" size="40">
+          <button type="submit">Senden</button>
+        </form>
 
-        setInterval(fetchLog, 2000); // Alle 2 Sekunden neu laden
-        fetchLog(); // Initialer Abruf
-      </script>
-    </body>
-    </html>
-  )rawliteral";
+        <button onclick="clearLog()">Log löschen</button>
 
-  request->send(200, "text/html", html); });
+        <script>
+          function fetchLog() {
+            fetch('/logdata')
+              .then(response => response.text())
+              .then(data => {
+                const logElem = document.getElementById('log');
+                logElem.textContent = data;
+                logElem.scrollTop = logElem.scrollHeight;
+              });
+          }
+
+          function clearLog() {
+            fetch('/clearlog').then(() => fetchLog());
+          }
+
+          function sendCommand() {
+            const cmd = document.getElementById('cmdInput').value;
+            if (!cmd) return;
+            fetch('/get?input1=' + encodeURIComponent(cmd))
+              .then(() => {
+                document.getElementById('cmdInput').value = '';
+                fetchLog();
+              });
+          }
+
+          setInterval(fetchLog, 2000);
+          fetchLog();
+        </script>
+      </body>
+      </html>
+    )rawliteral";
+
+    request->send(200, "text/html", html);
+  });
+
 
   // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
