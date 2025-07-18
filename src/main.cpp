@@ -36,6 +36,9 @@
 #define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+unsigned long displayClearTime = 0;
+bool displayClearScheduled = false;
+
 HardwareSerial SerialRX(1); // Receiver RX
 HardwareSerial SerialTX(2); // Receiver TX
 
@@ -1432,13 +1435,16 @@ String serialCmd = "";
 void displayMessage(String message)
 {
   display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
   display.setCursor(0, 0);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
   display.println(message);
   display.display();
-}
 
+  // Lösch-Timer setzen
+  displayClearTime = millis() + 15000; // 15 Sekunden
+  displayClearScheduled = true;
+}
 
 void setup()
 {
@@ -1446,7 +1452,7 @@ void setup()
   delay(5000);          // allow USB to initialize
   textOutln("# Serial Sniffer log");
 
-// Initialize OLED display
+  // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // 0x3C is the default I2C address
     Serial.println("SSD1306 allocation failed");
@@ -1462,8 +1468,6 @@ void setup()
     display.println("Serial Sniffer started");
     display.display();
   }
-
-  
 
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
@@ -1534,6 +1538,14 @@ void loop()
     {
       serialCmd += sc;
     }
+  }
+
+  // Display nach 15 Sekunden löschen
+  if (displayClearScheduled && millis() >= displayClearTime)
+  {
+    display.clearDisplay();
+    display.display();
+    displayClearScheduled = false;
   }
 
   handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
