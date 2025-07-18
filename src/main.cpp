@@ -1452,11 +1452,37 @@ String serialCmd = "";
 
 void displayMessage(String message)
 {
+String filteredMessage = "";
+
+  int semicolonCount = 0;
+  bool skip = false;
+
+  for (size_t i = 0; i < message.length(); i++) {
+    char c = message[i];
+
+    if (c == ';') {
+      semicolonCount++;
+      // Beim zweiten Paar Semikolons skip einschalten oder ausschalten
+      if (semicolonCount == 2) {
+        skip = true;    // Nach erstem Semikolon des zweiten Paares starten überspringen
+        continue;       // Semikolon nicht mitnehmen
+      }
+      else if (semicolonCount == 3) {
+        skip = false;   // Nach zweitem Semikolon des zweiten Paares stoppen mit skip
+        continue;       // Semikolon nicht mitnehmen
+      }
+    }
+
+    if (!skip) {
+      filteredMessage += c;
+    }
+  }
+
   display.clearDisplay();
   display.setCursor(0, 0);
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
-  display.println(message.substring(0, 140)); // Display first 90 characters
+  display.println(filteredMessage.substring(0, 140)); // Display first 90 characters
   display.display();
 
   // Lösch-Timer setzen
