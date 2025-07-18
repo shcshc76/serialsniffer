@@ -48,7 +48,7 @@ unsigned long rxLast = 0, txLast = 0;
 // RX simulation state
 bool rxSimActive = false;
 unsigned long rxSimLastTime = 0;
-unsigned long rxSimInterval = 10000; // alle 10 Sekunden
+unsigned long rxSimInterval = 20000; // alle 20 Sekunden
 
 // Serial config state
 unsigned long currentBaud = MON_BAUD;
@@ -1568,15 +1568,22 @@ void loop()
   }
 
   // Simulierte RX-Daten senden
-  if (rxSimActive && millis() - rxSimLastTime >= rxSimInterval)
-  {
-    const char *simulatedData = "Simulierte RX-Nachricht\n";
-    size_t len = strlen(simulatedData);
-    memcpy(rxBuf, simulatedData, len);
-    printBuffer("RX", rxBuf, len);
-    rxSimLastTime = millis();
-  }
+if (rxSimActive && millis() - rxSimLastTime >= rxSimInterval)
+{
+  // Binärdaten gemäß deinem Format
+  const uint8_t simulatedData[] = {
+    0x01, 0x31, 0x02, 0x31, 0x1F, 0x35, 0x30, 0x30, 0x32,
+    0x1E, 0x33, 0x1F, 0x31, 0x1E, 0x32, 0x1F,
+    0x4E, 0x4F, 0x52, 0x20, 0x53, 0x57, 0x5A, 0x2E,
+    0x45, 0x47, 0x20, 0x57, 0x1E, 0x35, 0x1F, 0x31, 0x03
+  };
+  size_t len = sizeof(simulatedData);
 
+  memcpy(rxBuf, simulatedData, len);   // in RX-Puffer kopieren
+  printBuffer("RX", rxBuf, len);       // wie eingehenden RX verarbeiten
+  rxSimLastTime = millis();            // Zeitstempel aktualisieren
+}
+  // Handle RX and TX serial data
   handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
   handleSerial(SerialTX, "TX", txBuf, txLen, txLast);
 }
