@@ -128,27 +128,22 @@ const char index_html[] PROGMEM = R"rawliteral(
   <form id="wifiForm">
     <label for="ssid">WLAN SSID</label>
     <input type="text" id="ssid" name="ssid" placeholder="SSID" required />
-
     <label for="password">WLAN Passwort</label>
     <input type="password" id="password" name="password" placeholder="Password" />
-
     <button type="submit" class="btn btn-success">Connect</button>
         <div class="d-grid gap-2 d-md-flex justify-content-md-between">
       <a href="/log" class="btn btn-outline-light">Show Live Log</a>
     </div>
-
   </form>
   <div class="info" id="responseMsg"></div>
   </div>
   <script>
     const form = document.getElementById('wifiForm');
     const responseMsg = document.getElementById('responseMsg');
-
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       const ssid = document.getElementById('ssid').value;
       const password = document.getElementById('password').value;
-
       fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
         .then(response => response.text())
         .then(text => {
@@ -159,12 +154,10 @@ const char index_html[] PROGMEM = R"rawliteral(
         });
     });
   </script>
-
     <div class="card p-3 mb-4">
       <h5 class="card-title">Device status</h5>
       <div id="status">Wird geladen...</div>
     </div>
-
     <div class="card p-3 mb-4">
       <h5 class="card-title">Send Command</h5>
       <form id="cmdForm" onsubmit="sendCommand(); return false;">
@@ -174,8 +167,6 @@ const char index_html[] PROGMEM = R"rawliteral(
         </div>
       </form>
     </div>
-
-
     <div class="card p-3 mt-4">
   <h5 class="card-title">Available commands</h5>
   <pre style="color: #0f0; background-color: #000; padding: 1rem;">
@@ -1453,28 +1444,33 @@ String serialCmd = "";
 
 void displayMessage(String message)
 {
-String filteredMessage = "";
+  String filteredMessage = "";
 
   int semicolonCount = 0;
   bool skip = false;
 
-  for (size_t i = 0; i < message.length(); i++) {
+  for (size_t i = 0; i < message.length(); i++)
+  {
     char c = message[i];
 
-    if (c == ';') {
+    if (c == ';')
+    {
       semicolonCount++;
       // Beim zweiten Paar Semikolons skip einschalten oder ausschalten
-      if (semicolonCount == 2) {
-        skip = true;    // Nach erstem Semikolon des zweiten Paares starten überspringen
-        continue;       // Semikolon nicht mitnehmen
+      if (semicolonCount == 2)
+      {
+        skip = true; // Nach erstem Semikolon des zweiten Paares starten überspringen
+        continue;    // Semikolon nicht mitnehmen
       }
-      else if (semicolonCount == 3) {
-        skip = false;   // Nach zweitem Semikolon des zweiten Paares stoppen mit skip
-        continue;       // Semikolon nicht mitnehmen
+      else if (semicolonCount == 3)
+      {
+        skip = false; // Nach zweitem Semikolon des zweiten Paares stoppen mit skip
+        continue;     // Semikolon nicht mitnehmen
       }
     }
 
-    if (!skip) {
+    if (!skip)
+    {
       filteredMessage += c;
     }
   }
@@ -1595,21 +1591,20 @@ void loop()
   }
 
   // Simulierte RX-Daten senden
-if (rxSimActive && millis() - rxSimLastTime >= rxSimInterval)
-{
-  // Binärdaten gemäß deinem Format
-  const uint8_t simulatedData[] = {
-    0x01, 0x31, 0x02, 0x31, 0x1F, 0x35, 0x30, 0x30, 0x32,
-    0x1E, 0x33, 0x1F, 0x31, 0x1E, 0x32, 0x1F,
-    0x4E, 0x4F, 0x52, 0x20, 0x53, 0x57, 0x5A, 0x2E,
-    0x45, 0x47, 0x20, 0x57, 0x1E, 0x35, 0x1F, 0x31, 0x03
-  };
-  size_t len = sizeof(simulatedData);
+  if (rxSimActive && millis() - rxSimLastTime >= rxSimInterval)
+  {
+    // Binärdaten gemäß deinem Format
+    const uint8_t simulatedData[] = {
+        0x01, 0x31, 0x02, 0x31, 0x1F, 0x35, 0x30, 0x30, 0x32,
+        0x1E, 0x33, 0x1F, 0x31, 0x1E, 0x32, 0x1F,
+        0x4E, 0x4F, 0x52, 0x20, 0x53, 0x57, 0x5A, 0x2E,
+        0x45, 0x47, 0x20, 0x57, 0x1E, 0x35, 0x1F, 0x31, 0x03};
+    size_t len = sizeof(simulatedData);
 
-  memcpy(rxBuf, simulatedData, len);   // in RX-Puffer kopieren
-  printBuffer("RX", rxBuf, len);       // wie eingehenden RX verarbeiten
-  rxSimLastTime = millis();            // Zeitstempel aktualisieren
-}
+    memcpy(rxBuf, simulatedData, len); // in RX-Puffer kopieren
+    printBuffer("RX", rxBuf, len);     // wie eingehenden RX verarbeiten
+    rxSimLastTime = millis();          // Zeitstempel aktualisieren
+  }
   // Handle RX and TX serial data
   handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
   handleSerial(SerialTX, "TX", txBuf, txLen, txLast);
