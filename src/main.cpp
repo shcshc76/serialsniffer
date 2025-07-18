@@ -72,39 +72,112 @@ AsyncWebServer server(80);
 const char *PARAM_INPUT_1 = "input1";
 // HTML web page to handle 3 input fields (input1)
 const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE HTML><html><head>
-  <title>ESP Input Form</title>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Serial Sniffer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head><body>
-  <h2>Serial Sniffer - Help</h2>
-  <pre>
-  b(baud) - Set baud rate (e.g., b9600)
-  B(data_bits) - Set data bits (5-8, e.g., B8)
-  s(stop_bits) - Set stop bits (1 or 2, e.g., s1)
-  N / E / O - Set parity: None / Even / Odd
-  Ri / RI - Disable or enable RX pin inversion
-  Ti / TI - Disable or enable TX pin inversion
-  p - Print current serial configuration
-  f - Flush RX and TX buffers
-  r - Reinitialize serial ports
-  W(SSID) - Set WiFi SSID (e.g., WMyNetwork)
-  w(PASS) - Set WiFi password (e.g., wMyPassword)
-  U(URL) - Set URL target (e.g., Uhttp://example.com/data)
-  Y(SYSLOG_IP) - Syslog-Server setzen
-  D(level) - Set debug level (e.g. D1 for basic, D2 for verbose)
-  t(timeout) - Set timeout in ms (e.g., t1000)
-  L / l - EOL detection Enable / Disable
-  S - Save current configuration
-  X - Restart Device
-  ? / h - Show this help
-  Note: Commands are case-sensitive.
-  </pre><br>
-  <form action="/get">
-    Command: <input type="text" name="input1">
-    <input type="submit" value="Submit">
-  </form><br>
-  <a href="/log">Show Live Log</a><br>
-</body></html>)rawliteral";
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0e0e0e;
+      color: #0f0;
+      font-family: monospace;
+      padding-top: 2rem;
+    }
+    .card {
+      background-color: #111;
+      border: 1px solid #333;
+      color: #0f0;
+    }
+    .form-control, .btn {
+      border-radius: 0;
+    }
+    label {
+      font-size: 0.9rem;
+    }
+    .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-4 text-center">ESP32 Serial Sniffer</h1>
+
+    <div class="card p-3 mb-4">
+      <h5 class="card-title">Gerätestatus</h5>
+      <div id="status">Wird geladen...</div>
+    </div>
+
+    <div class="card p-3 mb-4">
+      <h5 class="card-title">Kommando senden</h5>
+      <form id="cmdForm" onsubmit="sendCommand(); return false;">
+        <div class="input-group">
+          <input type="text" id="cmdInput" class="form-control" placeholder="z. B. b9600, Ti, X">
+          <button type="submit" class="btn btn-success">Senden</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+      <a href="/log" class="btn btn-outline-light">Live Log anzeigen</a>
+      <a href="/reset" class="btn btn-danger">Neustart</a>
+    </div>
+
+    <div class="card p-3 mt-4">
+  <h5 class="card-title">Verfügbare Befehle</h5>
+  <pre style="color: #0f0; background-color: #000; padding: 1rem;">
+b(baud)        - Set baud rate (e.g., b9600)
+B(data_bits)   - Set data bits (5-8, e.g., B8)
+s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
+N              - No parity
+E              - Even parity
+O              - Odd parity
+Ti             - Enable timestamps
+RI             - Enable RX inversion
+RO             - Enable TX inversion
+Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
+U(url)         - Set HTTP target URL
+WSSID/PASS    - Set WiFi credentials
+S              - Save config
+X              - Restart device
+? or h         - Help
+  </pre>
+</div>
+
+
+    <footer class="mt-5 text-center text-muted" style="font-size: 0.8rem;">
+      ESP32 Serial Sniffer – Webinterface v1.0
+    </footer>
+  </div>
+
+  <script>
+    function fetchStatus() {
+      fetch('/status')  // passt du ggf. an deine API an
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById('status').innerText = data;
+        });
+    }
+
+    function sendCommand() {
+      const cmd = document.getElementById('cmdInput').value;
+      if (!cmd) return;
+      fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
+        document.getElementById('cmdInput').value = '';
+        fetchStatus();
+      });
+    }
+
+    fetchStatus();
+  </script>
+</body>
+</html>
+)rawliteral";
 
 String webLogBuffer = "";
 const size_t WEB_LOG_MAX = 8192; // max. Größe in Bytes
