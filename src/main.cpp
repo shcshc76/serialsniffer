@@ -1008,7 +1008,8 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   { // Set target URL
     syslog_ip = val;
     textOutln("# syslog target set to: " + syslog_ip);
-    textOutln("# Please restart the device with X to apply syslog changes");
+    //textOutln("# Please restart the device with X to apply syslog changes");
+    syslog.server(syslog_ip.c_str(), syslog_port); // aktualisiere Ziel-IP direkt
   }
   else if (c == 'D')
   { // Debug mode on
