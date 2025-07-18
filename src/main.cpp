@@ -117,6 +117,10 @@ const char index_html[] PROGMEM = R"rawliteral(
     <input type="password" id="password" name="password" placeholder="Password" />
 
     <button type="submit" class="btn btn-success">Connect</button>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+      <a href="/log" class="btn btn-outline-light">Show Live Log</a>
+    </div>
+
   </form>
   <div class="info" id="responseMsg"></div>
   </div>
@@ -155,9 +159,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       </form>
     </div>
 
-    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-      <a href="/log" class="btn btn-outline-light">Show Live Log</a>
-    </div>
 
     <div class="card p-3 mt-4">
   <h5 class="card-title">Available commands</h5>
@@ -229,7 +230,7 @@ Preferences prefs;
 String outBuffer = "";
 
 void parseSerialCommand(String cmd); // Parse and execute serial commands
-void tryWiFiConnect(); // Attempt to connect to WiFi
+void tryWiFiConnect();               // Attempt to connect to WiFi
 
 // webserver request handler
 void notFound(AsyncWebServerRequest *request)
