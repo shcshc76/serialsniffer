@@ -714,10 +714,10 @@ void startWebserver()
     <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
       <div class="col-md-8">
         <h5 class="card-title">Send Command</h5>
+        <div class="input-group">
         <input type="text" id="cmdInput" class="form-control" placeholder="Insert Command (e. g. 'b9600', 'h')" required>
-      </div>
-      <div class="col-md-4 d-grid">
         <button type="submit" class="btn btn-success">Send</button>
+      </div>
       </div>
     </form>
 
