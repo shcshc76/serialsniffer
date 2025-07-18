@@ -108,6 +108,38 @@ const char index_html[] PROGMEM = R"rawliteral(
   <div class="container">
     <h1 class="mb-4 text-center">ESP32 Serial Sniffer</h1>
 
+<h5>WLAN verbinden</h1>
+  <form id="wifiForm">
+    <label for="ssid">WLAN SSID</label>
+    <input type="text" id="ssid" name="ssid" placeholder="Netzwerkname" required />
+
+    <label for="password">WLAN Passwort</label>
+    <input type="password" id="password" name="password" placeholder="Passwort" />
+
+    <button type="submit">Verbinden</button>
+  </form>
+  <div class="info" id="responseMsg"></div>
+
+  <script>
+    const form = document.getElementById('wifiForm');
+    const responseMsg = document.getElementById('responseMsg');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const ssid = document.getElementById('ssid').value;
+      const password = document.getElementById('password').value;
+
+      fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
+        .then(response => response.text())
+        .then(text => {
+          responseMsg.textContent = text;
+        })
+        .catch(err => {
+          responseMsg.textContent = 'Fehler beim Verbinden: ' + err;
+        });
+    });
+  </script>
+
     <div class="card p-3 mb-4">
       <h5 class="card-title">Device status</h5>
       <div id="status">Wird geladen...</div>
@@ -197,6 +229,7 @@ Preferences prefs;
 String outBuffer = "";
 
 void parseSerialCommand(String cmd); // Parse and execute serial commands
+void tryWiFiConnect(); // Attempt to connect to WiFi
 
 // webserver request handler
 void notFound(AsyncWebServerRequest *request)
@@ -594,17 +627,36 @@ void startWebserver()
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "text/html", index_html); });
 
+  // Status anzeigen
   server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   String status = "IP: " + WiFi.localIP().toString();
+  status += "\nSSID: " + wifiSSID;
   status += "\nBaudrate: " + String(currentBaud);
-  status += "\nData Bits: " + String(currentDataBits);
-  status += "\nParity: " + String(currentParity);
-  status += "\nStop Bits: " + String(currentStopBits);
+  status += ", Data Bits: " + String(currentDataBits);
+  status += ", Parity: " + String(currentParity);
+  status += ", Stop Bits: " + String(currentStopBits);
   status += "\nRX Invert: " + String(rxInvert ? "Enabled" : "Disabled");
   status += "\nTX Invert: " + String(txInvert ? "Enabled" : "Disabled");
   // weitere Infos
   request->send(200, "text/plain", status); });
+
+  server.on("/connect", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+
+  if (request->hasParam("ssid")) {
+    wifiSSID = request->getParam("ssid")->value();
+  }
+  if (request->hasParam("password")) {
+    wifiPass = request->getParam("password")->value();
+  }
+
+  // Hier WLAN-Verbindungslogik einbauen, z.B. speichern und neustarten
+  tryWiFiConnect();
+  // Dann Antwort senden:
+
+  String response = "Verbindungsversuch mit SSID: " + wifiSSID + " gestartet.";
+  request->send(200, "text/plain", response); });
 
   // Serve the log data
   server.on("/logdata", HTTP_GET, [](AsyncWebServerRequest *request)
