@@ -533,6 +533,14 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
       {
         textOutln("ERR");
         wifiConnected = false;
+        WiFi.mode(WIFI_AP);
+        WiFi.softAP("SerialSniffer_Config");
+        IPAddress IP = WiFi.softAPIP();
+        textOutln("## Fallback-AP gestartet. IP: " + IP.toString());
+        textOutln("## WiFi connection failed, check SSID and password", 2);
+        textOutln("## Please connect to the fallback AP and configure WiFi settings", 2);
+        textOutln("## Use the web server to set WiFi SSID and password", 2);
+        startWebserver(); // Start web server
       }
     }
     else
