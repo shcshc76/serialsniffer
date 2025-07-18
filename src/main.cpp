@@ -177,7 +177,11 @@ void sendBuffer()
         }
       }
     }
-    syslog.log(LOG_INFO, outBuffer.c_str()); // Send to Syslog server
+    if(syslog_ip.length() > 0) // Send Data to Syslog
+    {
+      syslog.log(LOG_INFO, outBuffer.c_str()); // Send to Syslog server
+    }
+    
   }
   else if (outputLevel >= 4)
   {
