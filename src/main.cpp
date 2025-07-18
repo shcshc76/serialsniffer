@@ -709,9 +709,12 @@ void startWebserver()
 </head>
 <body>
   <div class="container">
-    <h1 class="mb-4">ESP32 Serial Log</h1>
+    <h5 class="mb-4">ESP32 Serial Log</h1>
     <div id="log">Lade Log...</div>
-
+<div class="mt-3">
+      <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
+      <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
+    </div>
     <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
       <div class="col-md-8">
         <h5 class="card-title">Send Command</h5>
@@ -722,12 +725,36 @@ void startWebserver()
       </div>
     </form>
 
-    <div class="mt-3">
-      <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
-      <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
-    </div>
+    
   </div>
-
+ <div class="container">
+  <h5 class="card-title">Available commands</h5>
+  <pre style="color: #0f0; background-color: #000; padding: 1rem;">
+b(baud)        - Set baud rate (e.g., b9600)
+B(data_bits)   - Set data bits (5-8, e.g., B8)
+s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
+N              - No parity
+E              - Even parity
+O              - Odd parity
+Ri|RI          - Disable or enable RX pin inversion
+Ti|TI          - Disable or enable TX pin inversion
+p              - Print current serial configuration
+f              - Flush RX and TX buffers
+r              - Reinitialize serial ports
+Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
+U(url)         - Set HTTP target URL
+D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
+t(timeout)     - Set timeout in ms (e.g., t1000)
+L              - Enable EOL detection
+l              - Disable EOL detection
+W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
+w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
+S              - Save config
+X              - Restart device
+? or h         - Help
+Note: Commands are case-sensitive.
+  </pre>
+</div>
   <script>
     function fetchLog() {
       fetch('/logdata')
