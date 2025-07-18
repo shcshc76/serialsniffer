@@ -17,6 +17,8 @@
 #include <NTPClient.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #define MON_RX 17 // RX pin
 #define MON_TX 16 // TX pin
@@ -27,6 +29,12 @@
 
 #define DUMMY_PIN1 13 // Dummy pin for unused TX
 #define DUMMY_PIN2 14 // Dummy pin for unused TX
+
+// OLED display settings
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 HardwareSerial SerialRX(1); // Receiver RX
 HardwareSerial SerialTX(2); // Receiver TX
@@ -231,6 +239,7 @@ String outBuffer = "";
 
 void parseSerialCommand(String cmd); // Parse and execute serial commands
 void tryWiFiConnect();               // Attempt to connect to WiFi
+void displayMessage(String message); // Display message on OLED
 
 // webserver request handler
 void notFound(AsyncWebServerRequest *request)
@@ -835,6 +844,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         delay(250); // DNS might fail otherwise
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
+        displayMessage("OK IP: " + WiFi.localIP().toString());
         startWebserver(); // Start web server
 
         // Start the NTP client
@@ -860,6 +870,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         textOutln("## WiFi connection failed, check SSID and password", 2);
         textOutln("## Please connect to the fallback AP and configure WiFi settings", 2);
         textOutln("## Use the web server to set WiFi SSID and password", 2);
+        displayMessage("NOK IP: " + IP.toString());
         startWebserver(); // Start web server
       }
     }
@@ -1418,11 +1429,42 @@ bool isEOLChar(uint8_t c)
 
 String serialCmd = "";
 
+void displayMessage(String message)
+{
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  display.println(message);
+  display.display();
+}
+
+
 void setup()
 {
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
   textOutln("# Serial Sniffer log");
+
+// Initialize OLED display
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+  { // 0x3C is the default I2C address
+    Serial.println("SSD1306 allocation failed");
+    for (;;)
+      ;
+  }
+  else
+  {
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.println("Serial Sniffer started");
+    display.display();
+  }
+
+  
+
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
   {
