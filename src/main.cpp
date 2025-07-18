@@ -103,6 +103,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     Command: <input type="text" name="input1">
     <input type="submit" value="Submit">
   </form><br>
+  <a href="/log">Show Live Log</a><br>
 </body></html>)rawliteral";
 
 String webLogBuffer = "";
@@ -540,11 +541,11 @@ void startWebserver()
         <div id="log">Lade Log...</div>
 
         <form id="cmdForm" onsubmit="sendCommand(); return false;">
-          <input type="text" id="cmdInput" placeholder="Befehl eingeben (z.B. p oder b9600)" size="40">
-          <button type="submit">Senden</button>
+          <input type="text" id="cmdInput" placeholder="Enter Command(e.g. p or b9600, h for help)" size="40">
+          <button type="submit">Send</button>
         </form>
 
-        <button onclick="clearLog()">Log löschen</button>
+        <button onclick="clearLog()">Clear LOG</button>
 
         <script>
           function fetchLog() {
@@ -598,7 +599,7 @@ void startWebserver()
         }
         // Serial.println(inputMessage);
         parseSerialCommand(inputMessage);
-        request->send(200, "text/html", "HTTP GET request sent to your ESP on input field (" 
+        request->send(200, "text/html", "HTTP GET request sent to your ESP (" 
                                      + inputParam + ") with value: " + inputMessage +
                                      "<br><a href=\"/\">Return to Home Page</a>"); });
   server.onNotFound(notFound);
