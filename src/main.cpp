@@ -35,6 +35,7 @@
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+bool displayOk = false;
 
 unsigned long displayClearTime = 0;
 bool displayClearScheduled = false;
@@ -1446,6 +1447,18 @@ String serialCmd = "";
 
 void displayMessage(String message)
 {
+  if (!displayOk)
+  {
+    textOutln("## Display not initialized, skipping displayMessage");
+    return;
+  }
+  if (message.length() == 0)
+  {
+    textOutln("## Empty message, skipping displayMessage");
+    return;
+  }
+  // Filter message to remove text between second pair of semicolons
+  // and the semicolons themselves
   String filteredMessage = "";
 
   int semicolonCount = 0;
@@ -1494,11 +1507,12 @@ void setup()
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
                         // Initialize OLED display
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
-  { // 0x3C is the default I2C address
-    Serial.println("SSD1306 allocation failed");
-    for (;;)
-      ;
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // 0x3C ist die Standard-I2C-Adresse
+    Serial.println("SSD1306-Initialisierung fehlgeschlagen");
+    displayOk = false;
+  } else {
+    displayOk = true;
   }
 
   //textOutln("## Sniffer started");
