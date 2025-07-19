@@ -37,6 +37,13 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 bool displayOk = false;
 
+// Serial configuration constants
+#define SOH 0x01
+#define STX 0x02
+#define ETX 0x03
+#define US  0x1F
+#define RS  0x1E
+
 unsigned long displayClearTime = 0;
 bool displayClearScheduled = false;
 
@@ -898,6 +905,85 @@ void appendHex(String &str, uint8_t val)
   str += buf;
 }
 
+// decode SOH (Start of Header) codes
+String decodeSOH(const String &code) {
+  if (code == "1") return "Call to pager";
+  if (code == "2") return "Status Information";
+  if (code == "3") return "Status Request";
+  if (code == "4") return "Call to subscriber line";
+  if (code == "5") return "Other Information (manufacturer defined)";
+  return "Unknown SOH code";
+}
+
+
+// Hilfsfunktion zum Extrahieren zwischen 0x01 und 0x03
+String extractESPAMessage(const String &s) {
+  int start = s.indexOf("<SOH>");
+  int end = s.indexOf("<ETX>");
+
+  if (start == -1 || end == -1 || end <= start)
+    return "";
+
+  String extracted = s.substring(start, end + 5); // +5 für "0x03"
+  return extracted;
+}
+
+// Decode field 0 based on the code
+String decodeField0(const String &code) {
+  if (code == "1") return "Call address";
+  if (code == "2") return "Display message";
+  // weitere Codes hier hinzufügen
+  return "Unbekannt";
+}
+
+// Parse a record and print its fields
+void parseRecord(const String &record) {
+  int start = 0;
+  int index;
+  int fieldNum = 0;
+
+  Serial.println("  Felder:");
+  while ((index = record.indexOf(US, start)) != -1) {
+    String field = record.substring(start, index);
+    Serial.print("    Feld ");
+    Serial.print(fieldNum);
+    Serial.print(": ");
+    Serial.print(field);
+
+    if (fieldNum == 0) {
+      Serial.print(" → ");
+      Serial.println(decodeField0(field));
+    } else {
+      Serial.println();
+    }
+
+    start = index + 1;
+    fieldNum++;
+  }
+
+  // Letztes Feld (kein weiteres US)
+  String lastField = record.substring(start);
+  Serial.print("    Feld ");
+  Serial.print(fieldNum);
+  Serial.print(": ");
+  Serial.println(lastField);
+}
+
+// SOH Code auslesen
+String readSOHCode(const String &rawData) {
+  int sohIndex = rawData.indexOf(("<SOH>"));
+  if (sohIndex == -1) {
+    Serial.println("SOH nicht gefunden!");
+    return ("");
+  }
+  if (sohIndex + 5 >= rawData.length()) {
+    Serial.println("SOH-Code nicht vorhanden!");
+    return ("");
+  }
+  char sohCode = rawData.charAt(sohIndex + 5);
+  return((String)sohCode);
+}
+
 void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer with time, type, HEX and ASCII representation
 {
   // Print time and type
@@ -1193,6 +1279,9 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
     }
   }
   textOutln(line, 0);
+  String espaString= extractESPAMessage(line); // Extract ESPA message if present
+  textOutln("ESPA:"+espaString, 0);
+  textOutln("SOH Code: " + readSOHCode(espaString)+ " "+decodeSOH(readSOHCode(espaString)), 0);
 }
 
 void parseSerialCommand(String cmd) // Parse and execute serial commands
