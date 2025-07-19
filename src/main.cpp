@@ -67,6 +67,7 @@ String wifiSSID = "WLAN_SSID";
 String wifiPass = "WLAN_PASS";
 String targetURL = "";
 bool wifiConnected = false;
+IPAddress IP;
 
 // 🔹 Syslog Server Settings (Replace with your server IP)
 String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
@@ -846,6 +847,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         delay(250); // DNS might fail otherwise
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
+        IP= WiFi.localIP();
         displayMessage("OK IP: " + WiFi.localIP().toString());
         startWebserver(); // Start web server
 
@@ -867,7 +869,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         wifiConnected = false;
         WiFi.mode(WIFI_AP);
         WiFi.softAP("SerialSniffer_Config");
-        IPAddress IP = WiFi.softAPIP();
+        IP = WiFi.softAPIP();
         textOutln("## Fallback-AP gestartet. IP: " + IP.toString());
         textOutln("## WiFi connection failed, check SSID and password", 2);
         textOutln("## Please connect to the fallback AP and configure WiFi settings", 2);
@@ -1498,17 +1500,8 @@ void setup()
     for (;;)
       ;
   }
-  else
-  {
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.setCursor(0, 0);
-    display.println("Serial Sniffer started");
-    display.display();
-  }
 
-  textOutln("# Serial Sniffer log");
+  //textOutln("## Sniffer started");
 
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
@@ -1518,8 +1511,10 @@ void setup()
   }
   applySerialConfig(false, true); // Apply initial serial configuration
   parseSerialCommand("p");        // Print initial config
-  textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
-  textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
+  // textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
+  // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
+  textOutln("## IP:"+IP.toString(), 2);
+  
 }
 
 void handleSerial(
