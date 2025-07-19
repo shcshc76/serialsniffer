@@ -1350,12 +1350,12 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   else if (c == 'Z')
   { // enable RX simulation
     rxSimActive = true;
-    textOutln("RX simulation enabled");
+    textOutln("# RX simulation enabled");
   }
   else if (c == 'z')
   { // disable RX simulation
     rxSimActive = false;
-    textOutln("RX simulation disabled");
+    textOutln("# RX simulation disabled");
   }
   else if (c == 'D')
   { // Debug mode on
@@ -1454,7 +1454,7 @@ void displayMessage(String message)
   }
   if (message.length() == 0)
   {
-    textOutln("## Empty message, skipping displayMessage");
+    //textOutln("## Empty message, skipping displayMessage");
     return;
   }
   // Filter message to remove text between second pair of semicolons
