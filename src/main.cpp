@@ -969,12 +969,26 @@ String parseRawData(const String &rawData) { // Parse raw data string into JSON 
 
   // SOH auslesen
   int sohIndex = rawData.indexOf((char)SOH);
+ 
   String sohCode = "unknown";
   String sohDesc = "Unknown SOH code";
   if (sohIndex != -1 && sohIndex + 1 < rawData.length()) {
     sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
     sohDesc = decodeSOH(sohCode);
   }
+
+  int directionIndex = rawData.indexOf("RX");
+  if (directionIndex != -1 && directionIndex + 1 < rawData.length()) {
+    doc["direction"] = "RX";
+  } else {
+    directionIndex = rawData.indexOf("TX");
+    if (directionIndex != -1 && directionIndex + 1 < rawData.length()) {
+      doc["direction"] = "TX";
+    } else {
+      doc["direction"] = "unknown";
+    }
+  }
+
 
   doc["datetime"] = getDateTimeString();
   doc["SOH_code"] = sohCode;
