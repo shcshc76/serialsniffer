@@ -917,8 +917,25 @@ String decodeSOH(const String &code) { // Decode SOH code
 String decodeField0(const String &code) { // Decode Field 0 code
   if (code == "1") return "Call address";
   if (code == "2") return "Display message";
+  if (code == "3") return "Beep coding";
+  if (code == "4") return "Call type";
+  if (code == "5") return "Number of transmissions";
+  if (code == "6") return "Priority";
+  if (code == "7") return "Call Status";
+  if (code == "8") return "System Status";
   return "Unbekannt";
 }
+
+String symbolicToControlChars(const String &input) {
+  String output = input;
+  output.replace("<SOH>", String((char)0x01));
+  output.replace("<STX>", String((char)0x02));
+  output.replace("<ETX>", String((char)0x03));
+  output.replace("<US>",  String((char)0x1F));
+  output.replace("<RS>",  String((char)0x1E));
+  return output;
+}
+
 
 String parseRawData(const String &rawData) { // Parse raw data string into JSON format
   StaticJsonDocument<1024> doc;
@@ -932,8 +949,8 @@ String parseRawData(const String &rawData) { // Parse raw data string into JSON 
     sohDesc = decodeSOH(sohCode);
   }
 
-  doc["soh_code"] = sohCode;
-  doc["soh_description"] = sohDesc;
+  doc["SOH_code"] = sohCode;
+  doc["SOH_description"] = sohDesc;
 
   // Text zwischen STX und ETX
   int stxIndex = rawData.indexOf((char)STX);
@@ -961,9 +978,9 @@ String parseRawData(const String &rawData) { // Parse raw data string into JSON 
     String field1 = usIndex != -1 ? record.substring(usIndex + 1) : "";
 
     JsonObject rec = records.createNestedObject();
-    rec["field_0"] = field0;
-    rec["field_0_description"] = decodeField0(field0);
-    rec["field_1"] = field1;
+    rec["Data Identifier"] = field0;
+    rec["Record type"] = decodeField0(field0);
+    rec["Data"] = field1;
   }
 
   // Letztes Record (nach letztem RS)
@@ -973,9 +990,9 @@ String parseRawData(const String &rawData) { // Parse raw data string into JSON 
   String field1 = usIndex != -1 ? lastRecord.substring(usIndex + 1) : "";
 
   JsonObject rec = records.createNestedObject();
-  rec["field_0"] = field0;
-  rec["field_0_description"] = decodeField0(field0);
-  rec["field_1"] = field1;
+  rec["Data Identifier"] = field0;
+  rec["Record type"] = decodeField0(field0);
+  rec["Data"] = field1;
 
   // JSON serialisieren
   String output;
@@ -1278,7 +1295,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
     }
   }
   textOutln(line, 0);
-  String json = parseRawData(line);
+  String json = parseRawData(symbolicToControlChars(line));
   Serial.println("Parsed JSON:");
   Serial.println(json);}
 
