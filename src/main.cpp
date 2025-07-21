@@ -245,6 +245,7 @@ uint8_t outputLevel = 2; // Verbosity
 Preferences prefs;
 
 String outBuffer = "";
+String lastJsonString = "{}";
 
 void parseSerialCommand(String cmd); // Parse and execute serial commands
 void tryWiFiConnect();               // Attempt to connect to WiFi
@@ -687,6 +688,10 @@ void startWebserver()
   server.on("/logdata", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "text/plain", webLogBuffer); });
 
+  server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->send(200, "application/json", lastJsonString);
+});          
+
   server.on("/clearlog", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   webLogBuffer = "";
@@ -730,10 +735,16 @@ void startWebserver()
   <div class="container">
     <h5 class="mb-4">ESP32 Serial Log</h1>
     <div id="log">Lade Log...</div>
+
+
 <div class="mt-3">
       <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
       <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
     </div>
+        <div class="container mt-3">
+  <h5>Letzte Nachricht (JSON):</h5>
+  <pre id="jsonOutput">{}</pre>
+</div>
     <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
       <div class="col-md-8">
         <h5 class="card-title">Send Command</h5>
@@ -798,6 +809,22 @@ Note: Commands are case-sensitive.
         fetchLog();
       });
     }
+
+    function fetchJson() {
+  fetch('/json')
+    .then(response => response.json())
+    .then(data => {
+      const output = document.getElementById('jsonOutput');
+      output.textContent = JSON.stringify(data, null, 2); // schön formatiert
+    })
+    .catch(err => {
+      console.error("Fehler beim JSON-Fetch:", err);
+    });
+}
+
+// alle 2 Sekunden abrufen
+setInterval(fetchJson, 2000);
+
 
     setInterval(fetchLog, 2000);
     fetchLog();
@@ -949,8 +976,10 @@ String parseRawData(const String &rawData) { // Parse raw data string into JSON 
     sohDesc = decodeSOH(sohCode);
   }
 
+  doc["datetime"] = getDateTimeString();
   doc["SOH_code"] = sohCode;
   doc["SOH_description"] = sohDesc;
+  
 
   // Text zwischen STX und ETX
   int stxIndex = rawData.indexOf((char)STX);
@@ -997,6 +1026,7 @@ String parseRawData(const String &rawData) { // Parse raw data string into JSON 
   // JSON serialisieren
   String output;
   serializeJson(doc, output);
+  lastJsonString = output; // Save last JSON string for later use
   return output;
 }
 
@@ -1296,8 +1326,8 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
   }
   textOutln(line, 0);
   String json = parseRawData(symbolicToControlChars(line));
-  Serial.println("Parsed JSON:");
-  Serial.println(json);}
+  textOutln("# JSON: "+json, 2);
+}
 
 void parseSerialCommand(String cmd) // Parse and execute serial commands
 {
