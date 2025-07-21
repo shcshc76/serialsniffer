@@ -905,7 +905,6 @@ void appendHex(String &str, uint8_t val)
   str += buf;
 }
 
-// decode SOH (Start of Header) codes
 String decodeSOH(const String &code) {
   if (code == "1") return "Call to pager";
   if (code == "2") return "Status Information";
@@ -915,73 +914,73 @@ String decodeSOH(const String &code) {
   return "Unknown SOH code";
 }
 
-
-// Hilfsfunktion zum Extrahieren zwischen 0x01 und 0x03
-String extractESPAMessage(const String &s) {
-  int start = s.indexOf("<SOH>");
-  int end = s.indexOf("<ETX>");
-
-  if (start == -1 || end == -1 || end <= start)
-    return "";
-
-  String extracted = s.substring(start, end + 5); // +5 für "0x03"
-  return extracted;
-}
-
-// Decode field 0 based on the code
 String decodeField0(const String &code) {
   if (code == "1") return "Call address";
   if (code == "2") return "Display message";
-  // weitere Codes hier hinzufügen
   return "Unbekannt";
 }
 
-// Parse a record and print its fields
-void parseRecord(const String &record) {
+String parseRawData(const String &rawData) {
+  StaticJsonDocument<1024> doc;
+
+  // SOH auslesen
+  int sohIndex = rawData.indexOf((char)SOH);
+  String sohCode = "unknown";
+  String sohDesc = "Unknown SOH code";
+  if (sohIndex != -1 && sohIndex + 1 < rawData.length()) {
+    sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
+    sohDesc = decodeSOH(sohCode);
+  }
+
+  doc["soh_code"] = sohCode;
+  doc["soh_description"] = sohDesc;
+
+  // Text zwischen STX und ETX
+  int stxIndex = rawData.indexOf((char)STX);
+  int etxIndex = rawData.indexOf((char)ETX);
+  if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex) {
+    doc["error"] = "STX/ETX not found";
+    String output;
+    serializeJson(doc, output);
+    return output;
+  }
+
+  String content = rawData.substring(stxIndex + 1, etxIndex);
+
+  // Records parsen
+  JsonArray records = doc.createNestedArray("records");
   int start = 0;
-  int index;
-  int fieldNum = 0;
+  int rsIndex;
 
-  Serial.println("  Felder:");
-  while ((index = record.indexOf(US, start)) != -1) {
-    String field = record.substring(start, index);
-    Serial.print("    Feld ");
-    Serial.print(fieldNum);
-    Serial.print(": ");
-    Serial.print(field);
+  while ((rsIndex = content.indexOf(RS, start)) != -1) {
+    String record = content.substring(start, rsIndex);
+    start = rsIndex + 1;
 
-    if (fieldNum == 0) {
-      Serial.print(" → ");
-      Serial.println(decodeField0(field));
-    } else {
-      Serial.println();
-    }
+    int usIndex = record.indexOf(US);
+    String field0 = usIndex != -1 ? record.substring(0, usIndex) : record;
+    String field1 = usIndex != -1 ? record.substring(usIndex + 1) : "";
 
-    start = index + 1;
-    fieldNum++;
+    JsonObject rec = records.createNestedObject();
+    rec["field_0"] = field0;
+    rec["field_0_description"] = decodeField0(field0);
+    rec["field_1"] = field1;
   }
 
-  // Letztes Feld (kein weiteres US)
-  String lastField = record.substring(start);
-  Serial.print("    Feld ");
-  Serial.print(fieldNum);
-  Serial.print(": ");
-  Serial.println(lastField);
-}
+  // Letztes Record (nach letztem RS)
+  String lastRecord = content.substring(start);
+  int usIndex = lastRecord.indexOf(US);
+  String field0 = usIndex != -1 ? lastRecord.substring(0, usIndex) : lastRecord;
+  String field1 = usIndex != -1 ? lastRecord.substring(usIndex + 1) : "";
 
-// SOH Code auslesen
-String readSOHCode(const String &rawData) {
-  int sohIndex = rawData.indexOf(("<SOH>"));
-  if (sohIndex == -1) {
-    Serial.println("SOH nicht gefunden!");
-    return ("");
-  }
-  if (sohIndex + 5 >= rawData.length()) {
-    Serial.println("SOH-Code nicht vorhanden!");
-    return ("");
-  }
-  char sohCode = rawData.charAt(sohIndex + 5);
-  return((String)sohCode);
+  JsonObject rec = records.createNestedObject();
+  rec["field_0"] = field0;
+  rec["field_0_description"] = decodeField0(field0);
+  rec["field_1"] = field1;
+
+  // JSON serialisieren
+  String output;
+  serializeJson(doc, output);
+  return output;
 }
 
 void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer with time, type, HEX and ASCII representation
@@ -1279,10 +1278,9 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
     }
   }
   textOutln(line, 0);
-  String espaString= extractESPAMessage(line); // Extract ESPA message if present
-  textOutln("ESPA:"+espaString, 0);
-  textOutln("SOH Code: " + readSOHCode(espaString)+ " "+decodeSOH(readSOHCode(espaString)), 0);
-}
+  String json = parseRawData(line);
+  Serial.println("Parsed JSON:");
+  Serial.println(json);}
 
 void parseSerialCommand(String cmd) // Parse and execute serial commands
 {
