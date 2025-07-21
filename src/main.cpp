@@ -41,8 +41,8 @@ bool displayOk = false;
 #define SOH 0x01
 #define STX 0x02
 #define ETX 0x03
-#define US  0x1F
-#define RS  0x1E
+#define US 0x1F
+#define RS 0x1E
 
 unsigned long displayClearTime = 0;
 bool displayClearScheduled = false;
@@ -245,7 +245,7 @@ uint8_t outputLevel = 2; // Verbosity
 Preferences prefs;
 
 String outBuffer = "";
-String lastJsonString = "{}";
+String lastJsonString = "{}"; // Last JSON string
 
 void parseSerialCommand(String cmd); // Parse and execute serial commands
 void tryWiFiConnect();               // Attempt to connect to WiFi
@@ -306,7 +306,7 @@ String getDateTimeString()
   }
 }
 
-void sendBuffer()
+void sendBuffer() // Send outBuffer to Syslog or HTTP URL
 {
   if (wifiConnected && outBuffer.length() > 0)
   {
@@ -350,7 +350,7 @@ void sendBuffer()
   outBuffer = ""; // Clear buffer
 }
 
-void textOutln(String text = "", uint8_t level = 1)
+void textOutln(String text = "", uint8_t level = 1) // Output text with newline
 {
   if (level > outputLevel)
     return;
@@ -366,7 +366,7 @@ void textOutln(String text = "", uint8_t level = 1)
   displayMessage(text); // Display message on OLED
 }
 
-void textOut(String text = "", uint8_t level = 1)
+void textOut(String text = "", uint8_t level = 1) // Output text without newline
 {
   if (level > outputLevel)
     return;
@@ -623,7 +623,7 @@ SerialConfig calcSerialConfig(void) // Calculate current serial config based on 
   return currentContig;
 }
 
-void applySerialConfig(bool calc = false, bool init = false)
+void applySerialConfig(bool calc = false, bool init = false) // Apply serial configuration
 {
   if (calc)
   {
@@ -642,7 +642,7 @@ void applySerialConfig(bool calc = false, bool init = false)
   textOutln("## Serial ports reconfigured", 2);
 }
 
-void startWebserver()
+void startWebserver() // Start the web server
 {
   // Send web page with input fields to client
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -688,9 +688,8 @@ void startWebserver()
   server.on("/logdata", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "text/plain", webLogBuffer); });
 
-  server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request){
-  request->send(200, "application/json", lastJsonString);
-});          
+  server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "application/json", lastJsonString); });
 
   server.on("/clearlog", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -699,7 +698,7 @@ void startWebserver()
 
   server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-    String html = R"rawliteral(
+  String html = R"rawliteral(
       <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -740,8 +739,8 @@ void startWebserver()
 <div class="mt-3">
       <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
       <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
-    </div>
-        <div class="container mt-3">
+</div>
+<div class="container mt-3">
   <h5>Letzte Nachricht (JSON):</h5>
   <pre id="jsonOutput">{}</pre>
 </div>
@@ -754,9 +753,7 @@ void startWebserver()
       </div>
       </div>
     </form>
-
-    
-  </div>
+</div>
  <div class="container">
   <h5 class="card-title">Available commands</h5>
   <pre style="color: #0f0; background-color: #000; padding: 1rem;">
@@ -811,7 +808,7 @@ Note: Commands are case-sensitive.
     }
 
     function fetchJson() {
-  fetch('/json')
+    fetch('/json')
     .then(response => response.json())
     .then(data => {
       const output = document.getElementById('jsonOutput');
@@ -824,17 +821,15 @@ Note: Commands are case-sensitive.
 
 // alle 2 Sekunden abrufen
 setInterval(fetchJson, 2000);
-
-
-    setInterval(fetchLog, 2000);
-    fetchLog();
+setInterval(fetchLog, 2000);
+fetchLog();
   </script>
 </body>
 </html>
 
-    )rawliteral";
+)rawliteral";
 
-    request->send(200, "text/html", html); });
+  request->send(200, "text/html", html); });
 
   // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -882,7 +877,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         delay(250); // DNS might fail otherwise
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
-        IP= WiFi.localIP();
+        IP = WiFi.localIP();
         displayMessage("OK IP: " + WiFi.localIP().toString());
         startWebserver(); // Start web server
 
@@ -925,80 +920,102 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
   }
 }
 
-void appendHex(String &str, uint8_t val)
+void appendHex(String &str, uint8_t val) // Append a byte value as hex to a string
 {
   char buf[6]; // "0x" + 2 digits + null = 5, 6 for safety
   snprintf(buf, sizeof(buf), "0x%02X", val);
   str += buf;
 }
 
-String decodeSOH(const String &code) { // Decode SOH code
-  if (code == "1") return "Call to pager";
-  if (code == "2") return "Status Information";
-  if (code == "3") return "Status Request";
-  if (code == "4") return "Call to subscriber line";
-  if (code == "5") return "Other Information (manufacturer defined)";
+String decodeSOH(const String &code)
+{ // Decode SOH code
+  if (code == "1")
+    return "Call to pager";
+  if (code == "2")
+    return "Status Information";
+  if (code == "3")
+    return "Status Request";
+  if (code == "4")
+    return "Call to subscriber line";
+  if (code == "5")
+    return "Other Information (manufacturer defined)";
   return "Unknown SOH code";
 }
 
-String decodeField0(const String &code) { // Decode Field 0 code
-  if (code == "1") return "Call address";
-  if (code == "2") return "Display message";
-  if (code == "3") return "Beep coding";
-  if (code == "4") return "Call type";
-  if (code == "5") return "Number of transmissions";
-  if (code == "6") return "Priority";
-  if (code == "7") return "Call Status";
-  if (code == "8") return "System Status";
+String decodeField0(const String &code)
+{ // Decode Field 0 code
+  if (code == "1")
+    return "Call address";
+  if (code == "2")
+    return "Display message";
+  if (code == "3")
+    return "Beep coding";
+  if (code == "4")
+    return "Call type";
+  if (code == "5")
+    return "Number of transmissions";
+  if (code == "6")
+    return "Priority";
+  if (code == "7")
+    return "Call Status";
+  if (code == "8")
+    return "System Status";
   return "Unbekannt";
 }
 
-String symbolicToControlChars(const String &input) {
+String symbolicToControlChars(const String &input) // Convert symbolic control characters to actual control characters
+{
   String output = input;
   output.replace("<SOH>", String((char)0x01));
   output.replace("<STX>", String((char)0x02));
   output.replace("<ETX>", String((char)0x03));
-  output.replace("<US>",  String((char)0x1F));
-  output.replace("<RS>",  String((char)0x1E));
+  output.replace("<US>", String((char)0x1F));
+  output.replace("<RS>", String((char)0x1E));
   return output;
 }
 
-
-String parseRawData(const String &rawData) { // Parse raw data string into JSON format
+String parseRawData(const String &rawData) // Parse raw data string into JSON format
+{ // Parse raw data string into JSON format
   StaticJsonDocument<1024> doc;
 
   // SOH auslesen
   int sohIndex = rawData.indexOf((char)SOH);
- 
+
   String sohCode = "unknown";
   String sohDesc = "Unknown SOH code";
-  if (sohIndex != -1 && sohIndex + 1 < rawData.length()) {
+  if (sohIndex != -1 && sohIndex + 1 < rawData.length())
+  {
     sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
     sohDesc = decodeSOH(sohCode);
   }
 
   int directionIndex = rawData.indexOf("RX");
-  if (directionIndex != -1 && directionIndex + 1 < rawData.length()) {
+  if (directionIndex != -1 && directionIndex + 1 < rawData.length())
+  {
     doc["direction"] = "RX";
-  } else {
+  }
+  else
+  {
     directionIndex = rawData.indexOf("TX");
-    if (directionIndex != -1 && directionIndex + 1 < rawData.length()) {
+    if (directionIndex != -1 && directionIndex + 1 < rawData.length())
+    {
       doc["direction"] = "TX";
-    } else {
+    }
+    else
+    {
       doc["direction"] = "unknown";
     }
   }
 
-
   doc["datetime"] = getDateTimeString();
   doc["SOH_code"] = sohCode;
   doc["SOH_description"] = sohDesc;
-  
 
   // Text zwischen STX und ETX
   int stxIndex = rawData.indexOf((char)STX);
   int etxIndex = rawData.indexOf((char)ETX);
-  if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex) {
+  if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex)
+  {
     doc["error"] = "STX/ETX not found";
     String output;
     serializeJson(doc, output);
@@ -1012,7 +1029,8 @@ String parseRawData(const String &rawData) { // Parse raw data string into JSON 
   int start = 0;
   int rsIndex;
 
-  while ((rsIndex = content.indexOf(RS, start)) != -1) {
+  while ((rsIndex = content.indexOf(RS, start)) != -1)
+  {
     String record = content.substring(start, rsIndex);
     start = rsIndex + 1;
 
@@ -1339,8 +1357,8 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
     }
   }
   textOutln(line, 0);
-  String json = parseRawData(symbolicToControlChars(line));
-  textOutln("# JSON: "+json, 2);
+  String json = parseRawData(symbolicToControlChars(line)); // Parse the line into JSON format
+  textOutln("# JSON: " + json, 2);
 }
 
 void parseSerialCommand(String cmd) // Parse and execute serial commands
@@ -1577,7 +1595,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   }
 }
 
-bool isEOLChar(uint8_t c)
+bool isEOLChar(uint8_t c) // Check if character is an EOL character
 {
   // Check if character is something indicating a data end
   if (c == 0x00 || c == 0x03 || c == 0x04 || c == 0x05 || c == 0x06 ||
@@ -1593,7 +1611,7 @@ bool isEOLChar(uint8_t c)
 
 String serialCmd = "";
 
-void displayMessage(String message)
+void displayMessage(String message) // Display a message on the OLED display
 {
   if (!displayOk)
   {
@@ -1602,7 +1620,7 @@ void displayMessage(String message)
   }
   if (message.length() == 0)
   {
-    //textOutln("## Empty message, skipping displayMessage");
+    // textOutln("## Empty message, skipping displayMessage");
     return;
   }
   // Filter message to remove text between second pair of semicolons
@@ -1656,14 +1674,15 @@ void setup()
   delay(5000);          // allow USB to initialize
                         // Initialize OLED display
 
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // 0x3C ist die Standard-I2C-Adresse
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+  { // 0x3C ist die Standard-I2C-Adresse
     Serial.println("SSD1306-Initialisierung fehlgeschlagen");
     displayOk = false;
-  } else {
+  }
+  else
+  {
     displayOk = true;
   }
-
-  //textOutln("## Sniffer started");
 
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
@@ -1675,11 +1694,10 @@ void setup()
   parseSerialCommand("p");        // Print initial config
   // textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
   // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
-  textOutln("## IP:"+IP.toString(), 2);
-  
+  textOutln("## IP:" + IP.toString(), 2);
 }
 
-void handleSerial(
+void handleSerial( // Handle incoming serial data for RX and TX
     HardwareSerial &serial,
     const char *type,
     uint8_t *buf,
