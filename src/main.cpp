@@ -905,7 +905,7 @@ void appendHex(String &str, uint8_t val)
   str += buf;
 }
 
-String decodeSOH(const String &code) {
+String decodeSOH(const String &code) { // Decode SOH code
   if (code == "1") return "Call to pager";
   if (code == "2") return "Status Information";
   if (code == "3") return "Status Request";
@@ -914,13 +914,13 @@ String decodeSOH(const String &code) {
   return "Unknown SOH code";
 }
 
-String decodeField0(const String &code) {
+String decodeField0(const String &code) { // Decode Field 0 code
   if (code == "1") return "Call address";
   if (code == "2") return "Display message";
   return "Unbekannt";
 }
 
-String parseRawData(const String &rawData) {
+String parseRawData(const String &rawData) { // Parse raw data string into JSON format
   StaticJsonDocument<1024> doc;
 
   // SOH auslesen
