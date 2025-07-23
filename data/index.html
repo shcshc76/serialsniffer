@@ -41,18 +41,18 @@
     <div class="container">
         <h1 class="mb-4 text-center">ESP32 Serial Sniffer by SHC</h1>
         <div class="card p-3 mb-4">
-            <h5 class="card-title">Connect to WLAN</h1>
-                <form id="wifiForm">
-                    <label for="ssid">WLAN SSID</label>
-                    <input type="text" id="ssid" name="ssid" placeholder="SSID" required />
-                    <label for="password">WLAN Passwort</label>
-                    <input type="password" id="password" name="password" placeholder="Password" />
-                    <button type="submit" class="btn btn-success">Connect</button>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-                        <a href="/log" class="btn btn-outline-light">Show Live Log</a>
-                    </div>
-                </form>
-                <div class="info" id="responseMsg"></div>
+            <h5 class="card-title">Connect to WLAN</h5>
+            <form id="wifiForm">
+                <label for="ssid">WLAN SSID</label>
+                <input type="text" id="ssid" name="ssid" class="form-control" placeholder="SSID" required />
+                <label for="password">WLAN Passwort</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Password" />
+                <button type="submit" class="btn btn-success">Connect</button>
+            </form>
+            <div class="info" id="responseMsg"></div>
+        </div>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+            <a href="/log" class="btn btn-outline-light">Show Live Log</a>
         </div>
         <script>
             const form = document.getElementById('wifiForm');
@@ -119,7 +119,7 @@ Note: Commands are case-sensitive.
     </div>
     <script>
         function fetchStatus() { // Fetch the device status
-            fetch('/status')  
+            fetch('/status')
                 .then(res => res.text())
                 .then(data => {
                     document.getElementById('status').innerText = data;
@@ -129,10 +129,13 @@ Note: Commands are case-sensitive.
         function sendCommand() { // Send a command to the device
             const cmd = document.getElementById('cmdInput').value;
             if (!cmd) return;
-            fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
-                document.getElementById('cmdInput').value = '';
-                fetchStatus();
-            });
+            fetch('/get?input1=' + encodeURIComponent(cmd))
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('cmdInput').value = '';
+                        fetchStatus();
+                    }
+                });
         }
 
         fetchStatus();

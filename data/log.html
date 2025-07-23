@@ -21,6 +21,7 @@
             padding: 1rem;
             border: 1px solid #333;
             height: 60vh;
+            max-height: 80vh;
             overflow-y: auto;
             font-size: 0.95rem;
         }
@@ -35,26 +36,26 @@
 
 <body>
     <div class="container">
-        <h5 class="mb-4">ESP32 Serial Log</h1>
-            <div id="log">Lade Log...</div>
-            <div class="mt-3">
-                <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
-                <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
-            </div>
-            <div class="container mt-3">
-                <h5>Letzte Nachricht (JSON):</h5>
-                <pre id="jsonOutput">{}</pre>
-            </div>
-            <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
-                <div class="col-md-8">
-                    <h5 class="card-title">Send Command</h5>
-                    <div class="input-group">
-                        <input type="text" id="cmdInput" class="form-control"
-                            placeholder="Insert Command (e. g. 'b9600', 'h')" required>
-                        <button type="submit" class="btn btn-success">Send</button>
-                    </div>
+        <h5 class="mb-4">ESP32 Serial Log</h5>
+        <div id="log">Lade Log...</div>
+        <div class="mt-3">
+            <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
+            <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
+        </div>
+        <div class="container mt-3">
+            <h5>Letzte Nachricht (JSON):</h5>
+            <pre id="jsonOutput">{}</pre>
+        </div>
+        <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
+            <div class="col-md-8">
+                <h5 class="card-title">Send Command</h5>
+                <div class="input-group">
+                    <input type="text" id="cmdInput" class="form-control"
+                        placeholder="Insert Command (e. g. 'b9600', 'h')" required>
+                    <button type="submit" class="btn btn-success">Send</button>
                 </div>
-            </form>
+            </div>
+        </form>
     </div>
     <div class="container">
         <h5 class="card-title">Available commands</h5>
