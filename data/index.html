@@ -28,6 +28,8 @@
 
         label {
             font-size: 0.9rem;
+            color: #9f9;
+            /* Helleres Grün für bessere Lesbarkeit */
         }
 
         .btn-success {
@@ -102,127 +104,134 @@
                     </h2>
                     <div id="collapseSerial" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
                         <div class="accordion-body">
-                            < <div class="mb-3"> <!-- Baudrate Input -->
+                            <div class="mb-3"> <!-- Baudrate Input -->
                                 <label for="baudRateInput" class="form-label">Set Baudrate</label>
                                 <div class="input-group">
                                     <input type="number" id="baudRateInput" class="form-control" placeholder="9600" />
                                     <button class="btn btn-outline-success" onclick="sendBaudCommand()">Send
                                         b(baud)</button>
                                 </div>
-                        </div>
-                        <!-- Data Bits -->
-                        <div class="mb-3">
-                            <label for="dataBitsInput" class="form-label">Set Data Bits (5–8)</label>
-                            <div class="input-group">
-                                <input type="number" min="5" max="8" id="dataBitsInput" class="form-control"
-                                    placeholder="8" />
-                                <button class="btn btn-outline-success" onclick="sendDataBits()">Send B(bits)</button>
                             </div>
-                        </div>
-                        <!-- Stop Bits -->
-                        <div class="mb-3">
-                            <label for="stopBitsInput" class="form-label">Set Stop Bits (1 oder 2)</label>
-                            <div class="input-group">
-                                <input type="number" min="1" max="2" id="stopBitsInput" class="form-control"
-                                    placeholder="1" />
-                                <button class="btn btn-outline-success" onclick="sendStopBits()">Send s(stop)</button>
+                            <!-- Data Bits -->
+                            <div class="mb-3">
+                                <label for="dataBitsInput" class="form-label">Set Data Bits (5–8)</label>
+                                <div class="input-group">
+                                    <input type="number" min="5" max="8" id="dataBitsInput" class="form-control"
+                                        placeholder="8" />
+                                    <button class="btn btn-outline-success" onclick="sendDataBits()">Send
+                                        B(bits)</button>
+                                </div>
                             </div>
+                            <!-- Stop Bits -->
+                            <div class="mb-3">
+                                <label for="stopBitsInput" class="form-label">Set Stop Bits (1 oder 2)</label>
+                                <div class="input-group">
+                                    <input type="number" min="1" max="2" id="stopBitsInput" class="form-control"
+                                        placeholder="1" />
+                                    <button class="btn btn-outline-success" onclick="sendStopBits()">Send
+                                        s(stop)</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('N')">N (No
+                                parity)</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('E')">E
+                                (Even)</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('O')">O
+                                (Odd)</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('p')">Print
+                                config</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('f')">Flush</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('r')">Reinit</button>
                         </div>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('N')">N (No
-                            parity)</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('E')">E
-                            (Even)</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('O')">O
-                            (Odd)</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('p')">Print
-                            config</button>
-                        <button class="btn btn-outline-success btn-sm command-button"
-                            onclick="sendCmd('f')">Flush</button>
-                        <button class="btn btn-outline-success btn-sm command-button"
-                            onclick="sendCmd('r')">Reinit</button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Network Settings -->
-            <div class="accordion-item" style="background-color: #111; border-color: #333;">
-                <h2 class="accordion-header" id="headingNet">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#collapseNet">
-                        Network Settings
-                    </button>
-                </h2>
-                <div id="collapseNet" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
-                    <div class="accordion-body">
-                        <!-- Syslog IP -->
-                        <div class="mb-3">
-                            <label for="syslogInput" class="form-label">Syslog IP-Adresse</label>
-                            <div class="input-group">
-                                <input type="text" id="syslogInput" class="form-control" placeholder="192.168.1.100" />
-                                <button class="btn btn-outline-success" onclick="sendSyslog()">Send Y(ip)</button>
-                            </div>
-                        </div>
-                        <!-- Target URL -->
-                        <div class="mb-3">
-                            <label for="urlInput" class="form-label">HTTP Ziel-URL</label>
-                            <div class="input-group">
-                                <input type="text" id="urlInput" class="form-control"
-                                    placeholder="http://example.com/post" />
-                                <button class="btn btn-outline-success" onclick="sendUrl()">Send U(url)</button>
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
-                            Config</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System & Debug -->
-            <div class="accordion-item" style="background-color: #111; border-color: #333;">
-                <h2 class="accordion-header" id="headingSys">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#collapseSys">
-                        System & Debug
-                    </button>
-                </h2>
-                <div id="collapseSys" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
-                    <div class="accordion-body">
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D1')">Debug
-                            Level 1</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D2')">Debug
-                            Level 2</button>
-                        <!-- Timeout -->
-                        <div class="mb-3">
-                            <label for="timeoutInput" class="form-label">Set Timeout (ms)</label>
-                            <div class="input-group">
-                                <input type="number" id="timeoutInput" class="form-control" placeholder="15" />
-                                <button class="btn btn-outline-success" onclick="sendTimeout()">Send t(timeout)</button>
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('L')">Enable
-                            EOL</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('l')">Disable
-                            EOL</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('z')">Disable RX
-                            Sim</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('Z')">Enable RX
-                            Sim</button>
-                        <button class="btn btn-outline-danger btn-sm command-button"
-                            onclick="sendCmd('X')">Restart</button>
-                        <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
-                            data-bs-target="#helpModal">
-                            Help
+                <!-- Network Settings -->
+                <div class="accordion-item" style="background-color: #111; border-color: #333;">
+                    <h2 class="accordion-header" id="headingNet">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseNet">
+                            Network Settings
                         </button>
+                    </h2>
+                    <div id="collapseNet" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                        <div class="accordion-body">
+                            <!-- Syslog IP -->
+                            <div class="mb-3">
+                                <label for="syslogInput" class="form-label">Syslog IP-Adresse</label>
+                                <div class="input-group">
+                                    <input type="text" id="syslogInput" class="form-control"
+                                        placeholder="192.168.1.100" />
+                                    <button class="btn btn-outline-success" onclick="sendSyslog()">Send Y(ip)</button>
+                                </div>
+                            </div>
+                            <!-- Target URL -->
+                            <div class="mb-3">
+                                <label for="urlInput" class="form-label">HTTP Ziel-URL</label>
+                                <div class="input-group">
+                                    <input type="text" id="urlInput" class="form-control"
+                                        placeholder="http://example.com/post" />
+                                    <button class="btn btn-outline-success" onclick="sendUrl()">Send U(url)</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System & Debug -->
+                <div class="accordion-item" style="background-color: #111; border-color: #333;">
+                    <h2 class="accordion-header" id="headingSys">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseSys">
+                            System & Debug
+                        </button>
+                    </h2>
+                    <div id="collapseSys" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                        <div class="accordion-body">
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D1')">Debug
+                                Level 1</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D2')">Debug
+                                Level 2</button>
+                            <!-- Timeout -->
+                            <div class="mb-3">
+                                <label for="timeoutInput" class="form-label">Set Timeout (ms)</label>
+                                <div class="input-group">
+                                    <input type="number" id="timeoutInput" class="form-control" placeholder="15" />
+                                    <button class="btn btn-outline-success" onclick="sendTimeout()">Send
+                                        t(timeout)</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('L')">Enable
+                                EOL</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('l')">Disable
+                                EOL</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('z')">Disable
+                                RX
+                                Sim</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('Z')">Enable
+                                RX
+                                Sim</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
+                                Config</button>
+                            <button class="btn btn-outline-danger btn-sm command-button"
+                                onclick="sendCmd('X')">Restart</button>
+                            <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
+                                data-bs-target="#helpModal">
+                                Help
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Footer -->
-    <footer class="mt-5 text-center text-muted" style="font-size: 0.8rem;">
-        ESP32 Serial Sniffer – Webinterface v1.0
-    </footer>
+        <!-- Footer -->
+        <footer class="mt-5 text-center text-muted" style="font-size: 0.8rem;">
+            ESP32 Serial Sniffer – Webinterface v1.0
+        </footer>
     </div>
 
     <!-- Bootstrap JS -->
