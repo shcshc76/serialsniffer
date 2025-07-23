@@ -512,6 +512,9 @@ void startWebserver() // Start the web server
   server.on("/bootstrap.min.css", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/bootstrap.min.css", "text/css"); });
 
+  server.on("/bootstrap.bundle.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/bootstrap.bundle.min.js", "text/javascript"); });
+
   // Status anzeigen
   server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -540,7 +543,7 @@ void startWebserver() // Start the web server
   if (request->hasParam("password")) {
     wifiPass = request->getParam("password")->value();
   }
-
+saveSerialConfig(); // Save WiFi settings
   // Hier WLAN-Verbindungslogik einbauen, z.B. speichern und neustarten
   tryWiFiConnect();
   // Dann Antwort senden:
