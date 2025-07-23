@@ -86,7 +86,7 @@ Note: Commands are case-sensitive.
   </pre>
     </div>
     <script>
-        function fetchLog() {
+        function fetchLog() { // Logdaten abrufen und anzeigen
             fetch('/logdata')
                 .then(res => res.text())
                 .then(data => {
@@ -96,7 +96,7 @@ Note: Commands are case-sensitive.
                 });
         }
 
-        function clearLog() {
+        function clearLog() { // Logdaten löschen
             fetch('/clearlog').then(() => fetchLog());
         }
 
@@ -109,7 +109,7 @@ Note: Commands are case-sensitive.
             });
         }
 
-        function fetchJson() {
+        function fetchJson() { // JSON-Daten abrufen und anzeigen
             fetch('/json')
                 .then(response => response.json())
                 .then(data => {

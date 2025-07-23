@@ -118,15 +118,15 @@ Note: Commands are case-sensitive.
         </footer>
     </div>
     <script>
-        function fetchStatus() {
-            fetch('/status')  // passt du ggf. an deine API an
+        function fetchStatus() { // Fetch the device status
+            fetch('/status')  
                 .then(res => res.text())
                 .then(data => {
                     document.getElementById('status').innerText = data;
                 });
         }
 
-        function sendCommand() {
+        function sendCommand() { // Send a command to the device
             const cmd = document.getElementById('cmdInput').value;
             if (!cmd) return;
             fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
