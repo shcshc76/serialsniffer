@@ -19,6 +19,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ArduinoJson.h>
+#include "SPIFFS.h"
 
 #define MON_RX 17 // RX pin
 #define MON_TX 16 // TX pin
@@ -1684,6 +1685,11 @@ void setup()
     displayOk = true;
   }
 
+  if (!SPIFFS.begin(true)) { // Initialize SPIFFS
+    textOutln("## SPIFFS konnte nicht gestartet werden.", 2);
+    return;
+  }
+
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
   {
@@ -1695,6 +1701,7 @@ void setup()
   // textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
   // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
   textOutln("## IP:" + IP.toString(), 2);
+  
 }
 
 void handleSerial( // Handle incoming serial data for RX and TX
