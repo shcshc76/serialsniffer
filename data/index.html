@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>ESP32 Serial Sniffer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap 5 CDN -->
+    <!-- Bootstrap 5 CSS -->
     <link href="/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -34,12 +34,27 @@
             background-color: #28a745;
             border-color: #28a745;
         }
+
+        .accordion-button {
+            background-color: #1a1a1a;
+            color: #0f0;
+        }
+
+        .accordion-body {
+            background-color: #000;
+        }
+
+        .command-button {
+            margin: 0.25rem;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1 class="mb-4 text-center">ESP32 Serial Sniffer by SHC</h1>
+
+        <!-- WLAN Connection -->
         <div class="card p-3 mb-4">
             <h5 class="card-title">Connect to WLAN</h5>
             <form id="wifiForm">
@@ -47,46 +62,277 @@
                 <input type="text" id="ssid" name="ssid" class="form-control" placeholder="SSID" required />
                 <label for="password">WLAN Passwort</label>
                 <input type="password" id="password" name="password" class="form-control" placeholder="Password" />
-                <button type="submit" class="btn btn-success">Connect</button>
+                <button type="submit" class="btn btn-success mt-2">Connect</button>
             </form>
-            <div class="info" id="responseMsg"></div>
+            <div class="mt-3">
+                <a href="/log" class="btn btn-outline-light">Show Live Log</a>
+            </div>
+            <div class="info mt-3" id="responseMsg"></div>
         </div>
-        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-            <a href="/log" class="btn btn-outline-light">Show Live Log</a>
-        </div>
-        <script>
-            const form = document.getElementById('wifiForm');
-            const responseMsg = document.getElementById('responseMsg');
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                const ssid = document.getElementById('ssid').value;
-                const password = document.getElementById('password').value;
-                fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
-                    .then(response => response.text())
-                    .then(text => {
-                        responseMsg.textContent = text;
-                    })
-                    .catch(err => {
-                        responseMsg.textContent = 'Fehler beim Verbinden: ' + err;
-                    });
-            });
-        </script>
+
+        <!-- Status -->
         <div class="card p-3 mb-4">
             <h5 class="card-title">Device status</h5>
             <div id="status">Wird geladen...</div>
         </div>
+
+        <!-- Manual Command -->
         <div class="card p-3 mb-4">
             <h5 class="card-title">Send Command</h5>
             <form id="cmdForm" onsubmit="sendCommand(); return false;">
                 <div class="input-group">
-                    <input type="text" id="cmdInput" class="form-control" placeholder="e. g. b9600, Ti, X">
+                    <input type="text" id="cmdInput" class="form-control" placeholder="e.g. b9600, Ti, X">
                     <button type="submit" class="btn btn-success">Send</button>
                 </div>
             </form>
         </div>
+
+        <!-- Accordion Command Menu -->
         <div class="card p-3 mt-4">
-            <h5 class="card-title">Available commands</h5>
-            <pre style="color: #0f0; background-color: #000; padding: 1rem;">
+            <h5 class="card-title">Available Commands</h5>
+            <div class="accordion" id="commandAccordion">
+
+                <!-- Serial Config -->
+                <div class="accordion-item" style="background-color: #111; border-color: #333;">
+                    <h2 class="accordion-header" id="headingSerial">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseSerial">
+                            Serial Configuration
+                        </button>
+                    </h2>
+                    <div id="collapseSerial" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                        <div class="accordion-body">
+                            < <div class="mb-3"> <!-- Baudrate Input -->
+                                <label for="baudRateInput" class="form-label">Set Baudrate</label>
+                                <div class="input-group">
+                                    <input type="number" id="baudRateInput" class="form-control" placeholder="9600" />
+                                    <button class="btn btn-outline-success" onclick="sendBaudCommand()">Send
+                                        b(baud)</button>
+                                </div>
+                        </div>
+                        <!-- Data Bits -->
+                        <div class="mb-3">
+                            <label for="dataBitsInput" class="form-label">Set Data Bits (5–8)</label>
+                            <div class="input-group">
+                                <input type="number" min="5" max="8" id="dataBitsInput" class="form-control"
+                                    placeholder="8" />
+                                <button class="btn btn-outline-success" onclick="sendDataBits()">Send B(bits)</button>
+                            </div>
+                        </div>
+                        <!-- Stop Bits -->
+                        <div class="mb-3">
+                            <label for="stopBitsInput" class="form-label">Set Stop Bits (1 oder 2)</label>
+                            <div class="input-group">
+                                <input type="number" min="1" max="2" id="stopBitsInput" class="form-control"
+                                    placeholder="1" />
+                                <button class="btn btn-outline-success" onclick="sendStopBits()">Send s(stop)</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('N')">N (No
+                            parity)</button>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('E')">E
+                            (Even)</button>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('O')">O
+                            (Odd)</button>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('p')">Print
+                            config</button>
+                        <button class="btn btn-outline-success btn-sm command-button"
+                            onclick="sendCmd('f')">Flush</button>
+                        <button class="btn btn-outline-success btn-sm command-button"
+                            onclick="sendCmd('r')">Reinit</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Settings -->
+            <div class="accordion-item" style="background-color: #111; border-color: #333;">
+                <h2 class="accordion-header" id="headingNet">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseNet">
+                        Network Settings
+                    </button>
+                </h2>
+                <div id="collapseNet" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                    <div class="accordion-body">
+                        <!-- Syslog IP -->
+                        <div class="mb-3">
+                            <label for="syslogInput" class="form-label">Syslog IP-Adresse</label>
+                            <div class="input-group">
+                                <input type="text" id="syslogInput" class="form-control" placeholder="192.168.1.100" />
+                                <button class="btn btn-outline-success" onclick="sendSyslog()">Send Y(ip)</button>
+                            </div>
+                        </div>
+                        <!-- Target URL -->
+                        <div class="mb-3">
+                            <label for="urlInput" class="form-label">HTTP Ziel-URL</label>
+                            <div class="input-group">
+                                <input type="text" id="urlInput" class="form-control"
+                                    placeholder="http://example.com/post" />
+                                <button class="btn btn-outline-success" onclick="sendUrl()">Send U(url)</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
+                            Config</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System & Debug -->
+            <div class="accordion-item" style="background-color: #111; border-color: #333;">
+                <h2 class="accordion-header" id="headingSys">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseSys">
+                        System & Debug
+                    </button>
+                </h2>
+                <div id="collapseSys" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                    <div class="accordion-body">
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D1')">Debug
+                            Level 1</button>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D2')">Debug
+                            Level 2</button>
+                        <!-- Timeout -->
+                        <div class="mb-3">
+                            <label for="timeoutInput" class="form-label">Set Timeout (ms)</label>
+                            <div class="input-group">
+                                <input type="number" id="timeoutInput" class="form-control" placeholder="15" />
+                                <button class="btn btn-outline-success" onclick="sendTimeout()">Send t(timeout)</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('L')">Enable
+                            EOL</button>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('l')">Disable
+                            EOL</button>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('z')">Disable RX
+                            Sim</button>
+                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('Z')">Enable RX
+                            Sim</button>
+                        <button class="btn btn-outline-danger btn-sm command-button"
+                            onclick="sendCmd('X')">Restart</button>
+                        <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
+                            data-bs-target="#helpModal">
+                            Help
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 text-center text-muted" style="font-size: 0.8rem;">
+        ESP32 Serial Sniffer – Webinterface v1.0
+    </footer>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const form = document.getElementById('wifiForm');
+        const responseMsg = document.getElementById('responseMsg');
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const ssid = document.getElementById('ssid').value;
+            const password = document.getElementById('password').value;
+            fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
+                .then(response => response.text())
+                .then(text => {
+                    responseMsg.textContent = text;
+                })
+                .catch(err => {
+                    responseMsg.textContent = 'Fehler beim Verbinden: ' + err;
+                });
+        });
+
+        function fetchStatus() {
+            fetch('/status')
+                .then(res => res.text())
+                .then(data => {
+                    document.getElementById('status').innerText = data;
+                });
+        }
+
+        function sendCommand() {
+            const cmd = document.getElementById('cmdInput').value;
+            if (!cmd) return;
+            fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
+                document.getElementById('cmdInput').value = '';
+                fetchStatus();
+            });
+        }
+
+        function sendCmd(cmd) {
+            fetch('/get?input1=' + encodeURIComponent(cmd)).then(fetchStatus);
+        }
+
+        function sendBaudCommand() {
+            const val = document.getElementById('baudRateInput').value;
+            if (!val || isNaN(val)) {
+                alert("Bitte gültige Baudrate eingeben!");
+                return;
+            }
+            sendCmd('b' + val);
+        }
+
+        function sendDataBits() {
+            const val = document.getElementById('dataBitsInput').value;
+            if (!val || isNaN(val) || val < 5 || val > 8) {
+                alert("Bitte Datenbits zwischen 5 und 8 eingeben!");
+                return;
+            }
+            sendCmd('B' + val);
+        }
+
+        function sendStopBits() {
+            const val = document.getElementById('stopBitsInput').value;
+            if (val !== '1' && val !== '2') {
+                alert("Nur 1 oder 2 als Stopbit erlaubt!");
+                return;
+            }
+            sendCmd('s' + val);
+        }
+
+        function sendSyslog() {
+            const val = document.getElementById('syslogInput').value.trim();
+            if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(val)) {
+                alert("Bitte gültige IP-Adresse eingeben!");
+                return;
+            }
+            sendCmd('Y' + val);
+        }
+
+        function sendUrl() {
+            const val = document.getElementById('urlInput').value.trim();
+            if (!val.startsWith('http')) {
+                alert("Bitte gültige URL eingeben!");
+                return;
+            }
+            sendCmd('U' + val);
+        }
+
+        function sendTimeout() {
+            const val = document.getElementById('timeoutInput').value;
+            if (!val || isNaN(val) || parseInt(val) < 0) {
+                alert("Bitte gültigen Timeout in Millisekunden eingeben!");
+                return;
+            }
+            sendCmd('t' + val);
+        }
+
+        fetchStatus();
+    </script>
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content bg-dark text-success" style="font-family: monospace;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="helpModalLabel">Available Commands</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <pre style="color: #0f0; background-color: #000; padding: 1rem; margin-bottom: 0;">
 b(baud)        - Set baud rate (e.g., b9600)
 B(data_bits)   - Set data bits (5-8, e.g., B8)
 s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
@@ -111,35 +357,15 @@ z|Z            - Disable or enable RX simulation
 X              - Restart device
 ? or h         - Help
 Note: Commands are case-sensitive.
-  </pre>
+        </pre>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
-        <footer class="mt-5 text-center text-muted" style="font-size: 0.8rem;">
-            ESP32 Serial Sniffer – Webinterface v1.0
-        </footer>
     </div>
-    <script>
-        function fetchStatus() { // Fetch the device status
-            fetch('/status')
-                .then(res => res.text())
-                .then(data => {
-                    document.getElementById('status').innerText = data;
-                });
-        }
 
-        function sendCommand() { // Send a command to the device
-            const cmd = document.getElementById('cmdInput').value;
-            if (!cmd) return;
-            fetch('/get?input1=' + encodeURIComponent(cmd))
-                .then(response => {
-                    if (response.ok) {
-                        document.getElementById('cmdInput').value = '';
-                        fetchStatus();
-                    }
-                });
-        }
-
-        fetchStatus();
-    </script>
 </body>
 
 </html>
