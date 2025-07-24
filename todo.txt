@@ -1,3 +1,5 @@
-code html c und ccs trennen
+code html c und ccs trennen erledigt
 espax
-menü für config
+menü für config erledigt
+eot 1enq 2 enq unterdrücken
+log pausieren
