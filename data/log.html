@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32 Serial Log (Live)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0e0e0e;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 2rem;
+        }
+
+        #log {
+            white-space: pre-wrap;
+            background-color: #000;
+            padding: 1rem;
+            border: 1px solid #333;
+            height: 60vh;
+            max-height: 80vh;
+            overflow-y: auto;
+            font-size: 0.95rem;
+        }
+
+        input.form-control {
+            background-color: #111;
+            color: #0f0;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h5 class="mb-4">ESP32 Serial Log</h5>
+        <div id="log">Lade Log...</div>
+        <div class="mt-3">
+            <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
+            <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
+        </div>
+        <div class="container mt-3">
+            <h5>Letzte Nachricht (JSON):</h5>
+            <pre id="jsonOutput">{}</pre>
+        </div>
+        <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
+            <div class="col-md-8">
+                <h5 class="card-title">Send Command</h5>
+                <div class="input-group">
+                    <input type="text" id="cmdInput" class="form-control"
+                        placeholder="Insert Command (e. g. 'b9600', 'h')" required>
+                    <button type="submit" class="btn btn-success">Send</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="container">
+        <h5 class="card-title">Available commands</h5>
+        <pre style="color: #0f0; background-color: #000; padding: 1rem;">
+b(baud)        - Set baud rate (e.g., b9600)
+B(data_bits)   - Set data bits (5-8, e.g., B8)
+s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
+N              - No parity
+E              - Even parity
+O              - Odd parity
+Ri|RI          - Disable or enable RX pin inversion
+Ti|TI          - Disable or enable TX pin inversion
+p              - Print current serial configuration
+f              - Flush RX and TX buffers
+r              - Reinitialize serial ports
+Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
+U(url)         - Set HTTP target URL
+D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
+t(timeout)     - Set timeout in ms (e.g., t1000)
+L              - Enable EOL detection
+l              - Disable EOL detection
+W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
+w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
+S              - Save config
+z|Z            - Disable or enable RX simulation
+X              - Restart device
+? or h         - Help
+Note: Commands are case-sensitive.
+  </pre>
+    </div>
+    <script>
+        function fetchLog() { // Logdaten abrufen und anzeigen
+            fetch('/logdata')
+                .then(res => res.text())
+                .then(data => {
+                    const logElem = document.getElementById('log');
+                    logElem.textContent = data;
+                    logElem.scrollTop = logElem.scrollHeight;
+                });
+        }
+
+        function clearLog() { // Logdaten löschen
+            fetch('/clearlog').then(() => fetchLog());
+        }
+
+        function sendCommand() {
+            const cmd = document.getElementById('cmdInput').value;
+            if (!cmd) return;
+            fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
+                document.getElementById('cmdInput').value = '';
+                fetchLog();
+            });
+        }
+
+        function fetchJson() { // JSON-Daten abrufen und anzeigen
+            fetch('/json')
+                .then(response => response.json())
+                .then(data => {
+                    const output = document.getElementById('jsonOutput');
+                    output.textContent = JSON.stringify(data, null, 2); // schön formatiert
+                })
+                .catch(err => {
+                    console.error("Fehler beim JSON-Fetch:", err);
+                });
+        }
+
+        // alle 2 Sekunden abrufen
+        setInterval(fetchJson, 2000);
+        setInterval(fetchLog, 2000);
+        fetchLog();
+    </script>
+</body>
+
+</html>

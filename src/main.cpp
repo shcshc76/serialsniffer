@@ -99,146 +99,6 @@ Syslog syslog(udpClient, syslog_ip.c_str(), syslog_port, "esp32", "serialsniffer
 //  🔹 Create AsyncWebServer instance
 AsyncWebServer server(80);
 const char *PARAM_INPUT_1 = "input1";
-// HTML web page to handle 3 input fields (input1)
-const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>ESP32 Serial Sniffer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap 5 CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #0e0e0e;
-      color: #0f0;
-      font-family: monospace;
-      padding-top: 2rem;
-    }
-    .card {
-      background-color: #111;
-      border: 1px solid #333;
-      color: #0f0;
-    }
-    .form-control, .btn {
-      border-radius: 0;
-    }
-    label {
-      font-size: 0.9rem;
-    }
-    .btn-success {
-      background-color: #28a745;
-      border-color: #28a745;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1 class="mb-4 text-center">ESP32 Serial Sniffer</h1>
-<div class="card p-3 mb-4">
-<h5 class="card-title">Connect to WLAN</h1>
-  <form id="wifiForm">
-    <label for="ssid">WLAN SSID</label>
-    <input type="text" id="ssid" name="ssid" placeholder="SSID" required />
-    <label for="password">WLAN Passwort</label>
-    <input type="password" id="password" name="password" placeholder="Password" />
-    <button type="submit" class="btn btn-success">Connect</button>
-        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-      <a href="/log" class="btn btn-outline-light">Show Live Log</a>
-    </div>
-  </form>
-  <div class="info" id="responseMsg"></div>
-  </div>
-  <script>
-    const form = document.getElementById('wifiForm');
-    const responseMsg = document.getElementById('responseMsg');
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const ssid = document.getElementById('ssid').value;
-      const password = document.getElementById('password').value;
-      fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
-        .then(response => response.text())
-        .then(text => {
-          responseMsg.textContent = text;
-        })
-        .catch(err => {
-          responseMsg.textContent = 'Fehler beim Verbinden: ' + err;
-        });
-    });
-  </script>
-    <div class="card p-3 mb-4">
-      <h5 class="card-title">Device status</h5>
-      <div id="status">Wird geladen...</div>
-    </div>
-    <div class="card p-3 mb-4">
-      <h5 class="card-title">Send Command</h5>
-      <form id="cmdForm" onsubmit="sendCommand(); return false;">
-        <div class="input-group">
-          <input type="text" id="cmdInput" class="form-control" placeholder="e. g. b9600, Ti, X">
-          <button type="submit" class="btn btn-success">Send</button>
-        </div>
-      </form>
-    </div>
-    <div class="card p-3 mt-4">
-  <h5 class="card-title">Available commands</h5>
-  <pre style="color: #0f0; background-color: #000; padding: 1rem;">
-b(baud)        - Set baud rate (e.g., b9600)
-B(data_bits)   - Set data bits (5-8, e.g., B8)
-s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
-N              - No parity
-E              - Even parity
-O              - Odd parity
-Ri|RI          - Disable or enable RX pin inversion
-Ti|TI          - Disable or enable TX pin inversion
-p              - Print current serial configuration
-f              - Flush RX and TX buffers
-r              - Reinitialize serial ports
-Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
-U(url)         - Set HTTP target URL
-D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
-t(timeout)     - Set timeout in ms (e.g., t1000)
-L              - Enable EOL detection
-l              - Disable EOL detection
-W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
-w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
-S              - Save config
-z|Z            - Disable or enable RX simulation
-X              - Restart device
-? or h         - Help
-Note: Commands are case-sensitive.
-  </pre>
-</div>
-
-
-    <footer class="mt-5 text-center text-muted" style="font-size: 0.8rem;">
-      ESP32 Serial Sniffer – Webinterface v1.0
-    </footer>
-  </div>
-
-  <script>
-    function fetchStatus() {
-      fetch('/status')  // passt du ggf. an deine API an
-        .then(res => res.text())
-        .then(data => {
-          document.getElementById('status').innerText = data;
-        });
-    }
-
-    function sendCommand() {
-      const cmd = document.getElementById('cmdInput').value;
-      if (!cmd) return;
-      fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
-        document.getElementById('cmdInput').value = '';
-        fetchStatus();
-      });
-    }
-
-    fetchStatus();
-  </script>
-</body>
-</html>
-)rawliteral";
 
 String webLogBuffer = "";
 const size_t WEB_LOG_MAX = 8192; // max. Größe in Bytes
@@ -648,9 +508,15 @@ void applySerialConfig(bool calc = false, bool init = false) // Apply serial con
 
 void startWebserver() // Start the web server
 {
-  // Send web page with input fields to client
+  // Serve static files
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "text/html", index_html); });
+            { request->send(SPIFFS, "/index.html", "text/html"); });
+
+  server.on("/bootstrap.min.css", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/bootstrap.min.css", "text/css"); });
+
+  server.on("/bootstrap.bundle.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/bootstrap.bundle.min.js", "text/javascript"); });
 
   // Status anzeigen
   server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -680,7 +546,7 @@ void startWebserver() // Start the web server
   if (request->hasParam("password")) {
     wifiPass = request->getParam("password")->value();
   }
-
+saveSerialConfig(); // Save WiFi settings
   // Hier WLAN-Verbindungslogik einbauen, z.B. speichern und neustarten
   tryWiFiConnect();
   // Dann Antwort senden:
@@ -701,139 +567,7 @@ void startWebserver() // Start the web server
   request->send(200, "text/plain", "Log gelöscht."); });
 
   server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
-  String html = R"rawliteral(
-      <!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>ESP32 Serial Log (Live)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap 5 CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #0e0e0e;
-      color: #00ff00;
-      font-family: monospace;
-      padding: 2rem;
-    }
-    #log {
-      white-space: pre-wrap;
-      background-color: #000;
-      padding: 1rem;
-      border: 1px solid #333;
-      height: 60vh;
-      overflow-y: auto;
-      font-size: 0.95rem;
-    }
-    input.form-control {
-      background-color: #111;
-      color: #0f0;
-      border: 1px solid #333;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h5 class="mb-4">ESP32 Serial Log</h1>
-    <div id="log">Lade Log...</div>
-
-
-<div class="mt-3">
-      <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
-      <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
-</div>
-<div class="container mt-3">
-  <h5>Letzte Nachricht (JSON):</h5>
-  <pre id="jsonOutput">{}</pre>
-</div>
-    <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
-      <div class="col-md-8">
-        <h5 class="card-title">Send Command</h5>
-        <div class="input-group">
-        <input type="text" id="cmdInput" class="form-control" placeholder="Insert Command (e. g. 'b9600', 'h')" required>
-        <button type="submit" class="btn btn-success">Send</button>
-      </div>
-      </div>
-    </form>
-</div>
- <div class="container">
-  <h5 class="card-title">Available commands</h5>
-  <pre style="color: #0f0; background-color: #000; padding: 1rem;">
-b(baud)        - Set baud rate (e.g., b9600)
-B(data_bits)   - Set data bits (5-8, e.g., B8)
-s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
-N              - No parity
-E              - Even parity
-O              - Odd parity
-Ri|RI          - Disable or enable RX pin inversion
-Ti|TI          - Disable or enable TX pin inversion
-p              - Print current serial configuration
-f              - Flush RX and TX buffers
-r              - Reinitialize serial ports
-Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
-U(url)         - Set HTTP target URL
-D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
-t(timeout)     - Set timeout in ms (e.g., t1000)
-L              - Enable EOL detection
-l              - Disable EOL detection
-W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
-w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
-S              - Save config
-z|Z            - Disable or enable RX simulation
-X              - Restart device
-? or h         - Help
-Note: Commands are case-sensitive.
-  </pre>
-</div>
-  <script>
-    function fetchLog() {
-      fetch('/logdata')
-        .then(res => res.text())
-        .then(data => {
-          const logElem = document.getElementById('log');
-          logElem.textContent = data;
-          logElem.scrollTop = logElem.scrollHeight;
-        });
-    }
-
-    function clearLog() {
-      fetch('/clearlog').then(() => fetchLog());
-    }
-
-    function sendCommand() {
-      const cmd = document.getElementById('cmdInput').value;
-      if (!cmd) return;
-      fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
-        document.getElementById('cmdInput').value = '';
-        fetchLog();
-      });
-    }
-
-    function fetchJson() {
-    fetch('/json')
-    .then(response => response.json())
-    .then(data => {
-      const output = document.getElementById('jsonOutput');
-      output.textContent = JSON.stringify(data, null, 2); // schön formatiert
-    })
-    .catch(err => {
-      console.error("Fehler beim JSON-Fetch:", err);
-    });
-}
-
-// alle 2 Sekunden abrufen
-setInterval(fetchJson, 2000);
-setInterval(fetchLog, 2000);
-fetchLog();
-  </script>
-</body>
-</html>
-
-)rawliteral";
-
-  request->send(200, "text/html", html); });
+            { request->send(SPIFFS, "/log.html", "text/html"); });
 
   // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
