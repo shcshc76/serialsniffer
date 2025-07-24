@@ -57,8 +57,11 @@ unsigned long rxLast = 0, txLast = 0;
 
 // RX simulation state
 bool rxSimActive = false;
-unsigned long rxSimLastTime = 0;
-unsigned long rxSimInterval = 20000; // alle 20 Sekunden
+unsigned long rxSimLastTime = 0; // Letzte Zeit, zu der SOH Rundruf gesendet wurde
+unsigned long rxSimInterval = 20000; // alle 20 Sekunden SOH Rundruf auf RX senden
+
+unsigned long rxSimLastTimeHB = 0; // Letzte Zeit, zu der Heartbeat gesendet wurde
+unsigned long rxSimIntervalHB = 5000; // alle 5 Sekunden Heartbeat an RX senden
 
 // Serial config state
 unsigned long currentBaud = MON_BAUD;
@@ -976,7 +979,7 @@ String symbolicToControlChars(const String &input) // Convert symbolic control c
 }
 
 String parseRawData(const String &rawData) // Parse raw data string into JSON format
-{ // Parse raw data string into JSON format
+{                                          // Parse raw data string into JSON format
   StaticJsonDocument<1024> doc;
 
   // SOH auslesen
@@ -990,6 +993,7 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
     sohDesc = decodeSOH(sohCode);
   }
 
+  // Richtung ermitteln
   int directionIndex = rawData.indexOf("RX");
   if (directionIndex != -1 && directionIndex + 1 < rawData.length())
   {
@@ -1008,56 +1012,59 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
     }
   }
 
-  doc["datetime"] = getDateTimeString();
-  doc["SOH_code"] = sohCode;
-  doc["SOH_description"] = sohDesc;
-
-  // Text zwischen STX und ETX
-  int stxIndex = rawData.indexOf((char)STX);
-  int etxIndex = rawData.indexOf((char)ETX);
-  if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex)
+  if (sohCode != "unknown") // Only parse further if SOH code is send
   {
-    doc["error"] = "STX/ETX not found";
-    String output;
-    serializeJson(doc, output);
-    return output;
-  }
+    // JSON-Daten füllen
+    doc["datetime"] = getDateTimeString();
+    doc["SOH_code"] = sohCode;
+    doc["SOH_description"] = sohDesc;
 
-  String content = rawData.substring(stxIndex + 1, etxIndex);
+    // Text zwischen STX und ETX
+    int stxIndex = rawData.indexOf((char)STX);
+    int etxIndex = rawData.indexOf((char)ETX);
+    if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex)
+    {
+      doc["error"] = "STX/ETX not found";
+      String output;
+      serializeJson(doc, output);
+      return output;
+    }
 
-  // Records parsen
-  JsonArray records = doc.createNestedArray("records");
-  int start = 0;
-  int rsIndex;
+    String content = rawData.substring(stxIndex + 1, etxIndex);
 
-  while ((rsIndex = content.indexOf(RS, start)) != -1)
-  {
-    String record = content.substring(start, rsIndex);
-    start = rsIndex + 1;
+    // Records parsen
+    JsonArray records = doc.createNestedArray("records");
+    int start = 0;
+    int rsIndex;
 
-    int usIndex = record.indexOf(US);
-    String field0 = usIndex != -1 ? record.substring(0, usIndex) : record;
-    String field1 = usIndex != -1 ? record.substring(usIndex + 1) : "";
+    while ((rsIndex = content.indexOf(RS, start)) != -1)
+    {
+      String record = content.substring(start, rsIndex);
+      start = rsIndex + 1;
+
+      int usIndex = record.indexOf(US);
+      String field0 = usIndex != -1 ? record.substring(0, usIndex) : record;
+      String field1 = usIndex != -1 ? record.substring(usIndex + 1) : "";
+
+      JsonObject rec = records.createNestedObject();
+      rec["Data Identifier"] = field0;
+      rec["Record type"] = decodeField0(field0);
+      rec["Data"] = field1;
+    }
+
+    // Letztes Record (nach letztem RS)
+    String lastRecord = content.substring(start);
+    int usIndex = lastRecord.indexOf(US);
+    String field0 = usIndex != -1 ? lastRecord.substring(0, usIndex) : lastRecord;
+    String field1 = usIndex != -1 ? lastRecord.substring(usIndex + 1) : "";
 
     JsonObject rec = records.createNestedObject();
     rec["Data Identifier"] = field0;
     rec["Record type"] = decodeField0(field0);
     rec["Data"] = field1;
   }
-
-  // Letztes Record (nach letztem RS)
-  String lastRecord = content.substring(start);
-  int usIndex = lastRecord.indexOf(US);
-  String field0 = usIndex != -1 ? lastRecord.substring(0, usIndex) : lastRecord;
-  String field1 = usIndex != -1 ? lastRecord.substring(usIndex + 1) : "";
-
-  JsonObject rec = records.createNestedObject();
-  rec["Data Identifier"] = field0;
-  rec["Record type"] = decodeField0(field0);
-  rec["Data"] = field1;
-
   // JSON serialisieren
-  String output;
+  String output="Kein SOH";
   serializeJson(doc, output);
   lastJsonString = output; // Save last JSON string for later use
   return output;
@@ -1685,7 +1692,8 @@ void setup()
     displayOk = true;
   }
 
-  if (!SPIFFS.begin(true)) { // Initialize SPIFFS
+  if (!SPIFFS.begin(true))
+  { // Initialize SPIFFS
     textOutln("## SPIFFS konnte nicht gestartet werden.", 2);
     return;
   }
@@ -1701,7 +1709,6 @@ void setup()
   // textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
   // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
   textOutln("## IP:" + IP.toString(), 2);
-  
 }
 
 void handleSerial( // Handle incoming serial data for RX and TX
@@ -1772,10 +1779,10 @@ void loop()
     displayClearScheduled = false;
   }
 
-  // Simulierte RX-Daten senden
+  // Simulierte RX-Daten senden Rundruf
   if (rxSimActive && millis() - rxSimLastTime >= rxSimInterval)
   {
-    // Binärdaten gemäß deinem Format
+    // Binärdaten gemäß SOH Rundruf
     const uint8_t simulatedData[] = {
         0x01, 0x31, 0x02, 0x31, 0x1F, 0x35, 0x30, 0x30, 0x32,
         0x1E, 0x33, 0x1F, 0x31, 0x1E, 0x32, 0x1F,
@@ -1787,6 +1794,21 @@ void loop()
     printBuffer("RX", rxBuf, len);     // wie eingehenden RX verarbeiten
     rxSimLastTime = millis();          // Zeitstempel aktualisieren
   }
+
+  // Simuliere RX/TX-Daten senden Heartbeat
+if (rxSimActive && millis() - rxSimLastTimeHB >= rxSimIntervalHB)
+  {
+    // Binärdaten gemäß SOH Rundruf
+    const uint8_t simulatedData[] = {
+        0x04, 0x31, 0x05, 0x32, 0x05};
+    size_t len = sizeof(simulatedData);
+
+    memcpy(rxBuf, simulatedData, len); // in RX-Puffer kopieren
+    printBuffer("RX", rxBuf, len);     // wie eingehenden RX verarbeiten
+    rxSimLastTimeHB = millis();          // Zeitstempel aktualisieren
+  }
+
+
   // Handle RX and TX serial data
   handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
   handleSerial(SerialTX, "TX", txBuf, txLen, txLast);
