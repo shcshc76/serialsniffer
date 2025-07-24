@@ -727,6 +727,8 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
     sohDesc = decodeSOH(sohCode);
   }
 
+  doc["datetime"] = getDateTimeString();
+
   // Richtung ermitteln
   int directionIndex = rawData.indexOf("RX");
   if (directionIndex != -1 && directionIndex + 1 < rawData.length())
@@ -749,7 +751,7 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
   if (sohCode != "unknown") // Only parse further if SOH code is send
   {
     // JSON-Daten füllen
-    doc["datetime"] = getDateTimeString();
+
     doc["SOH_code"] = sohCode;
     doc["SOH_description"] = sohDesc;
 
@@ -800,7 +802,8 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
   // JSON serialisieren
   String output = "Kein SOH";
   serializeJson(doc, output);
-  lastJsonString = output; // Save last JSON string for later use
+  if (output.endsWith("}]}")) // Nur JSON sichern, wenn Records vorhanden sind
+    lastJsonString = output; // Save last JSON string for later use
   return output;
 }
 
@@ -1100,7 +1103,8 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
   }
   textOutln(line, 0);
   String json = parseRawData(symbolicToControlChars(line)); // Parse the line into JSON format
-  textOutln("# JSON: " + json, 2);
+  if (json.endsWith("}]}")) // Only print JSON if records are present
+    textOutln("# JSON: " + json, 2);
 }
 
 void parseSerialCommand(String cmd) // Parse and execute serial commands
