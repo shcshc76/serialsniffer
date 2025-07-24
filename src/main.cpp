@@ -57,10 +57,10 @@ unsigned long rxLast = 0, txLast = 0;
 
 // RX simulation state
 bool rxSimActive = false;
-unsigned long rxSimLastTime = 0; // Letzte Zeit, zu der SOH Rundruf gesendet wurde
+unsigned long rxSimLastTime = 0;     // Letzte Zeit, zu der SOH Rundruf gesendet wurde
 unsigned long rxSimInterval = 20000; // alle 20 Sekunden SOH Rundruf auf RX senden
 
-unsigned long rxSimLastTimeHB = 0; // Letzte Zeit, zu der Heartbeat gesendet wurde
+unsigned long rxSimLastTimeHB = 0;    // Letzte Zeit, zu der Heartbeat gesendet wurde
 unsigned long rxSimIntervalHB = 5000; // alle 5 Sekunden Heartbeat an RX senden
 
 // Serial config state
@@ -798,7 +798,7 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
     rec["Data"] = field1;
   }
   // JSON serialisieren
-  String output="Kein SOH";
+  String output = "Kein SOH";
   serializeJson(doc, output);
   lastJsonString = output; // Save last JSON string for later use
   return output;
@@ -1530,18 +1530,34 @@ void loop()
   }
 
   // Simuliere RX/TX-Daten senden Heartbeat
-if (rxSimActive && millis() - rxSimLastTimeHB >= rxSimIntervalHB)
+  if (rxSimActive && millis() - rxSimLastTimeHB >= rxSimIntervalHB)
   {
-    // Binärdaten gemäß SOH Rundruf
+    // Binärdaten gemäß Heartbeat
     const uint8_t simulatedData[] = {
         0x04, 0x31, 0x05, 0x32, 0x05};
     size_t len = sizeof(simulatedData);
 
     memcpy(rxBuf, simulatedData, len); // in RX-Puffer kopieren
     printBuffer("RX", rxBuf, len);     // wie eingehenden RX verarbeiten
-    rxSimLastTimeHB = millis();          // Zeitstempel aktualisieren
-  }
 
+    // Binärdaten gemäß AK
+    const uint8_t simulatedDataAK[] = {
+        0x06};
+    size_t lenAK = sizeof(simulatedDataAK);
+
+    memcpy(txBuf, simulatedDataAK, lenAK); // in TX-Puffer kopieren
+    printBuffer("TX", txBuf, len);         // wie eingehenden TX verarbeiten
+
+    // Binärdaten gemäß Heartbeat
+    const uint8_t simulatedDataEOT[] = {
+        0x04};
+    size_t lenEOT = sizeof(simulatedDataEOT);
+
+    memcpy(rxBuf, simulatedDataEOT, lenEOT); // in RX-Puffer kopieren
+    printBuffer("RX", rxBuf, len);           // wie eingehenden RX verarbeiten
+
+    rxSimLastTimeHB = millis(); // Zeitstempel aktualisieren
+  }
 
   // Handle RX and TX serial data
   handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
