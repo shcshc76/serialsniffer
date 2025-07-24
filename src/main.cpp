@@ -1539,23 +1539,23 @@ void loop()
 
     memcpy(rxBuf, simulatedData, len); // in RX-Puffer kopieren
     printBuffer("RX", rxBuf, len);     // wie eingehenden RX verarbeiten
-
+    handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
     // Binärdaten gemäß AK
     const uint8_t simulatedDataAK[] = {
         0x06};
     size_t lenAK = sizeof(simulatedDataAK);
 
     memcpy(txBuf, simulatedDataAK, lenAK); // in TX-Puffer kopieren
-    printBuffer("TX", txBuf, len);         // wie eingehenden TX verarbeiten
-
+    printBuffer("TX", txBuf, lenAK);       // wie eingehenden TX verarbeiten
+    handleSerial(SerialTX, "TX", txBuf, txLen, txLast);
     // Binärdaten gemäß Heartbeat
     const uint8_t simulatedDataEOT[] = {
         0x04};
     size_t lenEOT = sizeof(simulatedDataEOT);
 
     memcpy(rxBuf, simulatedDataEOT, lenEOT); // in RX-Puffer kopieren
-    printBuffer("RX", rxBuf, len);           // wie eingehenden RX verarbeiten
-
+    printBuffer("RX", rxBuf, lenEOT);        // wie eingehenden RX verarbeiten
+    handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
     rxSimLastTimeHB = millis(); // Zeitstempel aktualisieren
   }
 
