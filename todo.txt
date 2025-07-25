@@ -6,3 +6,4 @@ ack unterdrücken tx
 eot unterdrücken rx
 log pausieren
 wenn kein soh auch kein soh unknown auageben
+ST7789 Display Unterstützung 
