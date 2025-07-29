@@ -1439,7 +1439,7 @@ void displayMessage(String message) // Display a message on the OLED display
       {
         tft.fillScreen(TFT_BLUE);
         tft.setTextSize(2);
-        tft.setCursor(0, 0);
+        tft.setCursor(0, 10);
         tft.println("  IP:" + IP.toString());
         tft.setTextSize(1);
         currentLine = 3;
@@ -1503,7 +1503,7 @@ void setup()
   tft.fillScreen(TFT_BLUE);
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(2);
-  tft.setCursor(0, 0);
+  tft.setCursor(0, 10);
   tft.println("  IP:" + IP.toString());
   currentLine = 3;
 }
