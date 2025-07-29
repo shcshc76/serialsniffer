@@ -1,10 +1,3 @@
-// Mit einem ESP32 getestet.
-// Die Daten werden an einen Syslog-Server gesendet.
-// Die Daten können auch an eine URL gesendet werden, z.B. an einen Webserver.
-// Die Konfiguration wird in den Preferences gespeichert und beim Start geladen.
-// Die Baudrate, Datenbits, Parität und Stoppbits können konfiguriert werden.
-// Über h oder ? wird eine Hilfe angezeigt.
-
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include <Preferences.h>
@@ -17,19 +10,23 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <Adafruit_GFX.h>
+#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <Adafruit_SSD1306.h>
 #include <ArduinoJson.h>
 #include "SPIFFS.h"
+#include <SPI.h>
 
-#define MON_RX 17 // RX pin
-#define MON_TX 16 // TX pin
+Adafruit_ST7789 tft = Adafruit_ST7789(13, 12, 11, 10, 9); // CS, DC, MOSI, SCK, RST
+
+#define MON_RX 5 // RX pin
+#define MON_TX 6 // TX pin
 
 #define MON_BAUD 9600 // initial baud rate
 
 #define MON_BUF_SIZE 128
 
-#define DUMMY_PIN1 13 // Dummy pin for unused TX
-#define DUMMY_PIN2 14 // Dummy pin for unused TX
+#define DUMMY_PIN1 45 // Dummy pin for unused TX
+#define DUMMY_PIN2 42 // Dummy pin for unused TX
 
 // OLED display settings
 #define SCREEN_WIDTH 128
@@ -803,7 +800,7 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
   String output = "Kein SOH";
   serializeJson(doc, output);
   if (output.endsWith("}]}")) // Nur JSON sichern, wenn Records vorhanden sind
-    lastJsonString = output; // Save last JSON string for later use
+    lastJsonString = output;  // Save last JSON string for later use
   return output;
 }
 
@@ -1103,7 +1100,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer wit
   }
   textOutln(line, 0);
   String json = parseRawData(symbolicToControlChars(line)); // Parse the line into JSON format
-  if (json.endsWith("}]}")) // Only print JSON if records are present
+  if (json.endsWith("}]}"))                                 // Only print JSON if records are present
     textOutln("# JSON: " + json, 2);
 }
 
@@ -1419,7 +1416,7 @@ void setup()
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
                         // Initialize OLED display
-
+  Wire.begin(7, 8);     // SDA, SCL pins for I2C
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // 0x3C ist die Standard-I2C-Adresse
     Serial.println("SSD1306-Initialisierung fehlgeschlagen");
@@ -1447,6 +1444,26 @@ void setup()
   // textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
   // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
   textOutln("## IP:" + IP.toString(), 2);
+
+  tft.init(240, 280); // Init ST7789 280x240
+  uint16_t time = millis();
+  tft.fillScreen(ST77XX_RED); // Fill screen with red color
+  time = millis() - time;
+
+  Serial.println(time, DEC);
+  delay(500);
+
+  // large block of text
+  tft.fillScreen(ST77XX_RED);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(20, 0);
+  tft.println();
+  tft.println();
+  tft.println();
+  tft.println("Serial Sniffer");
+  //tft.setTextSize(1);
+  tft.println("## IP:" + IP.toString());
 }
 
 void handleSerial( // Handle incoming serial data for RX and TX
