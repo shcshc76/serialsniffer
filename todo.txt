@@ -8,3 +8,6 @@ log pausieren
 wenn kein soh auch kein soh unknown auageben
 ST7789 Display Unterstützung erledigt
 syslog server über webif auch string zulassen. aktuell wird anscheinend nur ip zugelassen
+Meldungen auch auf ST7789 Display anzeigen
+Zeichnung von Schaltung erstellen
+neues Gehäuse
