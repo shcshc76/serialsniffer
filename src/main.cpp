@@ -18,6 +18,11 @@
 
 SPIClass hspi = SPIClass(HSPI);
 bool tftOk = false;
+int lineHeight = 12; // Höhe einer Textzeile (anpassen je nach Schriftart)
+int currentLine = 0; // Aktuelle Zeilenposition
+int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
+const int maxCharsPerLine = 38;
+
 #define TFT_GREY 0x5AEB // New colour
 #define TFT_WHITE 0xFFFF
 #define TFT_BLACK 0x0000
@@ -1418,6 +1423,29 @@ void displayMessage(String message) // Display a message on the OLED display
   }
   if (tftOk)
   {
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(1);
+    int start = 0;
+    int len = filteredMessage.length();
+
+    while (start < len)
+    {
+      // Zeile extrahieren
+      String line = filteredMessage.substring(start, start + maxCharsPerLine);
+      start += maxCharsPerLine;
+
+      // Wenn Display voll, leeren und neu anfangen
+      if (currentLine >= maxLines)
+      {
+        tft.fillScreen(TFT_BLUE);
+        currentLine = 3;
+      }
+
+      tft.setCursor(0, currentLine * lineHeight);
+      tft.println(line);
+      currentLine++;
+    }
+/*
     tft.fillScreen(TFT_BLUE);
     tft.setTextColor(TFT_WHITE);
     tft.setTextSize(1);
@@ -1425,7 +1453,8 @@ void displayMessage(String message) // Display a message on the OLED display
     tft.println();
     tft.println();
     tft.println();
-    tft.println("  "+filteredMessage); // Display first 90 characters
+    tft.println("  " + filteredMessage); // Display first 90 characters
+    */
   }
 }
 
@@ -1475,7 +1504,10 @@ void setup()
   tft.println("  Serial Sniffer");
   // tft.setTextSize(1);
   tft.println("  IP:" + IP.toString());
+  maxLines = tft.height() / lineHeight;
   delay(5000);
+  tft.fillScreen(TFT_BLUE);
+  currentLine = 3;
 }
 
 void handleSerial( // Handle incoming serial data for RX and TX
