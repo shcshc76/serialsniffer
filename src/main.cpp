@@ -1438,6 +1438,10 @@ void displayMessage(String message) // Display a message on the OLED display
       if (currentLine >= maxLines)
       {
         tft.fillScreen(TFT_BLUE);
+        tft.setTextSize(2);
+        tft.setCursor(0, 0);
+        tft.println("  IP:" + IP.toString());
+        tft.setTextSize(1);
         currentLine = 3;
       }
 
@@ -1445,16 +1449,16 @@ void displayMessage(String message) // Display a message on the OLED display
       tft.println(line);
       currentLine++;
     }
-/*
-    tft.fillScreen(TFT_BLUE);
-    tft.setTextColor(TFT_WHITE);
-    tft.setTextSize(1);
-    tft.setCursor(0, 0);
-    tft.println();
-    tft.println();
-    tft.println();
-    tft.println("  " + filteredMessage); // Display first 90 characters
-    */
+    /*
+        tft.fillScreen(TFT_BLUE);
+        tft.setTextColor(TFT_WHITE);
+        tft.setTextSize(1);
+        tft.setCursor(0, 0);
+        tft.println();
+        tft.println();
+        tft.println();
+        tft.println("  " + filteredMessage); // Display first 90 characters
+        */
   }
 }
 
@@ -1507,6 +1511,10 @@ void setup()
   maxLines = tft.height() / lineHeight;
   delay(5000);
   tft.fillScreen(TFT_BLUE);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(0, 0);
+  tft.println("  IP:" + IP.toString());
   currentLine = 3;
 }
 
