@@ -11,3 +11,5 @@ syslog server über webif auch string zulassen. aktuell wird anscheinend nur ip 
 Meldungen auch auf ST7789 Display anzeigen
 Zeichnung von Schaltung erstellen
 neues Gehäuse
+Heartbeat Anzeige schaltbar machen
+clear Screen per CLI Befehl

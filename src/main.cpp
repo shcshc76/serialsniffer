@@ -1505,9 +1505,11 @@ void setup()
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(2);
   tft.setCursor(0, 0);
+  tft.println();
   tft.println("  Serial Sniffer");
-  // tft.setTextSize(1);
+  tft.println();
   tft.println("  IP:" + IP.toString());
+  tft.println("    115200 8N1");
   maxLines = tft.height() / lineHeight;
   delay(5000);
   tft.fillScreen(TFT_BLUE);
@@ -1564,19 +1566,28 @@ void loop()
     timeClient.update();
   }
 
-  while (Serial.available())
-  {
-    char sc = Serial.read();
-    if (sc == '\n')
-    {
-      parseSerialCommand(serialCmd);
-      serialCmd = "";
-    }
-    else if (sc != '\r')
-    {
-      serialCmd += sc;
-    }
+  if (Serial.available())
+  {                                              // Soll die untere while Schleife ersetzen
+    String input = Serial.readStringUntil('\n'); // Reads input until newline
+    Serial.print("You entered: ");
+    Serial.println(input);
+    parseSerialCommand(input);
   }
+  /*
+    while (Serial.available())
+    {
+      char sc = Serial.read();
+      if (sc == '\n')
+      {
+        parseSerialCommand(serialCmd);
+        serialCmd = "";
+      }
+      else if (sc != '\r')
+      {
+        serialCmd += sc;
+      }
+    }
+      */
 
   // Display nach 15 Sekunden löschen
   if (displayClearScheduled && millis() >= displayClearTime)
