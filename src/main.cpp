@@ -10,13 +10,23 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <Adafruit_SSD1306.h>
 #include <ArduinoJson.h>
 #include "SPIFFS.h"
+#include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
 
-Adafruit_ST7789 tft = Adafruit_ST7789(13, 12, 11, 10, 9); // CS, DC, MOSI, SCK, RST
+SPIClass hspi = SPIClass(HSPI);
+bool tftOk = false;
+#define TFT_GREY 0x5AEB // New colour
+#define TFT_WHITE 0xFFFF
+#define TFT_BLACK 0x0000
+#define TFT_RED 0xF800
+#define TFT_GREEN 0x07E0
+#define TFT_BLUE 0x001F
+#define TFT_YELLOW 0xFFE0
+
+TFT_eSPI tft = TFT_eSPI(); // Invoke library
 
 #define MON_RX 5 // RX pin
 #define MON_TX 6 // TX pin
@@ -1406,6 +1416,17 @@ void displayMessage(String message) // Display a message on the OLED display
     displayClearTime = millis() + 15000; // 15 Sekunden
     displayClearScheduled = true;
   }
+  if (tftOk)
+  {
+    tft.fillScreen(TFT_BLUE);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(1);
+    tft.setCursor(0, 0);
+    tft.println();
+    tft.println();
+    tft.println();
+    tft.println("  "+filteredMessage); // Display first 90 characters
+  }
 }
 
 void setup()
@@ -1442,11 +1463,13 @@ void setup()
   // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
   textOutln("## IP:" + IP.toString(), 2);
 
-  tft.init(240, 280); // Init ST7789 280x240
+  tft.init();
+  tft.setRotation(2);
+  tftOk = true;
 
   // large block of text
-  tft.fillScreen(ST77XX_RED);
-  tft.setTextColor(ST77XX_WHITE);
+  tft.fillScreen(TFT_RED);
+  tft.setTextColor(TFT_WHITE);
   tft.setTextSize(2);
   tft.setCursor(0, 0);
   tft.println("  Serial Sniffer");
