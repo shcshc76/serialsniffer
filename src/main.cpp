@@ -1356,11 +1356,6 @@ String serialCmd = "";
 
 void displayMessage(String message) // Display a message on the OLED display
 {
-  if (!displayOk)
-  {
-    textOutln("## Display not initialized, skipping displayMessage");
-    return;
-  }
   if (message.length() == 0)
   {
     // textOutln("## Empty message, skipping displayMessage");
@@ -1398,17 +1393,19 @@ void displayMessage(String message) // Display a message on the OLED display
       filteredMessage += c;
     }
   }
+  if (displayOk)
+  {
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.println(filteredMessage.substring(0, 140)); // Display first 90 characters
+    display.display();
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.println(filteredMessage.substring(0, 140)); // Display first 90 characters
-  display.display();
-
-  // Lösch-Timer setzen
-  displayClearTime = millis() + 15000; // 15 Sekunden
-  displayClearScheduled = true;
+    // Lösch-Timer setzen
+    displayClearTime = millis() + 15000; // 15 Sekunden
+    displayClearScheduled = true;
+  }
 }
 
 void setup()
@@ -1446,24 +1443,16 @@ void setup()
   textOutln("## IP:" + IP.toString(), 2);
 
   tft.init(240, 280); // Init ST7789 280x240
-  uint16_t time = millis();
-  tft.fillScreen(ST77XX_RED); // Fill screen with red color
-  time = millis() - time;
-
-  Serial.println(time, DEC);
-  delay(500);
 
   // large block of text
   tft.fillScreen(ST77XX_RED);
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(2);
-  tft.setCursor(20, 0);
-  tft.println();
-  tft.println();
-  tft.println();
-  tft.println("Serial Sniffer");
-  //tft.setTextSize(1);
-  tft.println("## IP:" + IP.toString());
+  tft.setCursor(0, 0);
+  tft.println("  Serial Sniffer");
+  // tft.setTextSize(1);
+  tft.println("  IP:" + IP.toString());
+  delay(5000);
 }
 
 void handleSerial( // Handle incoming serial data for RX and TX
