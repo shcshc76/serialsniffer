@@ -23,14 +23,6 @@ int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
 const int maxCharsPerLine = 38;
 
-#define TFT_GREY 0x5AEB // New colour
-#define TFT_WHITE 0xFFFF
-#define TFT_BLACK 0x0000
-#define TFT_RED 0xF800
-#define TFT_GREEN 0x07E0
-#define TFT_BLUE 0x001F
-#define TFT_YELLOW 0xFFE0
-
 TFT_eSPI tft = TFT_eSPI(); // Invoke library
 
 #define MON_RX 5 // RX pin
@@ -74,6 +66,8 @@ unsigned long rxSimInterval = 20000; // alle 20 Sekunden SOH Rundruf auf RX send
 
 unsigned long rxSimLastTimeHB = 0;    // Letzte Zeit, zu der Heartbeat gesendet wurde
 unsigned long rxSimIntervalHB = 5000; // alle 5 Sekunden Heartbeat an RX senden
+
+bool showHB = true; // Heartbeat anzeigen
 
 // Serial config state
 unsigned long currentBaud = MON_BAUD;
@@ -230,6 +224,16 @@ void textOutln(String text = "", uint8_t level = 1) // Output text with newline
 {
   if (level > outputLevel)
     return;
+  if (!showHB) // Heartbeat ausblenden
+  {
+    if (text.indexOf("<EOT>1<ENQ>2<ENQ>") != -1 ||
+        text.indexOf("<EOT>") != -1 ||
+        text.indexOf("<ACK") != -1)
+    {
+      return; // Ignore heartbeat messages
+    }
+  }
+
   Serial.println(text);
   outBuffer += text + "\n";
   // WebLog anhängen
@@ -238,8 +242,8 @@ void textOutln(String text = "", uint8_t level = 1) // Output text with newline
   {
     webLogBuffer.remove(0, webLogBuffer.length() / 2);
   }
-  sendBuffer();
-  displayMessage(text); // Display message on OLED
+  sendBuffer();         // Send buffer to Syslog or HTTP URL
+  displayMessage(text); // Display message on Displays
 }
 
 void textOut(String text = "", uint8_t level = 1) // Output text without newline
@@ -576,6 +580,12 @@ saveSerialConfig(); // Save WiFi settings
   server.on("/clearlog", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   webLogBuffer = "";
+  tft.fillScreen(TFT_BLUE);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(0, 10);
+  tft.println("  IP:" + IP.toString());
+  currentLine = 3;
   request->send(200, "text/plain", "Log gelöscht."); });
 
   server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
