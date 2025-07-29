@@ -6,4 +6,5 @@ ack unterdrücken tx
 eot unterdrücken rx
 log pausieren
 wenn kein soh auch kein soh unknown auageben
-ST7789 Display Unterstützung 
+ST7789 Display Unterstützung erledigt
+syslog server über webif auch string zulassen. aktuell wird anscheinend nur ip zugelassen
