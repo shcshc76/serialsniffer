@@ -6,5 +6,5 @@ Monitor two UART lines (RX+TX) using an esp32-s3-devkitc-1. Serial parameters ca
 - OLED Display
 - WLAN Hotspot if no connection to WLAN
 - ESPA Call to JSON 
-<img width="1755" height="1141" alt="serialsniffer" src="https://github.com/user-attachments/assets/ee364f00-b2f1-43fc-9ce2-14d8ac180d9a" />
-<img width="1504" height="1016" alt="serialsniffer_Schaltplan" src="https://github.com/user-attachments/assets/9ba16bb3-804e-474c-814c-f082e4d2c535" />
+![Logo](pic/steckbrett.png)
+![Logo](pic/plan.png)
