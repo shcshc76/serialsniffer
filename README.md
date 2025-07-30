@@ -1,4 +1,4 @@
-# SerialSniffer<img width="248" height="248" alt="shc" src="https://github.com/user-attachments/assets/f57a49d1-2368-4be0-a1ce-6fd81524cd81" />
+# SerialSniffer ![Logo](pic/logo.png)
 
 
 Monitor two UART lines (RX+TX) using an esp32-s3-devkitc-1. Serial parameters can be set using a CLI and webinterface. Data output using USB/ display and (optional) HTTP and syslog as date;direction;HEX;ASCII. Ignore lines starting with '#' to get CSV compatible data. Send ?\n on USB and webinterface for supported configuration.
