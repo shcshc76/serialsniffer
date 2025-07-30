@@ -1,15 +1,14 @@
-code html c und ccs trennen erledigt
+ERLEDIGT code html c und ccs trennen
 espax
-menü für config erledigt
-eot 1enq 2 enq unterdrücken rx
-ack unterdrücken tx
-eot unterdrücken rx
-log pausieren
-wenn kein soh auch kein soh unknown auageben
-ST7789 Display Unterstützung erledigt
+ERLEDIGT menü für config
+ERLEDIGT eot 1enq 2 enq unterdrücken rx
+ERLEDIGT ack unterdrücken tx
+ERLEDIGT eot unterdrücken rx
+ERLEDIGT wenn kein soh auch kein soh unknown ausgeben
+ERLEDIGT ST7789 Display Unterstützung
 syslog server über webif auch string zulassen. aktuell wird anscheinend nur ip zugelassen
-Meldungen auch auf ST7789 Display anzeigen
-Zeichnung von Schaltung erstellen
+ERLEDIGT Meldungen auch auf ST7789 Display anzeigen
+ERLEDIGT Zeichnung von Schaltung erstellen
 neues Gehäuse
 Heartbeat Anzeige schaltbar machen
 clear Screen per CLI Befehl
