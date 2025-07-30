@@ -16,13 +16,13 @@
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
 
+// TFT_eSPI settings
 SPIClass hspi = SPIClass(HSPI);
 bool tftOk = false;
 int lineHeight = 12; // Höhe einer Textzeile (anpassen je nach Schriftart)
 int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
 const int maxCharsPerLine = 38;
-
 TFT_eSPI tft = TFT_eSPI(); // Invoke library
 
 #define MON_RX 5 // RX pin
@@ -49,6 +49,7 @@ bool displayOk = false;
 #define US 0x1F
 #define RS 0x1E
 
+// Clear OLED display afer x seconds
 unsigned long displayClearTime = 0;
 bool displayClearScheduled = false;
 
