@@ -16,3 +16,4 @@ clear Screen per CLI Befehl
 clear screen per Taster 
 readme bilder link anpassen
 display pause
+Display Helligkeit einstellbar
