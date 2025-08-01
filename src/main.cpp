@@ -68,7 +68,7 @@ unsigned long rxSimInterval = 20000; // alle 20 Sekunden SOH Rundruf auf RX send
 unsigned long rxSimLastTimeHB = 0;    // Letzte Zeit, zu der Heartbeat gesendet wurde
 unsigned long rxSimIntervalHB = 5000; // alle 5 Sekunden Heartbeat an RX senden
 
-bool showHB = true; // Heartbeat anzeigen
+bool showHB = true;        // Heartbeat anzeigen
 bool updateDisplay = true; // Flag to update display
 
 // Serial config state
@@ -122,6 +122,7 @@ String lastJsonString = "{}"; // Last JSON string
 void parseSerialCommand(String cmd); // Parse and execute serial commands
 void tryWiFiConnect();               // Attempt to connect to WiFi
 void displayMessage(String message); // Display message on OLED
+void clearLog(); // Clear the log buffer
 
 // webserver request handler
 void notFound(AsyncWebServerRequest *request)
@@ -524,6 +525,17 @@ void applySerialConfig(bool calc = false, bool init = false) // Apply serial con
   textOutln("## Serial ports reconfigured", 2);
 }
 
+void clearLog() // Clear the log buffer
+{
+  webLogBuffer = "";
+  tft.fillScreen(TFT_BLUE);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(0, 10);
+  tft.println("  IP:" + IP.toString());
+  currentLine = 3;
+}
+
 void startWebserver() // Start the web server
 {
   // Serve static files
@@ -581,13 +593,7 @@ saveSerialConfig(); // Save WiFi settings
 
   server.on("/clearlog", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-  webLogBuffer = "";
-  tft.fillScreen(TFT_BLUE);
-  tft.setTextColor(TFT_WHITE);
-  tft.setTextSize(2);
-  tft.setCursor(0, 10);
-  tft.println("  IP:" + IP.toString());
-  currentLine = 3;
+  clearLog(); // Clear the log buffer
   request->send(200, "text/plain", "Log gelöscht."); });
 
   server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -1313,6 +1319,11 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     updateDisplay = false;
     textOutln("# TFT display update disabled");
   }
+   else if (cmd == "clr")
+  { // clear log buffer
+    clearLog();
+    textOutln("# Log buffer cleared");
+  }
   else if (c == 'D')
   { // Debug mode on
     outputLevel = val.toInt();
@@ -1372,6 +1383,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# z|Z - Disable or enable RX simulation");
     textOutln("# v|V - Disable or enable display heartbeat");
     textOutln("# q|Q - Disable or enable display update on TFT");
+    textOutln("# clr - Clear log buffer");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }

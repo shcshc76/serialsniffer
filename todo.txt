@@ -11,12 +11,12 @@ ERLEDIGT Meldungen auch auf ST7789 Display anzeigen
 ERLEDIGT Zeichnung von Schaltung erstellen
 neues Gehäuse
 ERLEDIGT heartbeat Anzeige schaltbar machen
-clear Screen per CLI Befehl
-clear screen per Taster 
+ERLEDIGT clear Screen per CLI Befehl
 ERLEDIGT readme bilder link anpassen
-display pause
+ERLEDIGT display pause
 Display Helligkeit einstellbar
 send data to mqtt broker
 mdns
 taster für clear screen
 taster für heartbeat anzeige unterdrücken
+
