@@ -13,7 +13,7 @@ neues Gehäuse
 Heartbeat Anzeige schaltbar machen
 clear Screen per CLI Befehl
 clear screen per Taster 
-readme bilder link anpassen
+ERLEDIGT readme bilder link anpassen
 display pause
 Display Helligkeit einstellbar
 send data to mqtt broker 
