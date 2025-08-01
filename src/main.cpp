@@ -1292,6 +1292,16 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     rxSimActive = false;
     textOutln("# RX simulation disabled");
   }
+  else if (c == 'V')
+  { // enable heartbeat display
+    showHB = true;
+    textOutln("# Heartbeat display enabled");
+  }
+  else if (c == 'v')
+  { // disable heartbeat display
+    showHB = false;
+    textOutln("# Heartbeat display disabled");
+  }
   else if (c == 'D')
   { // Debug mode on
     outputLevel = val.toInt();
@@ -1349,6 +1359,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# X   - Restart Device");
     textOutln("# Y<SYSLOG> - Set syslog target (e.g., YMySyslogServer)");
     textOutln("# z|Z - Disable or enable RX simulation");
+    textOutln("# v|V - Disable or enable display heartbeat");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }

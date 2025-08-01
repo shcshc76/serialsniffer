@@ -10,7 +10,7 @@ ERLEDIGT syslog server über webif auch string zulassen. aktuell wird anscheinen
 ERLEDIGT Meldungen auch auf ST7789 Display anzeigen
 ERLEDIGT Zeichnung von Schaltung erstellen
 neues Gehäuse
-Heartbeat Anzeige schaltbar machen
+ERLEDIGT heartbeat Anzeige schaltbar machen
 clear Screen per CLI Befehl
 clear screen per Taster 
 ERLEDIGT readme bilder link anpassen
@@ -18,3 +18,5 @@ display pause
 Display Helligkeit einstellbar
 send data to mqtt broker
 mdns
+taster für clear screen
+taster für heartbeat anzeige unterdrücken
