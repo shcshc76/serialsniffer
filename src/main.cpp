@@ -69,6 +69,7 @@ unsigned long rxSimLastTimeHB = 0;    // Letzte Zeit, zu der Heartbeat gesendet 
 unsigned long rxSimIntervalHB = 5000; // alle 5 Sekunden Heartbeat an RX senden
 
 bool showHB = true; // Heartbeat anzeigen
+bool updateDisplay = true; // Flag to update display
 
 // Serial config state
 unsigned long currentBaud = MON_BAUD;
@@ -1302,6 +1303,16 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     showHB = false;
     textOutln("# Heartbeat display disabled");
   }
+  else if (c == 'Q')
+  { // disable TFT display update
+    updateDisplay = true;
+    textOutln("# TFT display update enabled");
+  }
+  else if (c == 'q')
+  { // enable TFT display update
+    updateDisplay = false;
+    textOutln("# TFT display update disabled");
+  }
   else if (c == 'D')
   { // Debug mode on
     outputLevel = val.toInt();
@@ -1360,6 +1371,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# Y<SYSLOG> - Set syslog target (e.g., YMySyslogServer)");
     textOutln("# z|Z - Disable or enable RX simulation");
     textOutln("# v|V - Disable or enable display heartbeat");
+    textOutln("# q|Q - Disable or enable display update on TFT");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
@@ -1443,7 +1455,7 @@ void displayMessage(String message) // Display a message on the OLED display
     displayClearTime = millis() + 15000; // 15 Sekunden
     displayClearScheduled = true;
   }
-  if (tftOk)
+  if (tftOk && updateDisplay)
   {
     tft.setTextColor(TFT_WHITE);
     tft.setTextSize(1);
