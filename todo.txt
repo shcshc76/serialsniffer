@@ -6,7 +6,7 @@ ERLEDIGT ack unterdrücken tx
 ERLEDIGT eot unterdrücken rx
 ERLEDIGT wenn kein soh auch kein soh unknown ausgeben
 ERLEDIGT ST7789 Display Unterstützung
-syslog server über webif auch string zulassen. aktuell wird anscheinend nur ip zugelassen
+ERLEDIGT syslog server über webif auch string zulassen. aktuell wird anscheinend nur ip zugelassen
 ERLEDIGT Meldungen auch auf ST7789 Display anzeigen
 ERLEDIGT Zeichnung von Schaltung erstellen
 neues Gehäuse
@@ -16,4 +16,5 @@ clear screen per Taster
 ERLEDIGT readme bilder link anpassen
 display pause
 Display Helligkeit einstellbar
-send data to mqtt broker 
+send data to mqtt broker
+mdns
