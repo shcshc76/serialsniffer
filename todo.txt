@@ -18,3 +18,4 @@ Display Helligkeit einstellbar
 send data to mqtt broker
 mdns
 ERLEDIGT IR Remote
+seriell log auch ohne oled 
