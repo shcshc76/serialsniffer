@@ -1418,7 +1418,7 @@ bool isEOLChar(uint8_t c) // Check if character is an EOL character
 
 String serialCmd = "";
 
-void displayMessage(String message) // Display a message on the OLED display
+void displayMessage(String message) // Display a message on the displays
 {
   if (message.length() == 0)
   {
@@ -1457,7 +1457,7 @@ void displayMessage(String message) // Display a message on the OLED display
       filteredMessage += c;
     }
   }
-  if (displayOk)
+  if (displayOk && filteredMessage.startsWith("#") && !filteredMessage.startsWith("# JSON")) // OLED display OK?
   {
     display.clearDisplay();
     display.setCursor(0, 0);
@@ -1470,7 +1470,7 @@ void displayMessage(String message) // Display a message on the OLED display
     displayClearTime = millis() + 15000; // 15 Sekunden
     displayClearScheduled = true;
   }
-  if (tftOk && updateDisplay)
+  if (tftOk && updateDisplay) //TFT Display OK?
   {
     tft.setTextColor(TFT_WHITE);
     tft.setTextSize(1);
