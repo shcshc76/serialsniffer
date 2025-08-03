@@ -1457,7 +1457,7 @@ void displayMessage(String message) // Display a message on the displays
       filteredMessage += c;
     }
   }
-  if (displayOk && filteredMessage.startsWith("#") && !filteredMessage.startsWith("# JSON")) // OLED display OK?
+  if (displayOk && filteredMessage.startsWith("#") && !filteredMessage.startsWith("# JSON")) // OLED display OK? und nur Befehle ausgeben
   {
     display.clearDisplay();
     display.setCursor(0, 0);
@@ -1674,6 +1674,10 @@ void loop()
     else if (IrReceiver.decodedIRData.command == 0xC)
     {
       parseSerialCommand("X"); // Restart device
+    }
+    else if (IrReceiver.decodedIRData.command == 0x0)
+    {
+      displayMessage("# 1 RX Simulation\n  2 Display heartbeat\n  3 TFT Update\n  7 Clear LOG\n  8 Save config\n ON Restart device");
     }
   }
   /*
