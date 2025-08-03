@@ -24,3 +24,8 @@ gnd  sw
 vcc  ws
 scl  gr
 sda  lila
+
+IR Pins
+data  gn
+gnd  ge
+vcc  or
