@@ -1641,28 +1641,28 @@ void loop()
      */
     if (IrReceiver.decodedIRData.command == 0x1)
     {
-      parseSerialCommand("Z"); // Enable RX simulation
+      if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_TOGGLE_BIT)
+        parseSerialCommand("z"); // Disable RX simulation
+      else
+        parseSerialCommand("Z"); // Enable RX simulation
     }
+
     else if (IrReceiver.decodedIRData.command == 0x2)
     {
-      parseSerialCommand("z"); // Disable RX simulation
+      if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_TOGGLE_BIT)
+        parseSerialCommand("v"); // Disable display heartbeat
+      else
+        parseSerialCommand("V"); // Enable display heartbeat
     }
+
     else if (IrReceiver.decodedIRData.command == 0x3)
     {
-      parseSerialCommand("V"); // Enable heartbeat display
+      if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_TOGGLE_BIT)
+        parseSerialCommand("q"); // Disable TFT display update
+      else
+        parseSerialCommand("Q"); // Enable TFT display update
     }
-    else if (IrReceiver.decodedIRData.command == 0x4)
-    {
-      parseSerialCommand("v"); // Disable heartbeat display
-    }
-    else if (IrReceiver.decodedIRData.command == 0x5)
-    {
-      parseSerialCommand("Q"); // Enable TFT display update
-    }
-    else if (IrReceiver.decodedIRData.command == 0x6)
-    {
-      parseSerialCommand("q"); // Disable TFT display update
-    }
+
     else if (IrReceiver.decodedIRData.command == 0x7)
     {
       parseSerialCommand("clr"); // Clear log buffer
