@@ -1514,6 +1514,7 @@ void setup()
   }
   else
   {
+    Serial.println("SSD1306-Initialisierung OK");
     displayOk = true;
   }
 
