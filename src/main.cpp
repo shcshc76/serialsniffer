@@ -15,6 +15,7 @@
 #include "SPIFFS.h"
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
+#include <IRremote.h>
 
 // TFT_eSPI settings
 SPIClass hspi = SPIClass(HSPI);
@@ -34,6 +35,8 @@ TFT_eSPI tft = TFT_eSPI(); // Invoke library
 
 #define DUMMY_PIN1 45 // Dummy pin for unused TX
 #define DUMMY_PIN2 42 // Dummy pin for unused TX
+
+#define IR_RECEIVE_PIN 4 // Pin for IR receiver
 
 // OLED display settings
 #define SCREEN_WIDTH 128
@@ -122,7 +125,7 @@ String lastJsonString = "{}"; // Last JSON string
 void parseSerialCommand(String cmd); // Parse and execute serial commands
 void tryWiFiConnect();               // Attempt to connect to WiFi
 void displayMessage(String message); // Display message on OLED
-void clearLog(); // Clear the log buffer
+void clearLog();                     // Clear the log buffer
 
 // webserver request handler
 void notFound(AsyncWebServerRequest *request)
@@ -1319,7 +1322,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     updateDisplay = false;
     textOutln("# TFT display update disabled");
   }
-   else if (cmd == "clr")
+  else if (cmd == "clr")
   { // clear log buffer
     clearLog();
     textOutln("# Log buffer cleared");
@@ -1520,6 +1523,8 @@ void setup()
     return;
   }
 
+  IrReceiver.begin(IR_RECEIVE_PIN, DISABLE_LED_FEEDBACK); // Start the receiver
+
   // saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
   {
@@ -1602,12 +1607,82 @@ void loop()
     timeClient.update();
   }
 
-  if (Serial.available())
+  if (Serial.available())                        // Serial input handling
   {                                              // Soll die untere while Schleife ersetzen
     String input = Serial.readStringUntil('\n'); // Reads input until newline
     Serial.print("You entered: ");
     Serial.println(input);
     parseSerialCommand(input);
+  }
+
+  if (IrReceiver.decode())
+  {
+
+    /*
+     * Print a summary of received data
+     */
+    if (IrReceiver.decodedIRData.protocol == UNKNOWN)
+    {
+      Serial.println(F("Received noise or an unknown (or not yet enabled) protocol"));
+      // We have an unknown protocol here, print extended info
+      IrReceiver.printIRResultRawFormatted(&Serial, true);
+      IrReceiver.resume(); // Do it here, to preserve raw data for printing with printIRResultRawFormatted()
+    }
+    else
+    {
+      IrReceiver.resume(); // Early enable receiving of the next IR frame
+      IrReceiver.printIRResultShort(&Serial);
+      IrReceiver.printIRSendUsage(&Serial);
+    }
+    Serial.println();
+
+    /*
+     * Finally, check the received data and perform actions according to the received command
+     */
+    if (IrReceiver.decodedIRData.command == 0x1)
+    {
+      parseSerialCommand("Z"); // Enable RX simulation
+    }
+    else if (IrReceiver.decodedIRData.command == 0x2)
+    {
+      parseSerialCommand("z"); // Disable RX simulation
+    }
+    else if (IrReceiver.decodedIRData.command == 0x3)
+    {
+      parseSerialCommand("V"); // Enable heartbeat display
+    }
+    else if (IrReceiver.decodedIRData.command == 0x4)
+    {
+      parseSerialCommand("v"); // Disable heartbeat display
+    }
+    else if (IrReceiver.decodedIRData.command == 0x5)
+    {
+      parseSerialCommand("Q"); // Enable TFT display update
+    }
+    else if (IrReceiver.decodedIRData.command == 0x6)
+    {
+      parseSerialCommand("q"); // Disable TFT display update
+    }
+    else if (IrReceiver.decodedIRData.command == 0x7)
+    {
+      parseSerialCommand("clr"); // Clear log buffer
+    }
+    else if (IrReceiver.decodedIRData.command == 0x8)
+    {
+      parseSerialCommand("S"); // Save config
+    }
+    else if (IrReceiver.decodedIRData.command == 0x9)
+    {
+      parseSerialCommand("X"); // Restart device
+    }
+    else if (IrReceiver.decodedIRData.command == 0xA)
+    {
+      parseSerialCommand("L"); // Enable EOL detection
+    }
+    else if (IrReceiver.decodedIRData.command == 0xB)
+    {
+      parseSerialCommand("l"); // Disable EOL detection
+    }
   }
   /*
     while (Serial.available())
