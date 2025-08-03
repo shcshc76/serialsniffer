@@ -1470,7 +1470,7 @@ void displayMessage(String message) // Display a message on the displays
     displayClearTime = millis() + 15000; // 15 Sekunden
     displayClearScheduled = true;
   }
-  if (tftOk && updateDisplay) //TFT Display OK?
+  if (tftOk && updateDisplay && (!filteredMessage.startsWith("#") || filteredMessage.startsWith("# JSON"))) // TFT Display OK und keine Befehle ausgeben?
   {
     tft.setTextColor(TFT_WHITE);
     tft.setTextSize(1);
