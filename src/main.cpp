@@ -1671,7 +1671,7 @@ void loop()
     {
       parseSerialCommand("S"); // Save config
     }
-    else if (IrReceiver.decodedIRData.command == 0x9)
+    else if (IrReceiver.decodedIRData.command == 0xC)
     {
       parseSerialCommand("X"); // Restart device
     }

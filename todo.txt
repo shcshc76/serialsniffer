@@ -17,6 +17,4 @@ ERLEDIGT display pause
 Display Helligkeit einstellbar
 send data to mqtt broker
 mdns
-taster für clear screen
-taster für heartbeat anzeige unterdrücken
-nicht taster verwenden sondern Infrarot 
+ERLEDIGT IR Remote
