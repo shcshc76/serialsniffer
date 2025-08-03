@@ -19,4 +19,4 @@ send data to mqtt broker
 mdns
 taster für clear screen
 taster für heartbeat anzeige unterdrücken
-
+nicht taster verwenden sondern Infrarot 
