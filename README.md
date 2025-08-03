@@ -8,3 +8,19 @@ Monitor two UART lines (RX+TX) using an esp32-s3-devkitc-1. Serial parameters ca
 - ESPA Call to JSON 
 ![Logo](pic/steckbrett.png)
 ![Logo](pic/plan.png)
+
+TFT Pins
+gnd  br
+vcc  rt
+scl  or
+sda  ge
+res  gn
+dc  bl
+cs  lila
+blk  gr
+
+oled Pins
+gnd  sw
+vcc  ws
+scl  gr
+sda  lila
