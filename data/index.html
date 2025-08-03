@@ -374,16 +374,15 @@ Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
 U(url)         - Set HTTP target URL
 D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
 t(timeout)     - Set timeout in ms (e.g., t1000)
-L              - Enable EOL detection
-l              - Disable EOL detection
+l|L            - Disable or enable EOL detection
 W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
 w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
-S              - Save config
-z|Z            - Disable or enable RX simulation
-v|V            - Disable or enable display heartbeat
-q|Q            - Disable or enable TFT display update
-clr            - Clear log buffer
-X              - Restart device
+S|IR-8         - Save config
+z|Z|IR-1|IR2   - Disable or enable RX simulation
+v|V|IR-3|IR-4  - Disable or enable display heartbeat
+q|Q|IR-5|IR-6  - Disable or enable TFT display update
+clr|IR-7       - Clear log buffer
+X|IR-ON        - Restart device
 ? or h         - Help
 Note: Commands are case-sensitive.
         </pre>

@@ -1675,14 +1675,6 @@ void loop()
     {
       parseSerialCommand("X"); // Restart device
     }
-    else if (IrReceiver.decodedIRData.command == 0xA)
-    {
-      parseSerialCommand("L"); // Enable EOL detection
-    }
-    else if (IrReceiver.decodedIRData.command == 0xB)
-    {
-      parseSerialCommand("l"); // Disable EOL detection
-    }
   }
   /*
     while (Serial.available())
