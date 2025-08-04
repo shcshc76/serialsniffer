@@ -16,6 +16,7 @@
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
 #include <IRremote.h>
+#include <PubSubClient.h>
 
 // TFT_eSPI settings
 SPIClass hspi = SPIClass(HSPI);
@@ -91,6 +92,15 @@ String wifiPass = "WLAN_PASS";
 String targetURL = "";
 bool wifiConnected = false;
 IPAddress IP;
+
+// MQTT settings
+String mqttServer = "MQTT_SERVER"; // MQTT Server IP or hostname
+int mqttPort = 1882;               // Default MQTT port
+String mqttUser = "MQTT_USER";     // MQTT Username
+String mqttPass = "MQTT_PASS";     // MQTT Password
+WiFiClient espClient;
+PubSubClient mqttclient(espClient);
+bool mqttON = true; // MQTT nutzen
 
 // 🔹 Syslog Server Settings (Replace with your server IP)
 String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
@@ -223,6 +233,11 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
     Serial.println("#### WiFi not connected or buffer empty, skipping send");
   }
 
+  // Send to mqtt broker if enabled
+  if (mqttON && mqttclient.connected())
+  {
+    mqttclient.publish("serialsniffer/raw", outBuffer.c_str());
+  }
   outBuffer = ""; // Clear buffer
 }
 
@@ -1501,6 +1516,46 @@ void displayMessage(String message) // Display a message on the displays
   }
 }
 
+void reconnectMQTT()
+{
+  if (!mqttON)
+    return; // MQTT is not enabled, skip reconnection
+  if (mqttServer = "MQTT_SERVER")
+  {
+    //Serial.println("### MQTT server not set, skipping reconnection.");
+    //displayMessage("### MQTT server not set, skipping reconnection.");
+    textOutln("### MQTT server not set, skipping reconnection", 2);
+    mqttON = false; // Disable MQTT connection
+    return;
+  }
+  int i = 0;
+  while (!mqttclient.connected())
+  {
+    Serial.print(".");
+    if (mqttclient.connect(mqttServer.c_str(), mqttUser.c_str(), mqttPass.c_str()))
+    {
+      //Serial.println("### MQTT connected");
+      textOutln("#### MQTT connected", 2);
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(mqttclient.state());
+      Serial.println(" try again in 100 ms");
+      delay(100); // Wait 100 ms before retrying
+    }
+    i++;
+    if (i > 10) // After 10 attempts, give up
+    {
+      //Serial.println("### MQTT connection failed after 10 attempts, giving up.");
+      //displayMessage("### MQTT connection failed after 10 attempts, giving up.");
+      textOutln("### MQTT connection failed after 10 attempts, giving up.", 2);
+      mqttON = false; // Disable MQTT connection
+      return;
+    }
+  }
+}
+
 void setup()
 {
   Serial.begin(115200); // Initialize USB console
@@ -1536,10 +1591,17 @@ void setup()
   parseSerialCommand("p");        // Print initial config
   // textOutln("## Monitoring RX pin: " + String(MON_RX), 2);
   // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
+
+  mqttclient.setServer(mqttServer.c_str(), mqttPort);
+  if (mqttON)
+  {
+    reconnectMQTT(); // Connect to MQTT server if enabled
+  }
+
   textOutln("## IP:" + IP.toString(), 2);
 
   tft.init();
-  tft.setRotation(2);
+  // tft.setRotation(2);
   tftOk = true;
 
   // large block of text
@@ -1601,6 +1663,11 @@ void loop()
     textOutln("### Wifi connection dropped. Reconnecting.", 3);
     displayMessage("Wifi connection dropped. Reconnecting.");
     tryWiFiConnect();
+  }
+
+  if (!mqttclient.connected() && mqttON) // Check if MQTT is connected
+  {
+    reconnectMQTT();
   }
 
   if (wifiConnected && WiFi.status() == WL_CONNECTED)
