@@ -227,17 +227,18 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
     {
       syslog.log(LOG_INFO, outBuffer.c_str()); // Send to Syslog server
     }
+
+    // Send to mqtt broker if enabled
+    if (mqttON && mqttclient.connected())
+    {
+      mqttclient.publish("serialsniffer/raw", outBuffer.c_str());
+    }
   }
   else if (outputLevel >= 4)
   {
     Serial.println("#### WiFi not connected or buffer empty, skipping send");
   }
 
-  // Send to mqtt broker if enabled
-  if (mqttON && mqttclient.connected())
-  {
-    mqttclient.publish("serialsniffer/raw", outBuffer.c_str());
-  }
   outBuffer = ""; // Clear buffer
 }
 
@@ -1522,8 +1523,8 @@ void reconnectMQTT()
     return; // MQTT is not enabled, skip reconnection
   if (mqttServer = "MQTT_SERVER")
   {
-    //Serial.println("### MQTT server not set, skipping reconnection.");
-    //displayMessage("### MQTT server not set, skipping reconnection.");
+    // Serial.println("### MQTT server not set, skipping reconnection.");
+    // displayMessage("### MQTT server not set, skipping reconnection.");
     textOutln("### MQTT server not set, skipping reconnection", 2);
     mqttON = false; // Disable MQTT connection
     return;
@@ -1534,7 +1535,7 @@ void reconnectMQTT()
     Serial.print(".");
     if (mqttclient.connect(mqttServer.c_str(), mqttUser.c_str(), mqttPass.c_str()))
     {
-      //Serial.println("### MQTT connected");
+      // Serial.println("### MQTT connected");
       textOutln("#### MQTT connected", 2);
     }
     else
@@ -1547,8 +1548,8 @@ void reconnectMQTT()
     i++;
     if (i > 10) // After 10 attempts, give up
     {
-      //Serial.println("### MQTT connection failed after 10 attempts, giving up.");
-      //displayMessage("### MQTT connection failed after 10 attempts, giving up.");
+      // Serial.println("### MQTT connection failed after 10 attempts, giving up.");
+      // displayMessage("### MQTT connection failed after 10 attempts, giving up.");
       textOutln("### MQTT connection failed after 10 attempts, giving up.", 2);
       mqttON = false; // Disable MQTT connection
       return;
