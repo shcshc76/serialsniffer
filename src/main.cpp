@@ -229,14 +229,9 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
     }
 
     // Send to mqtt broker if enabled
-    if (mqttON)
+    if (mqttON && mqttclient.connected() && lastJsonString.indexOf("{}") == -1)
     {
-      if (!mqttclient.connected() && mqttON) // Check if MQTT is connected
-      {
-        reconnectMQTT();
-      }
-      String mqqtTest= "Test";
-      mqttclient.publish("serialsniffer/raw", mqqtTest.c_str());
+      mqttclient.publish("serialsniffer/raw", lastJsonString.c_str());
     }
   }
   else if (outputLevel >= 4)
@@ -1669,6 +1664,11 @@ void loop()
     textOutln("### Wifi connection dropped. Reconnecting.", 3);
     displayMessage("Wifi connection dropped. Reconnecting.");
     tryWiFiConnect();
+  }
+
+  if (!mqttclient.connected() && mqttON) // Check if MQTT is connected
+  {
+    reconnectMQTT();
   }
 
   if (wifiConnected && WiFi.status() == WL_CONNECTED)
