@@ -95,9 +95,9 @@ IPAddress IP;
 
 // MQTT settings
 String mqttServer = "MQTT_SERVER"; // MQTT Server IP or hostname
-int mqttPort = 1882;                    // Default MQTT port
-String mqttUser = "MQTT_USER";           // MQTT Username
-String mqttPass = "MQTT_PASS";           // MQTT Password
+int mqttPort = 1882;               // Default MQTT port
+String mqttUser = "MQTT_USER";     // MQTT Username
+String mqttPass = "MQTT_PASS";     // MQTT Password
 WiFiClient espClient;
 PubSubClient mqttclient(espClient);
 bool mqttON = true; // MQTT nutzen
@@ -229,7 +229,7 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
     }
 
     // Send to mqtt broker if enabled
-    if (mqttON && mqttclient.connected())
+    if (mqttON && mqttclient.connected() && lastJsonString.indexOf("{}") == -1)
     {
       mqttclient.publish("serialsniffer/raw", lastJsonString.c_str());
     }
