@@ -136,7 +136,6 @@ void parseSerialCommand(String cmd); // Parse and execute serial commands
 void tryWiFiConnect();               // Attempt to connect to WiFi
 void displayMessage(String message); // Display message on OLED
 void clearLog();                     // Clear the log buffer
-void reconnectMQTT(); // Reconnect to MQTT broker
 
 // webserver request handler
 void notFound(AsyncWebServerRequest *request)
