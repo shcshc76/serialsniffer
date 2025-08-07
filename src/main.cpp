@@ -88,19 +88,21 @@ bool eolDetect = false;
 
 // WLAN configuration
 String wifiSSID = "WLAN_SSID";
-String wifiPass = "WLAN_PASS";
+String wifiPass = "WLAN_PASSWORD";
 String targetURL = "";
 bool wifiConnected = false;
 IPAddress IP;
 
 // MQTT settings
 String mqttServer = "MQTT_SERVER"; // MQTT Server IP or hostname
-int mqttPort = 1882;                    // Default MQTT port
+int mqttPort = 1883;                    // Default MQTT port
 String mqttUser = "MQTT_USER";           // MQTT Username
 String mqttPass = "MQTT_PASS";           // MQTT Password
 WiFiClient espClient;
 PubSubClient mqttclient(espClient);
-bool mqttON = true; // MQTT nutzen
+bool mqttON = false; // MQTT nutzen
+TaskHandle_t mqttTaskHandle;
+String lastmqttmsg = ""; // Last MQTT message
 
 // 🔹 Syslog Server Settings (Replace with your server IP)
 String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
@@ -132,10 +134,38 @@ Preferences prefs;
 String outBuffer = "";
 String lastJsonString = "{}"; // Last JSON string
 
-void parseSerialCommand(String cmd); // Parse and execute serial commands
-void tryWiFiConnect();               // Attempt to connect to WiFi
-void displayMessage(String message); // Display message on OLED
-void clearLog();                     // Clear the log buffer
+void parseSerialCommand(String cmd);        // Parse and execute serial commands
+void tryWiFiConnect();                      // Attempt to connect to WiFi
+void displayMessage(String message);        // Display message on OLED
+void clearLog();                            // Clear the log buffer
+void reconnectMQTT();                       // Reconnect to MQTT broker
+void textOutln(String text, uint8_t level); // Output text with newline
+
+void callback(char *topic, byte *payload, unsigned int length)
+{
+  Serial.print("Nachricht erhalten: ");
+  Serial.print(topic);
+  Serial.print(" => ");
+  for (unsigned int i = 0; i < length; i++)
+  {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+}
+
+// 🧵 FreeRTOS Task für MQTT loop()
+void mqttTask(void *parameter)
+{
+  for (;;)
+  {
+    if (!mqttclient.connected())
+    {
+      reconnectMQTT();
+    }
+    mqttclient.loop();
+    vTaskDelay(10 / portTICK_PERIOD_MS); // kleine Pause, um den Core zu entlasten
+  }
+}
 
 // webserver request handler
 void notFound(AsyncWebServerRequest *request)
@@ -229,9 +259,20 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
     }
 
     // Send to mqtt broker if enabled
-    if (mqttON && mqttclient.connected())
+    if (mqttON && mqttclient.connected() && lastJsonString != lastmqttmsg && lastJsonString != "{}" && outBuffer.startsWith("# JSON"))
     {
-      mqttclient.publish("serialsniffer/raw", lastJsonString.c_str());
+      mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
+      Serial.println("#### MQTT data sent: " + lastJsonString);
+      lastmqttmsg = lastJsonString; // Save last MQTT message
+    }
+    if (mqttON && mqttclient.connected() && outBuffer.startsWith("#") && !outBuffer.startsWith("# JSON"))
+    {
+      // Fallback to sending outBuffer if lastJsonString is empty
+      mqttclient.publish("serialsniffer/command", outBuffer.c_str(), outBuffer.length());      
+    }
+    if (mqttON && !mqttclient.connected())
+    {
+      Serial.println("#### MQTT not connected, skipping send");
     }
   }
   else if (outputLevel >= 4)
@@ -305,6 +346,10 @@ void saveSerialConfig() // Save alle Data
   prefs.putUShort("debug", outputLevel);
   prefs.putUInt("timeout", timeout);
   prefs.putBool("eoldetect", eolDetect);
+  prefs.putBool("mqttserver", mqttServer);
+  prefs.putInt("mqttport", mqttPort);
+  prefs.putString("mqttuser", mqttUser);
+  prefs.putString("mqttpass", mqttPass);
   prefs.end();
   textOutln("# Config saved");
 }
@@ -331,6 +376,10 @@ bool loadSerialConfig() // Load saved config
   outputLevel = prefs.getUShort("debug", 2);
   timeout = prefs.getUInt("timeout", 15);
   eolDetect = prefs.getBool("eoldetect", false);
+  mqttServer = prefs.getString("mqttserver", "MQTT_SERVER");
+  mqttPort = prefs.getInt("mqttport", 1883);
+  mqttUser = prefs.getString("mqttuser", "MQTT_USER");
+  mqttPass = prefs.getString("mqttpass", "MQTT_PASS");
   prefs.end();
   textOutln("# Saved config restored");
   return true;
@@ -1519,13 +1568,12 @@ void displayMessage(String message) // Display a message on the displays
 
 void reconnectMQTT()
 {
-  if (!mqttON)
-    return; // MQTT is not enabled, skip reconnection
+  
   if (mqttServer == "MQTT_SERVER")
   {
     // Serial.println("### MQTT server not set, skipping reconnection.");
     // displayMessage("### MQTT server not set, skipping reconnection.");
-    textOutln("### MQTT server not set, skipping reconnection", 2);
+    //textOutln("### MQTT server not set, skipping reconnection", 2);
     mqttON = false; // Disable MQTT connection
     return;
   }
@@ -1537,6 +1585,7 @@ void reconnectMQTT()
     {
       // Serial.println("### MQTT connected");
       textOutln("#### MQTT connected", 2);
+      mqttclient.subscribe("serialsniffer/befehl");
     }
     else
     {
@@ -1582,7 +1631,7 @@ void setup()
 
   IrReceiver.begin(IR_RECEIVE_PIN, DISABLE_LED_FEEDBACK); // Start the receiver
 
-  // saveSerialConfig(); // Save initial config if not already done
+  //saveSerialConfig(); // Save initial config if not already done
   if (loadSerialConfig())
   {
     tryWiFiConnect();
@@ -1594,10 +1643,9 @@ void setup()
   // textOutln("## Monitoring TX pin: " + String(MON_TX), 2);
 
   mqttclient.setServer(mqttServer.c_str(), mqttPort);
-  if (mqttON)
-  {
-    reconnectMQTT(); // Connect to MQTT server if enabled
-  }
+  mqttclient.setCallback(callback);
+
+
 
   textOutln("## IP:" + IP.toString(), 2);
 
@@ -1623,6 +1671,17 @@ void setup()
   tft.setCursor(0, 10);
   tft.println("  IP:" + IP.toString());
   currentLine = 3;
+
+    // Starte den MQTT Task
+  xTaskCreatePinnedToCore(
+      mqttTask,         // Funktion
+      "MQTT Loop Task", // Name
+      4096,             // Stack-Größe
+      NULL,             // Parameter
+      1,                // Priorität
+      &mqttTaskHandle,  // TaskHandle
+      1                 // Core 1 (0 wäre auch möglich)
+  );
 }
 
 void handleSerial( // Handle incoming serial data for RX and TX
