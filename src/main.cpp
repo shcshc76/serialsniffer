@@ -163,7 +163,7 @@ void mqttTask(void *parameter)
       reconnectMQTT(); // Reconnect if not connected
     }
 
-    if (mqttON && mqttclient.connected())
+    if (mqttON)
     {
       mqttclient.loop(); // Process MQTT messages
     }
@@ -1507,7 +1507,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       mqttclient.subscribe("serialsniffer/befehl");       // Subscribe to command topic
       mqttON = true;                                      // Enable MQTT connection
       reconnectMQTT();                                    // Try to connect to MQTT server
-      vTaskResume(mqttTask);                             // Resume MQTT task
+      vTaskResume(mqttTaskHandle);                             // Resume MQTT task
       textOutln("# MQTT connection enabled");
     }
   }
@@ -1521,7 +1521,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     if (!mqttclient.connected())
     {
       mqttON = false;
-       vTaskSuspend(mqttTask);
+       vTaskSuspend(mqttTaskHandle);
       textOutln("# MQTT connection disabled");
     }
   }
@@ -1788,10 +1788,7 @@ void loop()
     tryWiFiConnect();
   }
 
-  if (!mqttclient.connected() && mqttON) // Check if MQTT is connected
-  {
-    reconnectMQTT();
-  }
+  
 
   if (wifiConnected && WiFi.status() == WL_CONNECTED)
   {
