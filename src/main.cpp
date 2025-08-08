@@ -346,7 +346,6 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
   }
 }
 
-
 void textOutln(String text = "", uint8_t level = 1) // Output text with newline
 {
   if (level > outputLevel)
@@ -882,97 +881,98 @@ String symbolicToControlChars(const String &input) // Convert symbolic control c
 }
 
 String parseRawData(const String &rawData) // Parse raw data string into JSON format
-{                                          // Parse raw data string into JSON format
+{
   StaticJsonDocument<1024> doc;
 
   // SOH auslesen
   int sohIndex = rawData.indexOf((char)SOH);
 
-  String sohCode = "unknown";
-  String sohDesc = "Unknown SOH code";
-  if (sohIndex != -1 && sohIndex + 1 < rawData.length())
+  if (sohIndex == -1 || sohIndex + 1 >= rawData.length())
   {
-    sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
-    sohDesc = decodeSOH(sohCode);
+    // Kein gültiger SOH-Code gefunden, sofort "Kein SOH" zurückgeben
+    return "Kein SOH";
   }
+
+  String sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
+  String sohDesc = decodeSOH(sohCode);
 
   doc["datetime"] = getDateTimeString();
 
   // Richtung ermitteln
-  int directionIndex = rawData.indexOf("RX");
-  if (directionIndex != -1 && directionIndex + 1 < rawData.length())
+  if (rawData.indexOf("RX") != -1)
   {
     doc["direction"] = "RX";
   }
+  else if (rawData.indexOf("TX") != -1)
+  {
+    doc["direction"] = "TX";
+  }
   else
   {
-    directionIndex = rawData.indexOf("TX");
-    if (directionIndex != -1 && directionIndex + 1 < rawData.length())
-    {
-      doc["direction"] = "TX";
-    }
-    else
-    {
-      doc["direction"] = "unknown";
-    }
+    doc["direction"] = "unknown";
   }
 
-  if (sohCode != "unknown") // Only parse further if SOH code is send
+  // Nur weiter parsen, wenn SOH-Code bekannt ist
+  doc["SOH_code"] = sohCode;
+  doc["SOH_description"] = sohDesc;
+
+  // Text zwischen STX und ETX extrahieren
+  int stxIndex = rawData.indexOf((char)STX);
+  int etxIndex = rawData.indexOf((char)ETX);
+  if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex)
   {
-    // JSON-Daten füllen
+    doc["error"] = "STX/ETX not found or invalid positions";
+    String output;
+    serializeJson(doc, output);
+    return output;
+  }
 
-    doc["SOH_code"] = sohCode;
-    doc["SOH_description"] = sohDesc;
+  String content = rawData.substring(stxIndex + 1, etxIndex);
 
-    // Text zwischen STX und ETX
-    int stxIndex = rawData.indexOf((char)STX);
-    int etxIndex = rawData.indexOf((char)ETX);
-    if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex)
-    {
-      doc["error"] = "STX/ETX not found";
-      String output;
-      serializeJson(doc, output);
-      return output;
-    }
+  // Records parsen
+  JsonArray records = doc.createNestedArray("records");
+  int start = 0;
+  int rsIndex;
 
-    String content = rawData.substring(stxIndex + 1, etxIndex);
+  while ((rsIndex = content.indexOf(RS, start)) != -1)
+  {
+    String record = content.substring(start, rsIndex);
+    start = rsIndex + 1;
 
-    // Records parsen
-    JsonArray records = doc.createNestedArray("records");
-    int start = 0;
-    int rsIndex;
-
-    while ((rsIndex = content.indexOf(RS, start)) != -1)
-    {
-      String record = content.substring(start, rsIndex);
-      start = rsIndex + 1;
-
-      int usIndex = record.indexOf(US);
-      String field0 = usIndex != -1 ? record.substring(0, usIndex) : record;
-      String field1 = usIndex != -1 ? record.substring(usIndex + 1) : "";
-
-      JsonObject rec = records.createNestedObject();
-      rec["Data Identifier"] = field0;
-      rec["Record type"] = decodeField0(field0);
-      rec["Data"] = field1;
-    }
-
-    // Letztes Record (nach letztem RS)
-    String lastRecord = content.substring(start);
-    int usIndex = lastRecord.indexOf(US);
-    String field0 = usIndex != -1 ? lastRecord.substring(0, usIndex) : lastRecord;
-    String field1 = usIndex != -1 ? lastRecord.substring(usIndex + 1) : "";
+    int usIndex = record.indexOf(US);
+    String field0 = usIndex != -1 ? record.substring(0, usIndex) : record;
+    String field1 = usIndex != -1 ? record.substring(usIndex + 1) : "";
 
     JsonObject rec = records.createNestedObject();
     rec["Data Identifier"] = field0;
-    rec["Record type"] = decodeField0(field0);
+    String decodedType = decodeField0(field0);
+    rec["Record type"] = decodedType.length() > 0 ? decodedType : "Unknown";
     rec["Data"] = field1;
   }
+
+  // Letztes Record (nach letztem RS)
+  String lastRecord = content.substring(start);
+  int usIndex = lastRecord.indexOf(US);
+  String field0 = usIndex != -1 ? lastRecord.substring(0, usIndex) : lastRecord;
+  String field1 = usIndex != -1 ? lastRecord.substring(usIndex + 1) : "";
+
+  JsonObject rec = records.createNestedObject();
+  rec["Data Identifier"] = field0;
+  String decodedType = decodeField0(field0);
+  rec["Record type"] = decodedType.length() > 0 ? decodedType : "Unknown";
+  rec["Data"] = field1;
+
+  // Optional: Anzahl der Records speichern
+  doc["record_count"] = records.size();
+
   // JSON serialisieren
-  String output = "Kein SOH";
+  String output;
   serializeJson(doc, output);
-  if (output.endsWith("}]}")) // Nur JSON sichern, wenn Records vorhanden sind
-    lastJsonString = output;  // Save last JSON string for later use
+
+  // JSON sichern, wenn Records vorhanden sind
+  if (records.size() > 0)
+    lastJsonString = output;
+
   return output;
 }
 
