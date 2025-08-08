@@ -1524,8 +1524,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# m<MQTT_Port> - Set mqtt server port (e.g., m1883)");
     textOutln("# K<MQTT_User> - Set mqtt user (e.g., KMyMQTTUser)");
     textOutln("# k<MQTT_Pass> - Set mqtt password (e.g., kMyMQTTPass)");
-    textOutln("# J - enable MQTT connection");
-    textOutln("# j - disable MQTT connection");
+    textOutln("# j|J - Disable or enable MQTT connection");
     textOutln("# z|Z - Disable or enable RX simulation");
     textOutln("# v|V - Disable or enable display heartbeat");
     textOutln("# q|Q - Disable or enable display update on TFT");
