@@ -1541,7 +1541,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     if (!mqttclient.connected())
     {
       mqttclient.setServer(mqttServer.c_str(), mqttPort); // Set server if not already set
-      mqttclient.subscribe("serialsniffer/send/befehl");       // Subscribe to command topic
+      mqttclient.subscribe("serialsniffer/send/befehl");  // Subscribe to command topic
       mqttON = true;                                      // Enable MQTT connection
       reconnectMQTT();                                    // Try to connect to MQTT server
       vTaskResume(mqttTaskHandle);                        // Resume MQTT task
@@ -1553,7 +1553,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     if (mqttclient.connected())
     {
       mqttclient.unsubscribe("serialsniffer/send/befehl"); // Unsubscribe from command topic
-      mqttclient.disconnect();                        // Disconnect from MQTT server
+      mqttclient.disconnect();                             // Disconnect from MQTT server
     }
     if (!mqttclient.connected())
     {
@@ -1669,43 +1669,46 @@ void displayMessage(String message) // Display a message on the displays
 
 void reconnectMQTT()
 {
-
   if (mqttServer == "MQTT_SERVER" || !mqttON)
   {
-    // Serial.println("### MQTT server not set, skipping reconnection.");
-    // displayMessage("### MQTT server not set, skipping reconnection.");
-    // textOutln("### MQTT server not set, skipping reconnection", 2);
-    mqttON = false; // Disable MQTT connection
+    textOutln("### MQTT server not set, skipping reconnection", 2);
+    mqttON = false;
     return;
   }
-  int i = 0;
-  while (!mqttclient.connected())
+
+  const int maxRetries = 10;
+  int attempt = 0;
+
+  while (!mqttclient.connected() && attempt < maxRetries)
   {
-    Serial.print(".");
-    if (mqttclient.connect(mqttServer.c_str(), mqttUser.c_str(), mqttPass.c_str()))
+    textOutln("## Trying MQTT connection...", 2);
+
+    // Verbindungsversuch
+    bool connected = mqttclient.connect(
+        mqttServer.c_str(),
+        mqttUser.c_str(),
+        mqttPass.c_str());
+
+    if (connected)
     {
-      // Serial.println("### MQTT connected");
       textOutln("#### MQTT connected", 2);
       mqttclient.subscribe("serialsniffer/send/befehl");
-      mqttON = true; // Enable MQTT connection
+      mqttON = true;
+      return;
     }
     else
     {
-      Serial.print("failed, rc=");
-      Serial.print(mqttclient.state());
-      Serial.println(" try again in 100 ms");
-      delay(100); // Wait 100 ms before retrying
+      String err = "MQTT failed, rc=" + String(mqttclient.state()) + " retrying...";
+      textOutln(err, 2);
+      delay(200); // Minimal warten, kein zu langer Block
     }
-    i++;
-    if (i > 10) // After 10 attempts, give up
-    {
-      // Serial.println("### MQTT connection failed after 10 attempts, giving up.");
-      // displayMessage("### MQTT connection failed after 10 attempts, giving up.");
-      textOutln("### MQTT connection failed after 10 attempts, giving up.", 2);
-      mqttON = false; // Disable MQTT connection
-      return;
-    }
+
+    attempt++;
   }
+
+  // Nach max. Versuchen
+  textOutln("### MQTT connection failed after 10 attempts", 2);
+  mqttON = false;
 }
 
 void setup()
