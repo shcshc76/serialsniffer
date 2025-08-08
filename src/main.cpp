@@ -602,6 +602,7 @@ void applySerialConfig(bool calc = false, bool init = false) // Apply serial con
 
 void clearLog() // Clear the log buffer
 {
+  textOutln("# Log buffer cleared");
   webLogBuffer = "";
   tft.fillScreen(TFT_BLUE);
   tft.setTextColor(TFT_WHITE);
@@ -1403,7 +1404,6 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   else if (cmd == "clr")
   { // clear log buffer
     clearLog();
-    textOutln("# Log buffer cleared");
   }
   else if (c == 'D')
   { // Debug mode on
@@ -1511,7 +1511,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       mqttclient.subscribe("serialsniffer/befehl");       // Subscribe to command topic
       mqttON = true;                                      // Enable MQTT connection
       reconnectMQTT();                                    // Try to connect to MQTT server
-      vTaskResume(mqttTaskHandle);                             // Resume MQTT task
+      vTaskResume(mqttTaskHandle);                        // Resume MQTT task
       textOutln("# MQTT connection enabled");
     }
   }
@@ -1525,7 +1525,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     if (!mqttclient.connected())
     {
       mqttON = false;
-       vTaskSuspend(mqttTaskHandle);
+      vTaskSuspend(mqttTaskHandle);
       textOutln("# MQTT connection disabled");
     }
   }
@@ -1791,8 +1791,6 @@ void loop()
     displayMessage("Wifi connection dropped. Reconnecting.");
     tryWiFiConnect();
   }
-
-  
 
   if (wifiConnected && WiFi.status() == WL_CONNECTED)
   {
