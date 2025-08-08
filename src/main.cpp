@@ -158,11 +158,16 @@ void mqttTask(void *parameter)
 {
   for (;;)
   {
-    if (!mqttclient.connected())
+    if (!mqttclient.connected() && mqttON)
     {
-      reconnectMQTT();
+      reconnectMQTT(); // Reconnect if not connected
     }
-    mqttclient.loop();
+
+    if (mqttON && mqttclient.connected())
+    {
+      mqttclient.loop(); // Process MQTT messages
+    }
+
     vTaskDelay(10 / portTICK_PERIOD_MS); // kleine Pause, um den Core zu entlasten
   }
 }
@@ -1499,11 +1504,11 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     if (!mqttclient.connected())
     {
       mqttclient.setServer(mqttServer.c_str(), mqttPort); // Set server if not already set
-      mqttclient.subscribe("serialsniffer/befehl"); // Subscribe to command topic
-      mqttON = true;                                // Enable MQTT connection
+      mqttclient.subscribe("serialsniffer/befehl");       // Subscribe to command topic
+      mqttON = true;                                      // Enable MQTT connection
       reconnectMQTT();                                    // Try to connect to MQTT server
+      vTaskResume(mqttTask);                             // Resume MQTT task
       textOutln("# MQTT connection enabled");
-      
     }
   }
   else if (c == 'j')
@@ -1516,6 +1521,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     if (!mqttclient.connected())
     {
       mqttON = false;
+       vTaskSuspend(mqttTask);
       textOutln("# MQTT connection disabled");
     }
   }
