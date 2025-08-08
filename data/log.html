@@ -43,15 +43,19 @@
             <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
         </div>
         <div class="mt-3">
-            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('v')">Show no heartbeat</button>
+            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('v')">Show no
+                heartbeat</button>
             <button type="button" class="btn btn-primary" onclick="sendQuickCommand('V')">Show heartbeat</button>
-            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('q')">Disable TFT update</button>
-            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('Q')">Enable TFT update</button>
+            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('q')">Disable TFT
+                update</button>
+            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('Q')">Enable TFT
+                update</button>
         </div>
 
         <div class="container mt-3">
             <h5>Letzte Nachricht (JSON):</h5>
-            <pre id="jsonOutput">{}</pre>
+            <pre id="jsonOutput" style="white-space: pre-wrap; background:#111; padding:1rem;"></pre>
+
         </div>
         <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
             <div class="col-md-8">
@@ -102,13 +106,18 @@ Note: Commands are case-sensitive.
   </pre>
     </div>
     <script>
-        function fetchLog() { // Logdaten abrufen und anzeigen
+        let lastLog = "";
+
+        function fetchLog() {
             fetch('/logdata')
                 .then(res => res.text())
                 .then(data => {
-                    const logElem = document.getElementById('log');
-                    logElem.textContent = data;
-                    logElem.scrollTop = logElem.scrollHeight;
+                    if (data !== lastLog) {
+                        lastLog = data;
+                        const logElem = document.getElementById('log');
+                        logElem.textContent = data;
+                        logElem.scrollTop = logElem.scrollHeight;
+                    }
                 });
         }
 
@@ -117,12 +126,23 @@ Note: Commands are case-sensitive.
         }
 
         function sendCommand() {
-            const cmd = document.getElementById('cmdInput').value;
+            const input = document.getElementById('cmdInput');
+            const cmd = input.value.trim();
             if (!cmd) return;
-            fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
-                document.getElementById('cmdInput').value = '';
-                fetchLog();
-            });
+
+            const sendBtn = document.querySelector('#cmdForm button[type="submit"]');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            fetch('/get?input1=' + encodeURIComponent(cmd))
+                .then(() => {
+                    input.value = '';
+                    fetchLog();
+                })
+                .finally(() => {
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = 'Send';
+                });
         }
         function sendQuickCommand(cmd) {
             fetch('/get?input1=' + encodeURIComponent(cmd))
