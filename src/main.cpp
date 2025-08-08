@@ -102,7 +102,6 @@ WiFiClient espClient;
 PubSubClient mqttclient(espClient);
 bool mqttON = false; // MQTT nutzen
 TaskHandle_t mqttTaskHandle;
-String lastmqttmsg = ""; // Last MQTT message
 
 // 🔹 Syslog Server Settings (Replace with your server IP)
 String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
@@ -264,16 +263,50 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
     }
 
     // Send to mqtt broker if enabled
-    if (mqttON && mqttclient.connected() && lastJsonString != lastmqttmsg && lastJsonString != "{}" && outBuffer.startsWith("# JSON"))
+    if (mqttON && mqttclient.connected() && lastJsonString != "{}" && outBuffer.startsWith("# JSON"))
     {
-      mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
-      Serial.println("#### MQTT data sent: " + lastJsonString);
-      lastmqttmsg = lastJsonString; // Save last MQTT message
+      const size_t capacity = 1024;
+      DynamicJsonDocument doc(capacity);
+      String datetime = "";
+      String direction = "";
+      String soh_code = "";
+      String soh_desc = "";
+
+      // JSON parsen
+      DeserializationError error = deserializeJson(doc, lastJsonString);
+      if (error)
+      {
+        Serial.print("JSON Parse Error: ");
+        Serial.println(error.f_str());
+      }
+      else
+      { // Hauptfelder auslesen
+        datetime = doc["datetime"] | "N/A";
+        direction = doc["direction"] | "N/A";
+        soh_code = doc["SOH_code"] | "N/A";
+        soh_desc = doc["SOH_description"] | "N/A";
+
+        mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
+        mqttclient.publish("serialsniffer/datetime", datetime.c_str(), datetime.length());
+        mqttclient.publish("serialsniffer/direction", direction.c_str(), direction.length());
+        mqttclient.publish("serialsniffer/soh_code", soh_code.c_str(), soh_code.length());
+        mqttclient.publish("serialsniffer/soh_description", soh_desc.c_str(), soh_desc.length());
+
+        // Einzelne Records verarbeiten
+        JsonArray records = doc["records"];
+        for (JsonObject record : records)
+        {
+          String recordType = record["Record type"] | "N/A";
+          String recordData = record["Data"] | "N/A";
+          String topic = "serialsniffer/" + recordType;
+          mqttclient.publish(topic.c_str(), recordData.c_str(), recordData.length());
+        }
+      }
     }
     if (mqttON && mqttclient.connected() && outBuffer.startsWith("#") && !outBuffer.startsWith("# JSON"))
     {
       // Fallback to sending outBuffer if lastJsonString is empty
-      mqttclient.publish("serialsniffer/command", outBuffer.c_str(), outBuffer.length());
+      mqttclient.publish("serialsniffer/input/command", outBuffer.c_str(), outBuffer.length());
     }
     if (mqttON && !mqttclient.connected())
     {
@@ -1508,7 +1541,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     if (!mqttclient.connected())
     {
       mqttclient.setServer(mqttServer.c_str(), mqttPort); // Set server if not already set
-      mqttclient.subscribe("serialsniffer/befehl");       // Subscribe to command topic
+      mqttclient.subscribe("serialsniffer/send/befehl");       // Subscribe to command topic
       mqttON = true;                                      // Enable MQTT connection
       reconnectMQTT();                                    // Try to connect to MQTT server
       vTaskResume(mqttTaskHandle);                        // Resume MQTT task
@@ -1519,7 +1552,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   { // Disable MQTT connection
     if (mqttclient.connected())
     {
-      mqttclient.unsubscribe("serialsniffer/befehl"); // Unsubscribe from command topic
+      mqttclient.unsubscribe("serialsniffer/send/befehl"); // Unsubscribe from command topic
       mqttclient.disconnect();                        // Disconnect from MQTT server
     }
     if (!mqttclient.connected())
@@ -1653,7 +1686,7 @@ void reconnectMQTT()
     {
       // Serial.println("### MQTT connected");
       textOutln("#### MQTT connected", 2);
-      mqttclient.subscribe("serialsniffer/befehl");
+      mqttclient.subscribe("serialsniffer/send/befehl");
       mqttON = true; // Enable MQTT connection
     }
     else
