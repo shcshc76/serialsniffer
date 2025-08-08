@@ -374,10 +374,13 @@
 
         function sendUrl() {
             const val = document.getElementById('urlInput').value.trim();
-            if (!val.startsWith('http')) {
-                alert("Bitte gültige URL eingeben!");
-                return;
+            if (val.length > 0) {
+                if (!val.startsWith('http')) {
+                    alert("Bitte gültige URL eingeben!");
+                    return;
+                }
             }
+
             sendCmd('U' + val);
         }
 
