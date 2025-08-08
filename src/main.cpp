@@ -226,11 +226,23 @@ String getDateTimeString()
   }
 }
 
-void sendBuffer() // Send outBuffer to Syslog or HTTP URL
+void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
 {
-  if (wifiConnected && outBuffer.length() > 0)
+  if (!wifiConnected || outBuffer.length() == 0)
   {
-    if (targetURL.length() > 0) // Send Data to URL
+    if (outputLevel >= 4)
+    {
+      Serial.println("#### WiFi not connected or buffer empty, skipping send");
+    }
+    return;
+  }
+
+  bool transmissionSuccess = false;
+
+  // === HTTP SEND ===
+  if (targetURL.length() > 0)
+  {
+    if (targetURL.startsWith("http://") || targetURL.startsWith("https://"))
     {
       HTTPClient http;
       http.begin(targetURL);
@@ -238,11 +250,11 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
 
       String postBody = "data=" + urlEncode(outBuffer);
       int httpResponseCode = http.POST(postBody);
-
       http.end();
-      //@TODO
-      if (httpResponseCode > 0)
+
+      if (httpResponseCode >= 200 && httpResponseCode < 300)
       {
+        transmissionSuccess = true;
         if (outputLevel >= 4)
         {
           Serial.println("#### HTTP data sent: " + outBuffer);
@@ -257,34 +269,41 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
         }
       }
     }
-    if (syslog_ip.length() > 0) // Send Data to Syslog
+    else
     {
-      syslog.log(LOG_INFO, outBuffer.c_str()); // Send to Syslog server
+      if (outputLevel >= 2)
+        Serial.println("Invalid URL: Must start with http:// or https://");
     }
+  }
 
-    // Send to mqtt broker if enabled
-    if (mqttON && mqttclient.connected() && lastJsonString != "{}" && outBuffer.startsWith("# JSON"))
+  // === SYSLOG SEND ===
+  if (syslog_ip.length() > 0)
+  {
+    syslog.log(LOG_INFO, outBuffer.c_str());
+    transmissionSuccess = true; // assume success; adjust if syslog client supports status feedback
+  }
+
+  // === MQTT JSON DATA ===
+  if (mqttON && mqttclient.connected())
+  {
+    if (outBuffer.startsWith("# JSON") && lastJsonString != "{}")
     {
       const size_t capacity = 1024;
       DynamicJsonDocument doc(capacity);
-      String datetime = "";
-      String direction = "";
-      String soh_code = "";
-      String soh_desc = "";
-
-      // JSON parsen
       DeserializationError error = deserializeJson(doc, lastJsonString);
+
       if (error)
       {
         Serial.print("JSON Parse Error: ");
         Serial.println(error.f_str());
       }
       else
-      { // Hauptfelder auslesen
-        datetime = doc["datetime"] | "N/A";
-        direction = doc["direction"] | "N/A";
-        soh_code = doc["SOH_code"] | "N/A";
-        soh_desc = doc["SOH_description"] | "N/A";
+      {
+        transmissionSuccess = true;
+        String datetime = doc["datetime"] | "N/A";
+        String direction = doc["direction"] | "N/A";
+        String soh_code = doc["SOH_code"] | "N/A";
+        String soh_desc = doc["SOH_description"] | "N/A";
 
         mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
         mqttclient.publish("serialsniffer/datetime", datetime.c_str(), datetime.length());
@@ -297,29 +316,36 @@ void sendBuffer() // Send outBuffer to Syslog or HTTP URL
         for (JsonObject record : records)
         {
           String recordType = record["Record type"] | "N/A";
+          recordType.replace(' ', '_'); // MQTT-tauglich
           String recordData = record["Data"] | "N/A";
           String topic = "serialsniffer/" + recordType;
           mqttclient.publish(topic.c_str(), recordData.c_str(), recordData.length());
         }
       }
     }
-    if (mqttON && mqttclient.connected() && outBuffer.startsWith("#") && !outBuffer.startsWith("# JSON"))
+    else if (outBuffer.startsWith("#"))
     {
-      // Fallback to sending outBuffer if lastJsonString is empty
+      // Fallback für nicht-JSON-Kommandos
       mqttclient.publish("serialsniffer/input/command", outBuffer.c_str(), outBuffer.length());
-    }
-    if (mqttON && !mqttclient.connected())
-    {
-      Serial.println("#### MQTT not connected, skipping send");
+      transmissionSuccess = true;
     }
   }
-  else if (outputLevel >= 4)
+  else if (mqttON && !mqttclient.connected())
   {
-    Serial.println("#### WiFi not connected or buffer empty, skipping send");
+    Serial.println("#### MQTT not connected, skipping send");
   }
 
-  outBuffer = ""; // Clear buffer
+  // === CLEAR BUFFER IF SENT ===
+  if (transmissionSuccess)
+  {
+    outBuffer = "";
+  }
+  else if (outputLevel >= 2)
+  {
+    Serial.println("#### No transmission succeeded, buffer retained");
+  }
 }
+
 
 void textOutln(String text = "", uint8_t level = 1) // Output text with newline
 {
