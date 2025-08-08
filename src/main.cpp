@@ -636,6 +636,10 @@ void startWebserver() // Start the web server
   status += ", TX Invert: " + String(txInvert ? "Enabled" : "Disabled");
   status += "\nSyslog IP: " + syslog_ip;
   status += ", Target URL: " + targetURL;
+  status += "\nMQTT Server: " + mqttServer + ":" + String(mqttPort);
+  status += "\nMQTT User: " + mqttUser;
+  status += "\nMQTT ON: " + String(mqttON ? "Enabled" : "Disabled");
+  status += "\nNTP Time: " + getDateTimeString();
   status += "\nOutput Level: " + String(outputLevel);
   status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
   status += "\nTimeout: " + String(timeout) + " ms";
