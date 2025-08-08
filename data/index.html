@@ -177,7 +177,47 @@
                                     <button class="btn btn-outline-success" onclick="sendUrl()">Send U(url)</button>
                                 </div>
                             </div>
-
+                            <!-- MQTT Settings -->
+                            <div class="mb-3">
+                                <label for="mqttServerInput" class="form-label">MQTT Server</label>
+                                <div class="input-group">
+                                    <input type="text" id="mqttServerInput" class="form-control"
+                                        placeholder="MQTT Server IP" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('M' + mqttServerInput.value)">Send
+                                        M(MQTT_SERVER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mqttportInput" class="form-label">MQTT Port</label>
+                                <div class="input-group">
+                                    <input type="text" id="mqttportInput" class="form-control"
+                                        placeholder="MQTT Server Port" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('m' + mqttportInput.value)">Send
+                                        m(MQTT_PORT)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mqttuserInput" class="form-label">MQTT Port</label>
+                                <div class="input-group">
+                                    <input type="text" id="mqttuserInput" class="form-control"
+                                        placeholder="MQTT User" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('K' + mqttuserInput.value)">Send
+                                        K(MQTT_USER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mqttpassInput" class="form-label">MQTT Port</label>
+                                <div class="input-group">
+                                    <input type="password" id="mqttpassInput" class="form-control"
+                                        placeholder="MQTT Password" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('k' + mqttpassInput.value)">Send
+                                        m(MQTT_PASS)</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
