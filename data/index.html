@@ -164,7 +164,7 @@
                                 <label for="syslogInput" class="form-label">Syslog IP-Adresse</label>
                                 <div class="input-group">
                                     <input type="text" id="syslogInput" class="form-control"
-                                        placeholder="192.168.1.100" />
+                                        placeholder="SYSLOG Server IP" />
                                     <button class="btn btn-outline-success" onclick="sendSyslog()">Send Y(ip)</button>
                                 </div>
                             </div>
@@ -414,14 +414,14 @@ Ti|TI          - Disable or enable TX pin inversion
 p              - Print current serial configuration
 f              - Flush RX and TX buffers
 r              - Reinitialize serial ports
-Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
+Y(ip)          - Set syslog IP (e.g., YMysyslogIP)
 U(url)         - Set HTTP target URL
 D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
 t(timeout)     - Set timeout in ms (e.g., t1000)
 l|L            - Disable or enable EOL detection
 W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
 w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
-M(MQTT_SERVER) - Set MQTT server (e.g., M192.168.1.50)
+M(MQTT_SERVER) - Set MQTT server (e.g., MMyMQTTServerIP)
 m(MQTT_PORT)   - Set MQTT port (e.g., m1883)
 K(MQTT_USER)   - Set MQTT username (e.g., Kuser)
 k(MQTT_PASS)   - Set MQTT password (e.g., kpassword)
