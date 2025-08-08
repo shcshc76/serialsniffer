@@ -286,7 +286,7 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
   // === MQTT JSON DATA ===
   if (mqttON && mqttclient.connected())
   {
-    if (outBuffer.startsWith("# JSON") && lastJsonString != "{}")
+    if (outBuffer.indexOf("<SOH>")>-1 && lastJsonString != "{}")
     {
       const size_t capacity = 1024;
       DynamicJsonDocument doc(capacity);
