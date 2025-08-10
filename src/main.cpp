@@ -880,16 +880,14 @@ String symbolicToControlChars(const String &input) // Convert symbolic control c
   return output;
 }
 
-String parseRawData(const String &rawData) // Parse raw data string into JSON format
+String parseRawData(const String &rawData)
 {
   StaticJsonDocument<1024> doc;
 
-  // SOH auslesen
+  // SOH finden
   int sohIndex = rawData.indexOf((char)SOH);
-
   if (sohIndex == -1 || sohIndex + 1 >= rawData.length())
   {
-    // Kein gültiger SOH-Code gefunden, sofort "Kein SOH" zurückgeben
     return "Kein SOH";
   }
 
@@ -897,26 +895,18 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
   String sohDesc = decodeSOH(sohCode);
 
   doc["datetime"] = getDateTimeString();
-
-  // Richtung ermitteln
-  if (rawData.indexOf("RX") != -1)
-  {
-    doc["direction"] = "RX";
-  }
-  else if (rawData.indexOf("TX") != -1)
-  {
-    doc["direction"] = "TX";
-  }
-  else
-  {
-    doc["direction"] = "unknown";
-  }
-
-  // Nur weiter parsen, wenn SOH-Code bekannt ist
   doc["SOH_code"] = sohCode;
   doc["SOH_description"] = sohDesc;
 
-  // Text zwischen STX und ETX extrahieren
+  // Richtung
+  if (rawData.indexOf("RX") != -1)
+    doc["direction"] = "RX";
+  else if (rawData.indexOf("TX") != -1)
+    doc["direction"] = "TX";
+  else
+    doc["direction"] = "unknown";
+
+  // STX / ETX prüfen
   int stxIndex = rawData.indexOf((char)STX);
   int etxIndex = rawData.indexOf((char)ETX);
   if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex)
@@ -927,54 +917,52 @@ String parseRawData(const String &rawData) // Parse raw data string into JSON fo
     return output;
   }
 
+  // Inhalt zwischen STX und ETX
   String content = rawData.substring(stxIndex + 1, etxIndex);
 
-  // Records parsen
-  JsonArray records = doc.createNestedArray("records");
-  int start = 0;
-  int rsIndex;
+  // Records-Array anlegen (neue ArduinoJson 7 Methode)
+  JsonArray records = doc["records"].to<JsonArray>();
 
-  while ((rsIndex = content.indexOf(RS, start)) != -1)
-  {
-    String record = content.substring(start, rsIndex);
-    start = rsIndex + 1;
+  // Hilfsfunktion zum Parsen eines einzelnen Records
+  auto parseRecord = [&](const String &recordStr) {
+    int usIndex = recordStr.indexOf(US);
+    String field0 = (usIndex != -1) ? recordStr.substring(0, usIndex) : recordStr;
+    String field1 = (usIndex != -1) ? recordStr.substring(usIndex + 1) : "";
 
-    int usIndex = record.indexOf(US);
-    String field0 = usIndex != -1 ? record.substring(0, usIndex) : record;
-    String field1 = usIndex != -1 ? record.substring(usIndex + 1) : "";
-
-    JsonObject rec = records.createNestedObject();
+    JsonObject rec = records.add<JsonObject>();
     rec["Data Identifier"] = field0;
+
     String decodedType = decodeField0(field0);
     rec["Record type"] = decodedType.length() > 0 ? decodedType : "Unknown";
     rec["Data"] = field1;
+  };
+
+  // Records per RS trennen
+  int start = 0;
+  int rsIndex;
+  while ((rsIndex = content.indexOf(RS, start)) != -1)
+  {
+    parseRecord(content.substring(start, rsIndex));
+    start = rsIndex + 1;
   }
 
-  // Letztes Record (nach letztem RS)
-  String lastRecord = content.substring(start);
-  int usIndex = lastRecord.indexOf(US);
-  String field0 = usIndex != -1 ? lastRecord.substring(0, usIndex) : lastRecord;
-  String field1 = usIndex != -1 ? lastRecord.substring(usIndex + 1) : "";
+  // Letzter Record
+  parseRecord(content.substring(start));
 
-  JsonObject rec = records.createNestedObject();
-  rec["Data Identifier"] = field0;
-  String decodedType = decodeField0(field0);
-  rec["Record type"] = decodedType.length() > 0 ? decodedType : "Unknown";
-  rec["Data"] = field1;
-
-  // Optional: Anzahl der Records speichern
+  // Anzahl der Records
   doc["record_count"] = records.size();
 
   // JSON serialisieren
   String output;
   serializeJson(doc, output);
 
-  // JSON sichern, wenn Records vorhanden sind
+  // Letzte JSON sichern
   if (records.size() > 0)
     lastJsonString = output;
 
   return output;
 }
+
 
 void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer with time, type, HEX and ASCII representation
 {
