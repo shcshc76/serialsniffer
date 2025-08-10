@@ -1844,7 +1844,31 @@ void handleSerial( // Handle incoming serial data for RX and TX
   }
 }
 
-void loop()
+// =================== IR-Befehls-Tabelle ===================
+struct IRCommandEntry
+{
+  uint8_t command;       // IR Command Code
+  bool usesToggle;       // Toggle-Bit auswerten?
+  const char *cmdOn;     // Befehl bei Toggle=0
+  const char *cmdOff;    // Befehl bei Toggle=1
+  const char *message;   // Nur Nachricht anzeigen (optional)
+};
+
+IRCommandEntry irCommands[] = {
+    {0x1, true, "Z", "z", nullptr}, // RX simulation
+    {0x2, true, "V", "v", nullptr}, // Heartbeat
+    {0x3, true, "Q", "q", nullptr}, // TFT update
+    {0x7, false, "clr", nullptr, nullptr}, // Clear log
+    {0x8, false, "S", nullptr, nullptr},   // Save config
+    {0x9, true, "J", "j", nullptr},        // MQTT
+    {0xC, false, "X", nullptr, nullptr},   // Restart
+    {0x0, false, nullptr, nullptr,
+     "# 1 RX Simulation\n  2 Display heartbeat\n  3 TFT Update\n  7 Clear LOG\n  8 Save config\n  9 enable mqtt\n ON Restart device"} // Menü
+};
+
+
+// =================== Wi-Fi ===================
+void handleWiFi()
 {
   if (wifiConnected && WiFi.status() != WL_CONNECTED)
   {
@@ -1852,120 +1876,111 @@ void loop()
     displayMessage("Wifi connection dropped. Reconnecting.");
     tryWiFiConnect();
   }
+}
 
+void handleTimeUpdate()
+{
   if (wifiConnected && WiFi.status() == WL_CONNECTED)
   {
     timeClient.update();
   }
+}
 
-  if (Serial.available())                        // Serial input handling
-  {                                              // Soll die untere while Schleife ersetzen
-    String input = Serial.readStringUntil('\n'); // Reads input until newline
-    Serial.print("You entered: ");
-    Serial.println(input);
-    parseSerialCommand(input);
-  }
+// =================== Serial Input (non-blocking) ===================
+void handleSerialInput()
+{
+  static String serialCmdBuffer = "";
 
-  if (IrReceiver.decode())
+  while (Serial.available())
   {
+    char c = Serial.read();
 
-    /*
-     * Print a summary of received data
-     */
-    if (IrReceiver.decodedIRData.protocol == UNKNOWN)
+    if (c == '\n') // Ende der Eingabe
     {
-      Serial.println(F("Received noise or an unknown (or not yet enabled) protocol"));
-      // We have an unknown protocol here, print extended info
-      IrReceiver.printIRResultRawFormatted(&Serial, true);
-      IrReceiver.resume(); // Do it here, to preserve raw data for printing with printIRResultRawFormatted()
+      serialCmdBuffer.trim();
+      if (serialCmdBuffer.length() > 0)
+      {
+        Serial.print("You entered: ");
+        Serial.println(serialCmdBuffer);
+        parseSerialCommand(serialCmdBuffer);
+      }
+      serialCmdBuffer = "";
     }
-    else
+    else if (c != '\r')
     {
-      IrReceiver.resume(); // Early enable receiving of the next IR frame
-      IrReceiver.printIRResultShort(&Serial);
-      IrReceiver.printIRSendUsage(&Serial);
-    }
-    Serial.println();
-
-    /*
-     * Finally, check the received data and perform actions according to the received command
-     */
-    if (IrReceiver.decodedIRData.command == 0x1)
-    {
-      if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_TOGGLE_BIT)
-        parseSerialCommand("z"); // Disable RX simulation
-      else
-        parseSerialCommand("Z"); // Enable RX simulation
-    }
-
-    else if (IrReceiver.decodedIRData.command == 0x2)
-    {
-      if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_TOGGLE_BIT)
-        parseSerialCommand("v"); // Disable display heartbeat
-      else
-        parseSerialCommand("V"); // Enable display heartbeat
-    }
-
-    else if (IrReceiver.decodedIRData.command == 0x3)
-    {
-      if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_TOGGLE_BIT)
-        parseSerialCommand("q"); // Disable TFT display update
-      else
-        parseSerialCommand("Q"); // Enable TFT display update
-    }
-
-    else if (IrReceiver.decodedIRData.command == 0x7)
-    {
-      parseSerialCommand("clr"); // Clear log buffer
-    }
-    else if (IrReceiver.decodedIRData.command == 0x8)
-    {
-      parseSerialCommand("S"); // Save config
-    }
-    else if (IrReceiver.decodedIRData.command == 0xC)
-    {
-      parseSerialCommand("X"); // Restart device
-    }
-    else if (IrReceiver.decodedIRData.command == 0x0)
-    {
-      displayMessage("# 1 RX Simulation\n  2 Display heartbeat\n  3 TFT Update\n  7 Clear LOG\n  8 Save config\n  9 enabele mqtt\n ON Restart device");
-    }
-    else if (IrReceiver.decodedIRData.command == 0x9)
-    {
-      if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_TOGGLE_BIT)
-        parseSerialCommand("j"); // Disable mqtt connection
-      else
-        parseSerialCommand("J"); // Enable mqtt connection
+      serialCmdBuffer += c;
     }
   }
-  /*
-    while (Serial.available())
-    {
-      char sc = Serial.read();
-      if (sc == '\n')
-      {
-        parseSerialCommand(serialCmd);
-        serialCmd = "";
-      }
-      else if (sc != '\r')
-      {
-        serialCmd += sc;
-      }
-    }
-      */
+}
 
-  // Display nach 15 Sekunden löschen
+void processIRCommandTable(uint8_t command, uint8_t flags)
+{
+  bool toggle = flags & IRDATA_FLAGS_TOGGLE_BIT;
+
+  for (auto &entry : irCommands)
+  {
+    if (entry.command == command)
+    {
+      if (entry.message)
+      {
+        displayMessage(entry.message);
+      }
+      else if (entry.usesToggle)
+      {
+        parseSerialCommand(toggle ? entry.cmdOff : entry.cmdOn);
+      }
+      else
+      {
+        parseSerialCommand(entry.cmdOn);
+      }
+      return;
+    }
+  }
+
+  Serial.print("Unknown IR command: 0x");
+  Serial.println(command, HEX);
+}
+
+// =================== IR Remote ===================
+void handleIRRemote()
+{
+  if (!IrReceiver.decode())
+    return;
+
+  if (IrReceiver.decodedIRData.protocol == UNKNOWN)
+  {
+    Serial.println(F("Received noise or an unknown (or not yet enabled) protocol"));
+    IrReceiver.printIRResultRawFormatted(&Serial, true);
+    IrReceiver.resume();
+    return;
+  }
+
+  IrReceiver.resume();
+  IrReceiver.printIRResultShort(&Serial);
+  IrReceiver.printIRSendUsage(&Serial);
+  Serial.println();
+
+  processIRCommandTable(IrReceiver.decodedIRData.command, IrReceiver.decodedIRData.flags);
+}
+
+
+
+// =================== Display Handling ===================
+void handleDisplayClear()
+{
   if (displayClearScheduled && millis() >= displayClearTime)
   {
     display.clearDisplay();
     display.display();
     displayClearScheduled = false;
   }
+}
 
-  // Simulierte RX-Daten senden Rundruf
+// =================== Simulation ===================
+void handleRxSimulation()
+{
   if (rxSimActive && millis() - rxSimLastTime >= rxSimInterval)
   {
-    // Binärdaten gemäß SOH Rundruf
     const uint8_t simulatedData[] = {
         0x01, 0x31, 0x02, 0x31, 0x1F, 0x35, 0x30, 0x30, 0x32,
         0x1E, 0x33, 0x1F, 0x31, 0x1E, 0x32, 0x1F,
@@ -1973,42 +1988,55 @@ void loop()
         0x45, 0x47, 0x20, 0x57, 0x1E, 0x35, 0x1F, 0x31, 0x03};
     size_t len = sizeof(simulatedData);
 
-    memcpy(rxBuf, simulatedData, len); // in RX-Puffer kopieren
-    printBuffer("RX", rxBuf, len);     // wie eingehenden RX verarbeiten
-    rxSimLastTime = millis();          // Zeitstempel aktualisieren
+    memcpy(rxBuf, simulatedData, len);
+    printBuffer("RX", rxBuf, len);
+    rxSimLastTime = millis();
   }
+}
 
-  // Simuliere RX/TX-Daten senden Heartbeat
+void handleHeartbeatSimulation()
+{
   if (rxSimActive && millis() - rxSimLastTimeHB >= rxSimIntervalHB)
   {
-    // Binärdaten gemäß Heartbeat
-    const uint8_t simulatedData[] = {
-        0x04, 0x31, 0x05, 0x32, 0x05};
-    size_t len = sizeof(simulatedData);
-
-    memcpy(rxBuf, simulatedData, len); // in RX-Puffer kopieren
-    printBuffer("RX", rxBuf, len);     // wie eingehenden RX verarbeiten
+    // Heartbeat
+    const uint8_t hbData[] = {0x04, 0x31, 0x05, 0x32, 0x05};
+    memcpy(rxBuf, hbData, sizeof(hbData));
+    printBuffer("RX", rxBuf, sizeof(hbData));
     handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
-    // Binärdaten gemäß AK
-    const uint8_t simulatedDataAK[] = {
-        0x06};
-    size_t lenAK = sizeof(simulatedDataAK);
 
-    memcpy(txBuf, simulatedDataAK, lenAK); // in TX-Puffer kopieren
-    printBuffer("TX", txBuf, lenAK);       // wie eingehenden TX verarbeiten
+    // ACK
+    const uint8_t ackData[] = {0x06};
+    memcpy(txBuf, ackData, sizeof(ackData));
+    printBuffer("TX", txBuf, sizeof(ackData));
     handleSerial(SerialTX, "TX", txBuf, txLen, txLast);
-    // Binärdaten gemäß Heartbeat
-    const uint8_t simulatedDataEOT[] = {
-        0x04};
-    size_t lenEOT = sizeof(simulatedDataEOT);
 
-    memcpy(rxBuf, simulatedDataEOT, lenEOT); // in RX-Puffer kopieren
-    printBuffer("RX", rxBuf, lenEOT);        // wie eingehenden RX verarbeiten
+    // EOT
+    const uint8_t eotData[] = {0x04};
+    memcpy(rxBuf, eotData, sizeof(eotData));
+    printBuffer("RX", rxBuf, sizeof(eotData));
     handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
-    rxSimLastTimeHB = millis(); // Zeitstempel aktualisieren
-  }
 
-  // Handle RX and TX serial data
+    rxSimLastTimeHB = millis();
+  }
+}
+
+// =================== Serial Buffer Handling ===================
+void handleSerialBuffers()
+{
   handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
   handleSerial(SerialTX, "TX", txBuf, txLen, txLast);
+}
+
+
+// =================== LOOP ===================
+void loop()
+{
+  handleWiFi();
+  handleTimeUpdate();
+  handleSerialInput();
+  handleIRRemote();
+  handleDisplayClear();
+  handleRxSimulation();
+  handleHeartbeatSimulation();
+  handleSerialBuffers();
 }
