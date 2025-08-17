@@ -219,10 +219,10 @@ void sendLogin()
                       "    <LI-CLIENTSW>SN_V0.1.0</LI-CLIENTSW>\n"
                       "    <LI-USER>" +
       espaxuser + "</LI-USER>\n"
-             "    <LI-PASSWORD>" +
+                  "    <LI-PASSWORD>" +
       espaxpass + "</LI-PASSWORD>\n"
-             "  </REQ.LOGIN>\n"
-             "</ESPA-X>";
+                  "  </REQ.LOGIN>\n"
+                  "</ESPA-X>";
 
   sendMessage(xml);
 }
@@ -1803,6 +1803,8 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       textOutln("# Sending ESPAX data...");
       // Example call, replace with actual data
       sendCall("1002", "1900", "Test mit Delay Wiederholungen", "Standard", "Phone", 0, 1);
+      Serial.println("sendCall-Antwort:");
+      Serial.println(readXMLResponse());
     }
     else
     {
@@ -1924,7 +1926,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# g<ESPAX_Port> - Set ESPAX server port (e.g., g2023)");
     textOutln("# A<ESPAX_User> - Set ESPAX user (e.g., AMyESPAXUser)");
     textOutln("# a<ESPAX_Pass> - Set ESPAX password (e.g., aMyESPAXPass)");
-    textOutln("# i|I - Disable or enable ESPAX connection");    
+    textOutln("# i|I - Disable or enable ESPAX connection");
     textOutln("# z|Z - Disable or enable RX simulation");
     textOutln("# v|V - Disable or enable display heartbeat");
     textOutln("# q|Q - Disable or enable display update on TFT");
@@ -1988,38 +1990,38 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       textOutln("# MQTT connection disabled");
     }
   }
-  else if(c== 'G')
+  else if (c == 'G')
   { // Set ESPAX server
     espaxserverIP = val;
     textOutln("# ESPAX server set to: " + espaxserverIP);
   }
-  else if(c== 'g')
+  else if (c == 'g')
   { // Set ESPAX port
     espaxserverPort = val.toInt();
     textOutln("# ESPAX port set to: " + String(espaxserverPort));
   }
-  else if(c== 'A')
+  else if (c == 'A')
   { // Set ESPAX user
     espaxuser = val;
     textOutln("# ESPAX user set to: " + espaxuser);
   }
-  else if(c== 'a')
+  else if (c == 'a')
   { // Set ESPAX password
     espaxpass = val;
     textOutln("# ESPAX password set");
   }
   else if (c == 'i' || c == 'I')
-  { // Enable or disable ESPAX connection
+  {               // Enable or disable ESPAX connection
     if (c == 'i') // Disable
     {
       espaxon = false;
-     
+
       textOutln("# ESPAX connection disabled");
     }
     else // Enable
     {
       espaxon = true;
-     
+
       textOutln("# ESPAX connection enabled");
     }
   }
