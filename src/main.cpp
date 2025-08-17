@@ -1796,7 +1796,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   { // clear log buffer
     clearLog();
   }
-  else if (cmd == "sendespaxcall")
+  else if (cmd == "xcall")
   { // Send ESPAX data
     if (espaxon)
     {
@@ -1929,7 +1929,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# v|V - Disable or enable display heartbeat");
     textOutln("# q|Q - Disable or enable display update on TFT");
     textOutln("# clr - Clear log buffer");
-    textOutln("# sendespaxcall - Send ESPAX data");
+    textOutln("# xcall - Send ESPAX data");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
