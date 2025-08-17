@@ -1796,6 +1796,69 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   { // clear log buffer
     clearLog();
   }
+  else if (cmd == "sendespaxcall")
+  { // Send ESPAX data
+    if (espaxon)
+    {
+      textOutln("# Sending ESPAX data...");
+      // Example call, replace with actual data
+      sendCall("1002", "1900", "Test mit Delay Wiederholungen", "Standard", "Phone", 0, 1);
+    }
+    else
+    {
+      textOutln("# ESPAX connection is disabled, cannot send data");
+    }
+  }
+  else if (c == 'I' || c == 'i')
+  { // Enable/Disable ESPAX connection
+    if (c == 'I')
+    {
+      espaxon = true;
+      textOutln("# ESPAX connection enabled");
+    }
+    else
+    {
+      espaxon = false;
+      textOutln("# ESPAX connection disabled");
+    }
+  }
+  else if (c == 'G')
+  { // Set ESPAX server IP
+    espaxserverIP = val;
+    textOutln("# ESPAX server set to: " + espaxserverIP);
+  }
+  else if (c == 'g')
+  { // Set ESPAX server port
+    espaxserverPort = val.toInt();
+    textOutln("# ESPAX server port set to: " + String(espaxserverPort));
+  }
+  else if (c == 'A')
+  { // Set ESPAX user
+    espaxuser = val;
+    textOutln("# ESPAX user set to: " + espaxuser);
+  }
+  else if (c == 'a')
+  { // Set ESPAX password
+    espaxpass = val;
+    textOutln("# ESPAX password set");
+  }
+  else if (c == 'j' || c == 'J')
+  { // Enable/Disable MQTT connection
+    if (c == 'j')
+    {
+      mqttON = true;
+      textOutln("# MQTT connection enabled");
+    }
+    else
+    {
+      mqttON = false;
+      textOutln("# MQTT connection disabled");
+    }
+  }
+  else if (c == 'C')
+  { // clear log buffer
+    clearLog();
+  }
   else if (c == 'D')
   { // Debug mode on
     outputLevel = val.toInt();
@@ -1866,6 +1929,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# v|V - Disable or enable display heartbeat");
     textOutln("# q|Q - Disable or enable display update on TFT");
     textOutln("# clr - Clear log buffer");
+    textOutln("# sendespaxcall - Send ESPAX data");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
