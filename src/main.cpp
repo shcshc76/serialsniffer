@@ -17,6 +17,7 @@
 #include <SPI.h>
 #include <IRremote.h>
 #include <PubSubClient.h>
+#include "time.h"
 
 // TFT_eSPI settings
 SPIClass hspi = SPIClass(HSPI);
@@ -103,6 +104,29 @@ PubSubClient mqttclient(espClient);
 bool mqttON = false; // MQTT nutzen
 TaskHandle_t mqttTaskHandle;
 
+// ESPAX
+bool espaxon = false; // ESPAX nutzen
+WiFiClient espaxclient;
+#define MAGIC 0x4558
+const uint8_t FLAGS[4] = {0x00, 0x00, 0x02, 0x2a};
+String espaxserverIP = "ESPAX_SERVER";
+int espaxserverPort = 2023;
+String sessionID = "";
+String espaxuser = "ESPAX_USER"; // ESPAX User
+String espaxpass = "ESPAX_PASS"; // ESPAX Password
+unsigned long lastLoginAttempt = 0;
+const unsigned long loginRetryInterval = 60000; // 60 Sekunden
+// Invoke-ID Zähler
+uint32_t invokeCounter = 0;
+// Heartbeat
+unsigned long lastHeartbeat = 0;
+const unsigned long heartbeatInterval = 50000; // 50 Sekunden
+
+// NTP Server
+const char *ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = 0;     // falls UTC
+const int daylightOffset_sec = 0; // Sommerzeit-Anpassung falls nötig
+
 // 🔹 Syslog Server Settings (Replace with your server IP)
 String syslog_ip = "SYSLOG_IP"; // Syslog Server IP
 const int syslog_port = 514;    // Default UDP Syslog port
@@ -139,6 +163,311 @@ void displayMessage(String message);        // Display message on OLED
 void clearLog();                            // Clear the log buffer
 void reconnectMQTT();                       // Reconnect to MQTT broker
 void textOutln(String text, uint8_t level); // Output text with newline
+
+// ---- Hilfsfunktionen Time ----
+String getTimestamp()
+{
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo))
+  {
+    Serial.println("Zeit nicht verfügbar");
+    return "1970-01-01T00:00:00";
+  }
+  char buf[25];
+  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &timeinfo);
+  return String(buf);
+}
+
+String getInvokeID() // Generate a unique Invoke ID for each command
+{
+  return String(invokeCounter++);
+}
+
+// ---- Sende ESPA-X Nachricht ----
+void sendMessage(const String &xml)
+{
+  size_t xmlLen = xml.length();
+  uint32_t totalLen = 10 + xmlLen;
+
+  uint8_t header[10];
+  header[0] = (MAGIC >> 8) & 0xFF;
+  header[1] = MAGIC & 0xFF;
+  header[2] = (totalLen >> 24) & 0xFF;
+  header[3] = (totalLen >> 16) & 0xFF;
+  header[4] = (totalLen >> 8) & 0xFF;
+  header[5] = totalLen & 0xFF;
+  memcpy(header + 6, FLAGS, 4);
+
+  // Senden: erst Header, dann XML
+  espaxclient.write(header, 10);
+  espaxclient.write((const uint8_t *)xml.c_str(), xmlLen);
+  espaxclient.flush();
+
+  Serial.printf("Gesendet: %u Bytes (Header + %u Bytes XML)\n", totalLen, xmlLen);
+}
+
+// ---- ESPAX Login ----
+void sendLogin()
+{
+  String xml =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+      "<ESPA-X version=\"1.00\" timestamp=\"" +
+      getTimestamp() + "\">\n"
+                       "  <REQ.LOGIN invokeID=\"" +
+      getInvokeID() + "\">\n"
+                      "    <LI-CLIENT>SerialSniffer</LI-CLIENT>\n"
+                      "    <LI-CLIENTSW>SN_V0.1.0</LI-CLIENTSW>\n"
+                      "    <LI-USER>" +
+      espaxuser + "</LI-USER>\n"
+             "    <LI-PASSWORD>" +
+      espaxpass + "</LI-PASSWORD>\n"
+             "  </REQ.LOGIN>\n"
+             "</ESPA-X>";
+
+  sendMessage(xml);
+}
+
+// ---- ESPAX Nach Login ----
+void sendSCondition()
+{
+  String xml =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+      "<ESPA-X version=\"1.00\" timestamp=\"" +
+      getTimestamp() + "\">\n"
+                       "  <REQ.S-CONDITION invokeID=\"" +
+      getInvokeID() + "\" sessionID=\"" + sessionID + "\"/>\n"
+                                                      "</ESPA-X>";
+
+  sendMessage(xml);
+}
+
+// ---- ESPAX Heartbeat ----
+void sendHeartbeat()
+{
+  String xml =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+      "<ESPA-X version=\"1.00\" timestamp=\"" +
+      getTimestamp() + "\">\n"
+                       "  <REQ.HEARTBEAT invokeID=\"" +
+      getInvokeID() + "\" sessionID=\"" + sessionID + "\"/>\n"
+                                                      "</ESPA-X>";
+
+  sendMessage(xml);
+  Serial.println("Heartbeat gesendet");
+}
+
+// ---- ESPAX PREF generieren ----
+String createPRRef()
+{
+  char buf[32];
+  snprintf(buf, sizeof(buf), "%lu-%u", millis(), random(1000, 9999));
+  return String(buf);
+}
+
+void sendCall(const String &groupID,
+              const String &callingNo,
+              const String &textMsg,
+              const String &prio,
+              const String &callback,
+              int delaySec,
+              int attempts)
+{
+  /*
+ <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+"<ESPA-X version=\"1.00\" xmlns=\"http://ns.espa-x.org/espa-x\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://ns.espa-x.org/espa-x http://schema.espa-x.org/espa-x100.xsd\" timestamp=\"2025-08-15T12:21:11\">\n"
+"  <REQ.P-START invokeID=\"5\" sessionID=\"20250815142057192.168.1.045904\">\n"
+"    <CP-PR-REF>3vdmsafkmecsrjdx</CP-PR-REF>\n"
+"    <CP-PHONENO/>\n"
+"    <CP-GROUPID>1002</CP-GROUPID>\n"
+"    <CP-CALLINGNO>1900</CP-CALLINGNO>\n"
+"    <CP-CALLINGNAME/>\n"
+"    <CP-TEXTMSG>Test Rundruf von Daniel per ESPA-X</CP-TEXTMSG>\n"
+"    <CP-WARD/>\n"
+"    <CP-BED/>\n"
+"    <CP-SIGNAL>Standard</CP-SIGNAL>\n"
+"    <CP-CALLBACK>Phone</CP-CALLBACK>\n"
+"    <CP-DELAY>0</CP-DELAY>\n"
+"    <CP-ATTEMPTS>1</CP-ATTEMPTS>\n"
+"    <CP-PRIO>Standard</CP-PRIO>\n"
+"    <CP-CBCKNO>1900</CP-CBCKNO>\n"
+"    <CP-NCIFNO/>\n"
+"    <CP-PR-DETAILS>All</CP-PR-DETAILS>\n"
+"    <PROPRIETARY>\n"
+"      <DAKS_ESPA-X version=\"1.14\" xmlns=\"http://ns.tetronik.com/DAKS_ESPA-X\" xsi:schemaLocation=\"http://ns.tetronik.com/DAKS_ESPA-X http://schema.tetronik.com/DAKS/DAKS_ESPA-X114.xsd\">\n"
+"        <START1>\n"
+"          <SA-ANNIDS/>\n"
+"          <CONFIRMATION/>\n"
+"          <SGL_CONNTYPE/>\n"
+"        </START1>\n"
+"      </DAKS_ESPA-X>\n"
+"    </PROPRIETARY>\n"
+"  </REQ.P-START>\n"
+"</ESPA-X>
+  */
+  String xml =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+      "<ESPA-X version=\"1.00\" xmlns=\"http://ns.espa-x.org/espa-x\" "
+      "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+      "xsi:schemaLocation=\"http://ns.espa-x.org/espa-x http://schema.espa-x.org/espa-x100.xsd\" "
+      "timestamp=\"" +
+      getTimestamp() + "\">\n"
+                       "  <REQ.P-START invokeID=\"" +
+      getInvokeID() + "\" sessionID=\"" + sessionID + "\">\n"
+                                                      "    <CP-PR-REF>" +
+      createPRRef() + "</CP-PR-REF>\n"
+                      "    <CP-PHONENO/>\n"
+                      "    <CP-GROUPID>" +
+      groupID + "</CP-GROUPID>\n"
+                "    <CP-CALLINGNO>" +
+      callingNo + "</CP-CALLINGNO>\n"
+                  "    <CP-CALLINGNAME/>\n"
+                  "    <CP-TEXTMSG>" +
+      textMsg + "</CP-TEXTMSG>\n"
+                "    <CP-WARD/>\n"
+                "    <CP-BED/>\n"
+                "    <CP-SIGNAL>Standard</CP-SIGNAL>\n"
+                "    <CP-CALLBACK>" +
+      callback + "</CP-CALLBACK>\n"
+                 "    <CP-DELAY>" +
+      String(delaySec) + "</CP-DELAY>\n"
+                         "    <CP-ATTEMPTS>" +
+      String(attempts) + "</CP-ATTEMPTS>\n"
+                         "    <CP-PRIO>" +
+      prio + "</CP-PRIO>\n"
+             "    <CP-CBCKNO>" +
+      callingNo + "</CP-CBCKNO>\n"
+                  "    <CP-NCIFNO/>\n"
+                  "    <CP-PR-DETAILS>All</CP-PR-DETAILS>\n"
+                  "    <PROPRIETARY>\n"
+                  "      <DAKS_ESPA-X version=\"1.14\" xmlns=\"http://ns.tetronik.com/DAKS_ESPA-X\" "
+                  "xsi:schemaLocation=\"http://ns.tetronik.com/DAKS_ESPA-X http://schema.tetronik.com/DAKS/DAKS_ESPA-X114.xsd\">\n"
+                  "        <START1>\n"
+                  "          <SA-ANNIDS/>\n"
+                  "          <CONFIRMATION/>\n"
+                  "          <SGL_CONNTYPE/>\n"
+                  "        </START1>\n"
+                  "      </DAKS_ESPA-X>\n"
+                  "    </PROPRIETARY>\n"
+                  "  </REQ.P-START>\n"
+                  "</ESPA-X>";
+
+  sendMessage(xml);
+  Serial.println("Call durchgeführt");
+}
+
+// ---- ESPAX SessionID extrahieren ----
+String extractSessionID(const String &resp)
+{
+  const String key = "sessionID=\"";
+  int pos = resp.indexOf(key);
+  if (pos < 0)
+    return "";
+  pos += key.length();
+  int endPos = resp.indexOf("\"", pos);
+  if (endPos < 0)
+    return "";
+  return resp.substring(pos, endPos);
+}
+
+// ---- Antwort lesen ----
+String readXMLResponse(unsigned long timeoutMs = 5000)
+{
+  unsigned long start = millis();
+
+  uint8_t header[10];
+  int readBytes = 0;
+
+  // --- Header lesen (10 Bytes) ---
+  while (readBytes < 10 && (millis() - start < timeoutMs))
+  {
+    if (espaxclient.available())
+    {
+      header[readBytes++] = espaxclient.read();
+    }
+  }
+
+  if (readBytes < 10)
+  {
+    Serial.println("Fehler: Timeout beim Header-Lesen");
+    return "";
+  }
+
+  // --- Länge extrahieren ---
+  uint32_t totalLen = ((uint32_t)header[2] << 24) |
+                      ((uint32_t)header[3] << 16) |
+                      ((uint32_t)header[4] << 8) |
+                      (uint32_t)header[5];
+
+  if (totalLen < 10)
+  {
+    Serial.println("Fehler: Ungültige Länge im Header");
+    return "";
+  }
+
+  uint32_t xmlLen = totalLen - 10;
+
+  // --- Rest (XML) lesen ---
+  String response = "";
+  response.reserve(xmlLen); // Speicher reservieren (optimiert)
+
+  uint32_t received = 0;
+  while (received < xmlLen && (millis() - start < timeoutMs))
+  {
+    while (espaxclient.available() && received < xmlLen)
+    {
+      char c = espaxclient.read();
+      response += c;
+      received++;
+    }
+  }
+
+  if (received < xmlLen)
+  {
+    Serial.printf("Fehler: Timeout beim XML-Lesen (%u/%u Bytes)\n", received, xmlLen);
+    return "";
+  }
+
+  return response;
+}
+
+// ---- Verbindung zum ESPAX Server sicherstellen ----
+bool ensureConnected()
+{
+  if (espaxclient.connected())
+    return true;
+
+  Serial.println("Verbindung zum Server verloren. Versuche Reconnect...");
+
+  if (!espaxclient.connect(espaxserverIP.c_str(), espaxserverPort))
+  {
+    Serial.println("Reconnect fehlgeschlagen");
+    return false;
+  }
+
+  Serial.println("Erneut mit Server verbunden");
+  return true;
+}
+
+// ---- ESPAX Login-Prozess durchführen ----
+bool doLogin()
+{
+  sendLogin();
+  String loginresponse = readXMLResponse();
+  Serial.println("Login-Antwort:");
+  Serial.println(loginresponse);
+
+  sessionID = extractSessionID(loginresponse);
+  Serial.println("SessionID: " + sessionID);
+
+  if (sessionID.length() > 0)
+  {
+    sendSCondition();
+    Serial.println("sendSCondition-Antwort:");
+    Serial.println(readXMLResponse());
+    return true;
+  }
+  return false;
+}
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
@@ -286,7 +615,7 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
   // === MQTT JSON DATA ===
   if (mqttON && mqttclient.connected())
   {
-    if (outBuffer.indexOf("<SOH>")>-1 && lastJsonString != "{}")
+    if (outBuffer.indexOf("<SOH>") > -1 && lastJsonString != "{}")
     {
       const size_t capacity = 1024;
       DynamicJsonDocument doc(capacity);
@@ -414,6 +743,11 @@ void saveSerialConfig() // Save alle Data
   prefs.putString("mqttuser", mqttUser);
   prefs.putString("mqttpass", mqttPass);
   prefs.putBool("mqtton", mqttON);
+  prefs.putString("espax_server", espaxserverIP);
+  prefs.putInt("espax_port", espaxserverPort);
+  prefs.putString("espax_user", espaxuser);
+  prefs.putString("espax_pass", espaxpass);
+  prefs.putBool("espaxon", espaxon);
   prefs.end();
   textOutln("# Config saved");
 }
@@ -445,6 +779,11 @@ bool loadSerialConfig() // Load saved config
   mqttUser = prefs.getString("mqttuser", "MQTT_USER");
   mqttPass = prefs.getString("mqttpass", "MQTT_PASS");
   mqttON = prefs.getBool("mqtton", false);
+  espaxserverIP = prefs.getString("espax_server", "ESPAX_SERVER");
+  espaxserverPort = prefs.getInt("espax_port", 2023);
+  espaxuser = prefs.getString("espax_user", "ESPAX_USER");
+  espaxpass = prefs.getString("espax_pass", "ESPAX_PASS");
+  espaxon = prefs.getBool("espaxon", false);
   prefs.end();
   textOutln("# Saved config restored");
   return true;
@@ -698,6 +1037,9 @@ void startWebserver() // Start the web server
   status += "\nMQTT Server: " + mqttServer + ":" + String(mqttPort);
   status += "\nMQTT User: " + mqttUser;
   status += "\nMQTT ON: " + String(mqttON ? "Enabled" : "Disabled");
+  status += "\nESPAX Server: " + espaxserverIP + ":" + String(espaxserverPort);
+  status += "\nESPAX User: " + espaxuser;
+  status += "\nESPAX ON: " + String(espaxon ? "Enabled" : "Disabled");
   status += "\nNTP Time: " + getDateTimeString();
   status += "\nOutput Level: " + String(outputLevel);
   status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
@@ -924,7 +1266,8 @@ String parseRawData(const String &rawData)
   JsonArray records = doc["records"].to<JsonArray>();
 
   // Hilfsfunktion zum Parsen eines einzelnen Records
-  auto parseRecord = [&](const String &recordStr) {
+  auto parseRecord = [&](const String &recordStr)
+  {
     int usIndex = recordStr.indexOf(US);
     String field0 = (usIndex != -1) ? recordStr.substring(0, usIndex) : recordStr;
     String field1 = (usIndex != -1) ? recordStr.substring(usIndex + 1) : "";
@@ -962,7 +1305,6 @@ String parseRawData(const String &rawData)
 
   return output;
 }
-
 
 void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer with time, type, HEX and ASCII representation
 {
@@ -1371,6 +1713,8 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln();
     textOutln("# MQTT Server: " + mqttServer + ", Port: " + String(mqttPort) + ", User: " + mqttUser);
     textOutln();
+    textOut("# ESPAX Server: " + espaxserverIP + ", Port: " + String(espaxserverPort) + ", User: " + espaxuser);
+    textOutln();
     textOut("# Debug Level: " + String(outputLevel) + ", ");
     textOut("Timeout: " + String(timeout) + " ms, ");
     textOut("EOL Detection: " + String(eolDetect ? "Enabled" : "Disabled"));
@@ -1513,6 +1857,11 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# K<MQTT_User> - Set mqtt user (e.g., KMyMQTTUser)");
     textOutln("# k<MQTT_Pass> - Set mqtt password (e.g., kMyMQTTPass)");
     textOutln("# j|J - Disable or enable MQTT connection");
+    textOutln("# G<ESPAX_Server> - Set ESPAX server target (e.g., GMyESPAXServer)");
+    textOutln("# g<ESPAX_Port> - Set ESPAX server port (e.g., g2023)");
+    textOutln("# A<ESPAX_User> - Set ESPAX user (e.g., AMyESPAXUser)");
+    textOutln("# a<ESPAX_Pass> - Set ESPAX password (e.g., aMyESPAXPass)");
+    textOutln("# i|I - Disable or enable ESPAX connection");    
     textOutln("# z|Z - Disable or enable RX simulation");
     textOutln("# v|V - Disable or enable display heartbeat");
     textOutln("# q|Q - Disable or enable display update on TFT");
@@ -1573,6 +1922,41 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       mqttON = false;
       vTaskSuspend(mqttTaskHandle);
       textOutln("# MQTT connection disabled");
+    }
+  }
+  else if(c== 'G')
+  { // Set ESPAX server
+    espaxserverIP = val;
+    textOutln("# ESPAX server set to: " + espaxserverIP);
+  }
+  else if(c== 'g')
+  { // Set ESPAX port
+    espaxserverPort = val.toInt();
+    textOutln("# ESPAX port set to: " + String(espaxserverPort));
+  }
+  else if(c== 'A')
+  { // Set ESPAX user
+    espaxuser = val;
+    textOutln("# ESPAX user set to: " + espaxuser);
+  }
+  else if(c== 'a')
+  { // Set ESPAX password
+    espaxpass = val;
+    textOutln("# ESPAX password set");
+  }
+  else if (c == 'i' || c == 'I')
+  { // Enable or disable ESPAX connection
+    if (c == 'i') // Disable
+    {
+      espaxon = false;
+     
+      textOutln("# ESPAX connection disabled");
+    }
+    else // Enable
+    {
+      espaxon = true;
+     
+      textOutln("# ESPAX connection enabled");
     }
   }
   else
@@ -1765,6 +2149,41 @@ void setup()
 
   textOutln("## IP:" + IP.toString(), 2);
 
+  if (wifiConnected)
+  {
+    // NTP initialisieren
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    Serial.println("Warte auf Zeit-Sync...");
+    struct tm timeinfo;
+    while (!getLocalTime(&timeinfo))
+    {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("\nZeit synchronisiert: " + getTimestamp());
+
+    if (espaxon)
+    {
+      if (!espaxclient.connect(espaxserverIP.c_str(), espaxserverPort))
+      {
+        Serial.println("Verbindung zum Server fehlgeschlagen");
+        while (true)
+          delay(1000);
+      }
+      Serial.println("Verbunden zum Server");
+
+      if (!ensureConnected())
+      {
+        Serial.println("Initiale Verbindung fehlgeschlagen, wird später erneut versucht");
+      }
+      else if (!doLogin())
+      {
+        Serial.println("Login fehlgeschlagen – wird später erneut versucht");
+      }
+      lastLoginAttempt = millis();
+    }
+  }
+
   tft.init();
   // tft.setRotation(2);
   tftOk = true;
@@ -1835,17 +2254,17 @@ void handleSerial( // Handle incoming serial data for RX and TX
 // =================== IR-Befehls-Tabelle ===================
 struct IRCommandEntry
 {
-  uint8_t command;       // IR Command Code
-  bool usesToggle;       // Toggle-Bit auswerten?
-  const char *cmdOn;     // Befehl bei Toggle=0
-  const char *cmdOff;    // Befehl bei Toggle=1
-  const char *message;   // Nur Nachricht anzeigen (optional)
+  uint8_t command;     // IR Command Code
+  bool usesToggle;     // Toggle-Bit auswerten?
+  const char *cmdOn;   // Befehl bei Toggle=0
+  const char *cmdOff;  // Befehl bei Toggle=1
+  const char *message; // Nur Nachricht anzeigen (optional)
 };
 
 IRCommandEntry irCommands[] = {
-    {0x1, true, "Z", "z", nullptr}, // RX simulation
-    {0x2, true, "V", "v", nullptr}, // Heartbeat
-    {0x3, true, "Q", "q", nullptr}, // TFT update
+    {0x1, true, "Z", "z", nullptr},        // RX simulation
+    {0x2, true, "V", "v", nullptr},        // Heartbeat
+    {0x3, true, "Q", "q", nullptr},        // TFT update
     {0x7, false, "clr", nullptr, nullptr}, // Clear log
     {0x8, false, "S", nullptr, nullptr},   // Save config
     {0x9, true, "J", "j", nullptr},        // MQTT
@@ -1853,7 +2272,6 @@ IRCommandEntry irCommands[] = {
     {0x0, false, nullptr, nullptr,
      "# 1 RX Simulation\n  2 Display heartbeat\n  3 TFT Update\n  7 Clear LOG\n  8 Save config\n  9 enable mqtt\n ON Restart device"} // Menü
 };
-
 
 // =================== Wi-Fi ===================
 void handleWiFi()
@@ -1951,8 +2369,6 @@ void handleIRRemote()
   processIRCommandTable(IrReceiver.decodedIRData.command, IrReceiver.decodedIRData.flags);
 }
 
-
-
 // =================== Display Handling ===================
 void handleDisplayClear()
 {
@@ -2015,6 +2431,50 @@ void handleSerialBuffers()
   handleSerial(SerialTX, "TX", txBuf, txLen, txLast);
 }
 
+void handleespax()
+{
+  unsigned long now = millis();
+  // Verbindung prüfen
+  if (!espaxclient.connected())
+  {
+    if (now - lastLoginAttempt >= loginRetryInterval)
+    {
+      if (ensureConnected())
+      {
+        if (!doLogin())
+        {
+          Serial.println("Login nach Reconnect fehlgeschlagen");
+        }
+      }
+      lastLoginAttempt = now;
+    }
+    return; // nichts weiter machen, solange nicht verbunden
+  }
+
+  // Falls Session verloren oder nie erfolgreich, alle 60s neuen Versuch starten
+  if (sessionID.length() == 0 && (now - lastLoginAttempt >= loginRetryInterval))
+  {
+    Serial.println("Versuche erneuten Login...");
+    if (!doLogin())
+    {
+      Serial.println("Login erneut fehlgeschlagen");
+    }
+    lastLoginAttempt = now;
+  }
+
+  if (espaxclient.connected() && sessionID.length() > 0)
+  {
+
+    if (now - lastHeartbeat >= heartbeatInterval)
+    {
+      sendHeartbeat();
+
+      Serial.println("sendHeartbeat-Antwort:");
+      Serial.println(readXMLResponse());
+      lastHeartbeat = now;
+    }
+  }
+}
 
 // =================== LOOP ===================
 void loop()
@@ -2027,4 +2487,6 @@ void loop()
   handleRxSimulation();
   handleHeartbeatSimulation();
   handleSerialBuffers();
+  if (espaxon && wifiConnected) // Nur wenn ESPAX aktiv
+    handleespax();
 }
