@@ -1646,7 +1646,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   }
   else if (c == 'j' || c == 'J')
   { // Enable/Disable MQTT connection
-    if (c == 'j')
+    if (c == 'J')
     {
       mqttON = true;
       textOutln("# MQTT connection enabled");
