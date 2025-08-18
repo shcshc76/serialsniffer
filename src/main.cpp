@@ -2547,12 +2547,12 @@ void loop()
 {
   handleWiFi();
   handleTimeUpdate();
-  handleSerialInput();
-  handleIRRemote();
-  handleDisplayClear();
   handleRxSimulation();
   handleHeartbeatSimulation();
   handleSerialBuffers();
   if (espaxon && wifiConnected) // Nur wenn ESPAX aktiv
     handleespax();
+  handleSerialInput();
+  handleIRRemote();
+  handleDisplayClear();
 }
