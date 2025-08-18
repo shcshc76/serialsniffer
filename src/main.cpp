@@ -1224,9 +1224,12 @@ String symbolicToControlChars(const String &input) // Convert symbolic control c
 
 String parseRawData(const String &rawData)
 {
-  StaticJsonDocument<1024> doc;
+  // Dynamisch alloziertes JSON-Dokument
+  DynamicJsonDocument doc(2048);  // Größe je nach erwarteten Daten anpassen
 
-  // SOH finden
+  //
+  // --- SOH prüfen ---
+  //
   int sohIndex = rawData.indexOf((char)SOH);
   if (sohIndex == -1 || sohIndex + 1 >= rawData.length())
   {
@@ -1236,11 +1239,13 @@ String parseRawData(const String &rawData)
   String sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
   String sohDesc = decodeSOH(sohCode);
 
-  doc["datetime"] = getDateTimeString();
-  doc["SOH_code"] = sohCode;
+  doc["datetime"]        = getDateTimeString();
+  doc["SOH_code"]        = sohCode;
   doc["SOH_description"] = sohDesc;
 
-  // Richtung
+  //
+  // --- Richtung bestimmen ---
+  //
   if (rawData.indexOf("RX") != -1)
     doc["direction"] = "RX";
   else if (rawData.indexOf("TX") != -1)
@@ -1248,63 +1253,78 @@ String parseRawData(const String &rawData)
   else
     doc["direction"] = "unknown";
 
-  // STX / ETX prüfen
+  //
+  // --- STX / ETX prüfen ---
+  //
   int stxIndex = rawData.indexOf((char)STX);
   int etxIndex = rawData.indexOf((char)ETX);
+
   if (stxIndex == -1 || etxIndex == -1 || etxIndex <= stxIndex)
   {
     doc["error"] = "STX/ETX not found or invalid positions";
+
     String output;
     serializeJson(doc, output);
     return output;
   }
 
-  // Inhalt zwischen STX und ETX
+  //
+  // --- Inhalt extrahieren ---
+  //
   String content = rawData.substring(stxIndex + 1, etxIndex);
 
-  // Records-Array anlegen (neue ArduinoJson 7 Methode)
+  // Array für Records anlegen
   JsonArray records = doc["records"].to<JsonArray>();
 
-  // Hilfsfunktion zum Parsen eines einzelnen Records
+  //
+  // --- Hilfsfunktion für Record-Parsing ---
+  //
   auto parseRecord = [&](const String &recordStr)
   {
-    int usIndex = recordStr.indexOf(US);
+    int usIndex   = recordStr.indexOf(US);
     String field0 = (usIndex != -1) ? recordStr.substring(0, usIndex) : recordStr;
     String field1 = (usIndex != -1) ? recordStr.substring(usIndex + 1) : "";
 
     JsonObject rec = records.add<JsonObject>();
     rec["Data Identifier"] = field0;
 
-    String decodedType = decodeField0(field0);
-    rec["Record type"] = decodedType.length() > 0 ? decodedType : "Unknown";
-    rec["Data"] = field1;
+    String decodedType     = decodeField0(field0);
+    rec["Record type"]     = decodedType.length() > 0 ? decodedType : "Unknown";
+    rec["Data"]            = field1;
   };
 
-  // Records per RS trennen
-  int start = 0;
-  int rsIndex;
+  //
+  // --- Records zerlegen (per RS) ---
+  //
+  int start   = 0;
+  int rsIndex = 0;
+
   while ((rsIndex = content.indexOf(RS, start)) != -1)
   {
     parseRecord(content.substring(start, rsIndex));
     start = rsIndex + 1;
   }
 
-  // Letzter Record
+  // Letzten Record hinzufügen
   parseRecord(content.substring(start));
 
-  // Anzahl der Records
+  //
+  // --- Metadaten ergänzen ---
+  //
   doc["record_count"] = records.size();
 
-  // JSON serialisieren
+  //
+  // --- JSON serialisieren ---
+  //
   String output;
   serializeJson(doc, output);
 
-  // Letzte JSON sichern
   if (records.size() > 0)
     lastJsonString = output;
 
   return output;
 }
+
 
 void printBuffer(const char *type, uint8_t *buf, size_t len)
 {
@@ -1380,7 +1400,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   textOutln(line, 0);
 
   // JSON-Ausgabe, falls Daten erkannt werden
-  String json = parseRawData(symbolicToControlChars(line));
+  String json = parseRawData(symbolicToControlChars(line)); // JSON parsing and storing
   if (json.endsWith("}]}"))
     textOutln("# JSON: " + json, 2);
 }
