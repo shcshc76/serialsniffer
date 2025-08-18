@@ -2285,37 +2285,47 @@ void setup()
   );
 }
 
-void handleSerial( // Handle incoming serial data for RX and TX
+void handleSerial(
     HardwareSerial &serial,
     const char *type,
     uint8_t *buf,
     size_t &len,
     unsigned long &last)
 {
-  while (serial.available())
-  {
-    char c = serial.read();
-    last = millis();
-
-    if (len == MON_BUF_SIZE - 2 || // Buffer is almost full
-        (eolDetect &&
-         len > 1 &&
-         (isEOLChar(buf[len - 1]) && !isEOLChar(c))))
+    while (serial.available() > 0)
     {
-      printBuffer(type, buf, len);
-      len = 0;
+        char c = serial.read();
+        last = millis();
+
+        bool bufferFull = (len >= MON_BUF_SIZE - 1); // leave room for terminator
+        bool eolDetected = (
+            eolDetect &&
+            len > 0 &&
+            isEOLChar(buf[len - 1]) &&
+            !isEOLChar(c));
+
+        // Flush buffer if full or if EOL boundary detected
+        if (bufferFull || eolDetected)
+        {
+            printBuffer(type, buf, len);
+            len = 0;
+        }
+
+        // Store character only if space remains
+        if (len < MON_BUF_SIZE)
+        {
+            buf[len++] = static_cast<uint8_t>(c);
+        }
     }
 
-    if (len < MON_BUF_SIZE)
-      buf[len++] = c;
-  }
-
-  if (len > 0 && (millis() - last > timeout))
-  {
-    printBuffer(type, buf, len);
-    len = 0;
-  }
+    // Timeout-based flush
+    if (len > 0 && (millis() - last >= timeout))
+    {
+        printBuffer(type, buf, len);
+        len = 0;
+    }
 }
+
 
 // =================== IR-Befehls-Tabelle ===================
 struct IRCommandEntry
