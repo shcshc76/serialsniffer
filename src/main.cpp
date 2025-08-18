@@ -1224,8 +1224,8 @@ String symbolicToControlChars(const String &input) // Convert symbolic control c
 
 String parseRawData(const String &rawData)
 {
-  // Dynamisch alloziertes JSON-Dokument
-  DynamicJsonDocument doc(2048);  // Größe je nach erwarteten Daten anpassen
+  // Neues API: nur noch JsonDocument
+  JsonDocument doc;
 
   //
   // --- SOH prüfen ---
@@ -1324,6 +1324,7 @@ String parseRawData(const String &rawData)
 
   return output;
 }
+
 
 
 void printBuffer(const char *type, uint8_t *buf, size_t len)
