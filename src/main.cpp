@@ -1306,305 +1306,85 @@ String parseRawData(const String &rawData)
   return output;
 }
 
-void printBuffer(const char *type, uint8_t *buf, size_t len) // Print buffer with time, type, HEX and ASCII representation
+void printBuffer(const char *type, uint8_t *buf, size_t len)
 {
-  // Print time and type
-  String line;
-  char code[8];
+  // Lookup-Tabelle für Steuerzeichen (C0 + C1)
+  static const char *controlCodes[256] = {
+      // C0 control codes (0x00–0x1F)
+      "<NUL>", "<SOH>", "<STX>", "<ETX>", "<EOT>", "<ENQ>", "<ACK>", "<BEL>", // 0x00–0x07
+      "<BS>",  "<HT>",  "<LF>",  "<VT>",  "<FF>",  "<CR>",  "<SO>",  "<SI>",  // 0x08–0x0F
+      "<DLE>", "<DC1>", "<DC2>", "<DC3>", "<DC4>", "<NAK>", "<SYN>", "<ETB>", // 0x10–0x17
+      "<CAN>", "<EM>",  "<SUB>", "<ESC>", "<FS>",  "<GS>",  "<RS>",  "<US>",  // 0x18–0x1F
 
-  line += getDateTimeString() + ';' + String(type) + ';';
+      // 0x20–0x7E: normale druckbare ASCII-Zeichen → handled separat
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x20–0x27
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x28–0x2F
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x30–0x37
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x38–0x3F
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x40–0x47
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x48–0x4F
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x50–0x57
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x58–0x5F
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x60–0x67
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x68–0x6F
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x70–0x77
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x78–0x7F
 
-  // Print HEX
-  for (size_t i = 0; i < len; i++)
-  {
-    if (i)
-      line += " ";
+      // DEL
+      "<DEL>",
+
+      // C1 control codes (0x80–0x9F)
+      "<PAD>", "<HOP>", "<BPH>", "<NBH>", "<IND>", "<NEL>", "<SSA>", "<ESA>", // 0x80–0x87
+      "<HTS>", "<HTJ>", "<VTS>", "<PLD>", "<PLU>", "<RI>",  "<SS2>", "<SS3>", // 0x88–0x8F
+      "<DCS>", "<PU1>", "<PU2>", "<STS>", "<CCH>", "<MW>",  "<SPA>", "<EPA>", // 0x90–0x97
+      "<SOS>", "<SGCI>","<SCI>", "<CSI>", "<ST>",  "<OSC>", "<PM>",  "<APC>", // 0x98–0x9F
+
+      // 0xA0–0xFF: druckbare/erweiterte Zeichen → separat behandelt
+      nullptr
+  };
+
+  // Zeitstempel + Typ
+  String line = getDateTimeString() + ';' + String(type) + ';';
+
+  // HEX-Ausgabe
+  for (size_t i = 0; i < len; i++) {
+    if (i) line += " ";
     appendHex(line, buf[i]);
   }
   line += ";";
-  // Print ASCII
-  for (size_t i = 0; i < len; i++)
-  {
-    if (buf[i] >= 32 && buf[i] <= 126)
-    {
-      line += (String((char)buf[i]));
-    }
-    else if (buf[i] >= 0xA0)
-    {
-      line += (String((char)buf[i]));
-    }
-    else if (buf[i] == 0x00)
-    {
-      line += ("<NUL>");
-    }
-    else if (buf[i] == 0x01)
-    {
-      line += ("<SOH>");
-    }
-    else if (buf[i] == 0x02)
-    {
-      line += ("<STX>");
-    }
-    else if (buf[i] == 0x03)
-    {
-      line += ("<ETX>");
-    }
-    else if (buf[i] == 0x04)
-    {
-      line += ("<EOT>");
-    }
-    else if (buf[i] == 0x05)
-    {
-      line += ("<ENQ>");
-    }
-    else if (buf[i] == 0x06)
-    {
-      line += ("<ACK>");
-    }
-    else if (buf[i] == 0x07)
-    {
-      line += ("<BEL>");
-    }
-    else if (buf[i] == 0x08)
-    {
-      line += ("<BS>");
-    }
-    else if (buf[i] == 0x09)
-    {
-      line += ("<HT>");
-    }
-    else if (buf[i] == 0x0A)
-    {
-      line += ("<LF>");
-    }
-    else if (buf[i] == 0x0B)
-    {
-      line += ("<VT>");
-    }
-    else if (buf[i] == 0x0C)
-    {
-      line += ("<FF>");
-    }
-    else if (buf[i] == 0x0D)
-    {
-      line += ("<CR>");
-    }
-    else if (buf[i] == 0x0E)
-    {
-      line += ("<SO>");
-    }
-    else if (buf[i] == 0x0F)
-    {
-      line += ("<SI>");
-    }
-    else if (buf[i] == 0x10)
-    {
-      line += ("<DLE>");
-    }
-    else if (buf[i] == 0x11)
-    {
-      line += ("<DC1>");
-    }
-    else if (buf[i] == 0x12)
-    {
-      line += ("<DC2>");
-    }
-    else if (buf[i] == 0x13)
-    {
-      line += ("<DC3>");
-    }
-    else if (buf[i] == 0x14)
-    {
-      line += ("<DC4>");
-    }
-    else if (buf[i] == 0x15)
-    {
-      line += ("<NAK>");
-    }
-    else if (buf[i] == 0x16)
-    {
-      line += ("<SYN>");
-    }
-    else if (buf[i] == 0x17)
-    {
-      line += ("<ETB>");
-    }
-    else if (buf[i] == 0x18)
-    {
-      line += ("<CAN>");
-    }
-    else if (buf[i] == 0x19)
-    {
-      line += ("<EM>");
-    }
-    else if (buf[i] == 0x1A)
-    {
-      line += ("<SUB>");
-    }
-    else if (buf[i] == 0x1B)
-    {
-      line += ("<ESC>");
-    }
-    else if (buf[i] == 0x1C)
-    {
-      line += ("<FS>");
-    }
-    else if (buf[i] == 0x1D)
-    {
-      line += ("<GS>");
-    }
-    else if (buf[i] == 0x1E)
-    {
-      line += ("<RS>");
-    }
-    else if (buf[i] == 0x1F)
-    {
-      line += ("<US>");
-    }
-    else if (buf[i] == 0x7F)
-    {
-      line += ("<DEL>");
-    }
-    else if (buf[i] == 0x80)
-    {
-      line += ("<PAD>");
-    }
-    else if (buf[i] == 0x81)
-    {
-      line += ("<HOP>");
-    }
-    else if (buf[i] == 0x82)
-    {
-      line += ("<BPH>");
-    }
-    else if (buf[i] == 0x83)
-    {
-      line += ("<NBH>");
-    }
-    else if (buf[i] == 0x84)
-    {
-      line += ("<IND>");
-    }
-    else if (buf[i] == 0x85)
-    {
-      line += ("<NEL>");
-    }
-    else if (buf[i] == 0x86)
-    {
-      line += ("<SSA>");
-    }
-    else if (buf[i] == 0x87)
-    {
-      line += ("<ESA>");
-    }
-    else if (buf[i] == 0x88)
-    {
-      line += ("<HTS>");
-    }
-    else if (buf[i] == 0x89)
-    {
-      line += ("<HTJ>");
-    }
-    else if (buf[i] == 0x8A)
-    {
-      line += ("<VTS>");
-    }
-    else if (buf[i] == 0x8B)
-    {
-      line += ("<PLD>");
-    }
-    else if (buf[i] == 0x8C)
-    {
-      line += ("<PLU>");
-    }
-    else if (buf[i] == 0x8D)
-    {
-      line += ("<RI>");
-    }
-    else if (buf[i] == 0x8E)
-    {
-      line += ("<SS2>");
-    }
-    else if (buf[i] == 0x8F)
-    {
-      line += ("<SS3>");
-    }
-    else if (buf[i] == 0x90)
-    {
-      line += ("<DCS>");
-    }
-    else if (buf[i] == 0x91)
-    {
-      line += ("<PU1>");
-    }
-    else if (buf[i] == 0x92)
-    {
-      line += ("<PU2>");
-    }
-    else if (buf[i] == 0x93)
-    {
-      line += ("<STS>");
-    }
-    else if (buf[i] == 0x94)
-    {
-      line += ("<CCH>");
-    }
-    else if (buf[i] == 0x95)
-    {
-      line += ("<MW>");
-    }
-    else if (buf[i] == 0x96)
-    {
-      line += ("<SPA>");
-    }
-    else if (buf[i] == 0x97)
-    {
-      line += ("<EPA>");
-    }
-    else if (buf[i] == 0x98)
-    {
-      line += ("<SOS>");
-    }
-    else if (buf[i] == 0x99)
-    {
-      line += ("<SGCI>");
-    }
-    else if (buf[i] == 0x9A)
-    {
-      line += ("<SCI>");
-    }
-    else if (buf[i] == 0x9B)
-    {
-      line += ("<CSI>");
-    }
-    else if (buf[i] == 0x9C)
-    {
-      line += ("<ST>");
-    }
-    else if (buf[i] == 0x9D)
-    {
-      line += ("<OSC>");
-    }
-    else if (buf[i] == 0x9E)
-    {
-      line += ("<PM>");
-    }
-    else if (buf[i] == 0x9F)
-    {
-      line += ("<APC>");
-    }
-    else
-    {
+
+  // ASCII / Symbolische Ausgabe
+  for (size_t i = 0; i < len; i++) {
+    uint8_t b = buf[i];
+    if (b >= 32 && b <= 126) {
+      // normale druckbare ASCII-Zeichen
+      line += (char)b;
+    }
+    else if (b >= 0xA0) {
+      // druckbare Erweiterung (Latin-1, UTF-8 etc.)
+      line += (char)b;
+    }
+    else if (controlCodes[b]) {
+      // bekannte Steuerzeichen aus Tabelle
+      line += controlCodes[b];
+    }
+    else {
+      // Fallback: Hex-Code in spitzen Klammern
       char code[8];
-      snprintf(code, sizeof(code), "<%02X>", buf[i]);
+      snprintf(code, sizeof(code), "<%02X>", b);
       line += code;
     }
   }
+
+  // Ausgabe
   textOutln(line, 0);
-  String json = parseRawData(symbolicToControlChars(line)); // Parse the line into JSON format
-  if (json.endsWith("}]}"))                                 // Only print JSON if records are present
+
+  // JSON-Ausgabe, falls Daten erkannt werden
+  String json = parseRawData(symbolicToControlChars(line));
+  if (json.endsWith("}]}"))
     textOutln("# JSON: " + json, 2);
 }
+
 
 void parseSerialCommand(String cmd) // Parse and execute serial commands
 {
