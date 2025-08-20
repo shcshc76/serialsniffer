@@ -1239,8 +1239,8 @@ String parseRawData(const String &rawData)
   String sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
   String sohDesc = decodeSOH(sohCode);
 
-  doc["datetime"]        = getDateTimeString();
-  doc["SOH_code"]        = sohCode;
+  doc["datetime"] = getDateTimeString();
+  doc["SOH_code"] = sohCode;
   doc["SOH_description"] = sohDesc;
 
   //
@@ -1281,22 +1281,22 @@ String parseRawData(const String &rawData)
   //
   auto parseRecord = [&](const String &recordStr)
   {
-    int usIndex   = recordStr.indexOf(US);
+    int usIndex = recordStr.indexOf(US);
     String field0 = (usIndex != -1) ? recordStr.substring(0, usIndex) : recordStr;
     String field1 = (usIndex != -1) ? recordStr.substring(usIndex + 1) : "";
 
     JsonObject rec = records.add<JsonObject>();
     rec["Data Identifier"] = field0;
 
-    String decodedType     = decodeField0(field0);
-    rec["Record type"]     = decodedType.length() > 0 ? decodedType : "Unknown";
-    rec["Data"]            = field1;
+    String decodedType = decodeField0(field0);
+    rec["Record type"] = decodedType.length() > 0 ? decodedType : "Unknown";
+    rec["Data"] = field1;
   };
 
   //
   // --- Records zerlegen (per RS) ---
   //
-  int start   = 0;
+  int start = 0;
   int rsIndex = 0;
 
   while ((rsIndex = content.indexOf(RS, start)) != -1)
@@ -1325,17 +1325,15 @@ String parseRawData(const String &rawData)
   return output;
 }
 
-
-
 void printBuffer(const char *type, uint8_t *buf, size_t len)
 {
   // Lookup-Tabelle für Steuerzeichen (C0 + C1)
   static const char *controlCodes[256] = {
       // C0 control codes (0x00–0x1F)
       "<NUL>", "<SOH>", "<STX>", "<ETX>", "<EOT>", "<ENQ>", "<ACK>", "<BEL>", // 0x00–0x07
-      "<BS>",  "<HT>",  "<LF>",  "<VT>",  "<FF>",  "<CR>",  "<SO>",  "<SI>",  // 0x08–0x0F
+      "<BS>", "<HT>", "<LF>", "<VT>", "<FF>", "<CR>", "<SO>", "<SI>",         // 0x08–0x0F
       "<DLE>", "<DC1>", "<DC2>", "<DC3>", "<DC4>", "<NAK>", "<SYN>", "<ETB>", // 0x10–0x17
-      "<CAN>", "<EM>",  "<SUB>", "<ESC>", "<FS>",  "<GS>",  "<RS>",  "<US>",  // 0x18–0x1F
+      "<CAN>", "<EM>", "<SUB>", "<ESC>", "<FS>", "<GS>", "<RS>", "<US>",      // 0x18–0x1F
 
       // 0x20–0x7E: normale druckbare ASCII-Zeichen → handled separat
       nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, // 0x20–0x27
@@ -1356,40 +1354,46 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
 
       // C1 control codes (0x80–0x9F)
       "<PAD>", "<HOP>", "<BPH>", "<NBH>", "<IND>", "<NEL>", "<SSA>", "<ESA>", // 0x80–0x87
-      "<HTS>", "<HTJ>", "<VTS>", "<PLD>", "<PLU>", "<RI>",  "<SS2>", "<SS3>", // 0x88–0x8F
-      "<DCS>", "<PU1>", "<PU2>", "<STS>", "<CCH>", "<MW>",  "<SPA>", "<EPA>", // 0x90–0x97
-      "<SOS>", "<SGCI>","<SCI>", "<CSI>", "<ST>",  "<OSC>", "<PM>",  "<APC>", // 0x98–0x9F
+      "<HTS>", "<HTJ>", "<VTS>", "<PLD>", "<PLU>", "<RI>", "<SS2>", "<SS3>",  // 0x88–0x8F
+      "<DCS>", "<PU1>", "<PU2>", "<STS>", "<CCH>", "<MW>", "<SPA>", "<EPA>",  // 0x90–0x97
+      "<SOS>", "<SGCI>", "<SCI>", "<CSI>", "<ST>", "<OSC>", "<PM>", "<APC>",  // 0x98–0x9F
 
       // 0xA0–0xFF: druckbare/erweiterte Zeichen → separat behandelt
-      nullptr
-  };
+      nullptr};
 
   // Zeitstempel + Typ
   String line = getDateTimeString() + ';' + String(type) + ';';
 
   // HEX-Ausgabe
-  for (size_t i = 0; i < len; i++) {
-    if (i) line += " ";
+  for (size_t i = 0; i < len; i++)
+  {
+    if (i)
+      line += " ";
     appendHex(line, buf[i]);
   }
   line += ";";
 
   // ASCII / Symbolische Ausgabe
-  for (size_t i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++)
+  {
     uint8_t b = buf[i];
-    if (b >= 32 && b <= 126) {
+    if (b >= 32 && b <= 126)
+    {
       // normale druckbare ASCII-Zeichen
       line += (char)b;
     }
-    else if (b >= 0xA0) {
+    else if (b >= 0xA0)
+    {
       // druckbare Erweiterung (Latin-1, UTF-8 etc.)
       line += (char)b;
     }
-    else if (controlCodes[b]) {
+    else if (controlCodes[b])
+    {
       // bekannte Steuerzeichen aus Tabelle
       line += controlCodes[b];
     }
-    else {
+    else
+    {
       // Fallback: Hex-Code in spitzen Klammern
       char code[8];
       snprintf(code, sizeof(code), "<%02X>", b);
@@ -1405,7 +1409,6 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   if (json.endsWith("}]}"))
     textOutln("# JSON: " + json, 2);
 }
-
 
 void parseSerialCommand(String cmd) // Parse and execute serial commands
 {
@@ -1979,8 +1982,12 @@ void setup()
 {
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
-                        // Initialize OLED display
-  Wire.begin(7, 8);     // SDA, SCL pins for I2C
+  
+  pinMode(LED_BUILTIN, OUTPUT); // Built-in LED pin
+  analogWrite(LED_BUILTIN, 255);  // Turn off built-in LED
+
+  // Initialize OLED display
+  Wire.begin(7, 8);             // SDA, SCL pins for I2C
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // 0x3C ist die Standard-I2C-Adresse
     Serial.println("SSD1306-Initialisierung fehlgeschlagen");
@@ -2093,40 +2100,38 @@ void handleSerial(
     size_t &len,
     unsigned long &last)
 {
-    while (serial.available() > 0)
+  while (serial.available() > 0)
+  {
+    char c = serial.read();
+    last = millis();
+
+    bool bufferFull = (len >= MON_BUF_SIZE - 1); // leave room for terminator
+    bool eolDetected = (eolDetect &&
+                        len > 0 &&
+                        isEOLChar(buf[len - 1]) &&
+                        !isEOLChar(c));
+
+    // Flush buffer if full or if EOL boundary detected
+    if (bufferFull || eolDetected)
     {
-        char c = serial.read();
-        last = millis();
-
-        bool bufferFull = (len >= MON_BUF_SIZE - 1); // leave room for terminator
-        bool eolDetected = (
-            eolDetect &&
-            len > 0 &&
-            isEOLChar(buf[len - 1]) &&
-            !isEOLChar(c));
-
-        // Flush buffer if full or if EOL boundary detected
-        if (bufferFull || eolDetected)
-        {
-            printBuffer(type, buf, len);
-            len = 0;
-        }
-
-        // Store character only if space remains
-        if (len < MON_BUF_SIZE)
-        {
-            buf[len++] = static_cast<uint8_t>(c);
-        }
+      printBuffer(type, buf, len);
+      len = 0;
     }
 
-    // Timeout-based flush
-    if (len > 0 && (millis() - last >= timeout))
+    // Store character only if space remains
+    if (len < MON_BUF_SIZE)
     {
-        printBuffer(type, buf, len);
-        len = 0;
+      buf[len++] = static_cast<uint8_t>(c);
     }
+  }
+
+  // Timeout-based flush
+  if (len > 0 && (millis() - last >= timeout))
+  {
+    printBuffer(type, buf, len);
+    len = 0;
+  }
 }
-
 
 // =================== IR-Befehls-Tabelle ===================
 struct IRCommandEntry
