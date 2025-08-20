@@ -2003,8 +2003,8 @@ void setup()
   delay(5000);          // allow USB to initialize
 
   // Helligkeit des TFT-Backlights
-  pinMode(3, OUTPUT);       // Built-in LED pin
-  analogWrite(3, tftLight); // Turn off built-in LED
+  pinMode(3, OUTPUT);       // Pin 3 für Backlight
+  analogWrite(3, tftLight); // Set initial brightness
 
   // Initialize OLED display
   Wire.begin(7, 8); // SDA, SCL pins for I2C

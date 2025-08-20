@@ -82,30 +82,31 @@ Ti|TI          - Disable or enable TX pin inversion
 p              - Print current serial configuration
 f              - Flush RX and TX buffers
 r              - Reinitialize serial ports
-Y(ip)          - Set syslog IP (e.g., Y192.168.1.100)
+Y(ip)          - Set syslog IP (e.g., YMysyslogIP)
 U(url)         - Set HTTP target URL
 D(level)       - Set debug level (e.g. D1 for basic, D2 for verbose)
 t(timeout)     - Set timeout in ms (e.g., t1000)
-L              - Enable EOL detection
-l              - Disable EOL detection
+l|L            - Disable or enable EOL detection
 W(WLAN_SSID)   - Set WiFi SSID (e.g., WMyNetwork)
 w(WLAN_PASS)   - Set WiFi password (e.g., wMyPassword)
-M(MQTT_SERVER) - Set MQTT server (e.g., M192.168.1.50)
+M(MQTT_SERVER) - Set MQTT server (e.g., MMyMQTTServerIP)
 m(MQTT_PORT)   - Set MQTT port (e.g., m1883)
 K(MQTT_USER)   - Set MQTT username (e.g., Kuser)
 k(MQTT_PASS)   - Set MQTT password (e.g., kpassword)
-j|J            - Disable or enable mqtt connection
+j|J|IR-9       - Disable or enable mqtt connection
 G(ESPAX_SERVER)- Set ESPAX server target (e.g., GMyESPAXServer)
 g(ESPAX_PORT)  - Set ESPAX server port (e.g., g2023)
 A(ESPAX_USER)  - Set ESPAX user (e.g., AMyESPAXUser)
 a(ESPAX_PASS)  - Set ESPAX password (e.g., aMyESPAXPass)
 i|I|           - Disable or enable ESPAX connection
-S              - Save config
-z|Z            - Disable or enable RX simulation
-v|V            - Disable or enable display heartbeat
-q|Q            - Disable or enable TFT display update
-clr            - Clear log buffer
-X              - Restart device
+S|IR-8         - Save config
+z|Z|IR-1       - Disable or enable RX simulation
+v|V|IR-2       - Disable or enable display heartbeat
+q|Q|IR-3       - Disable or enable TFT display update
+clr|IR-7       - Clear log buffer
+lup|IR-UP      - Increase TFT backlight
+ldn|IR-DOWN    - Decrease TFT backlight
+X|IR-ON        - Restart device
 ? or h         - Help
 Note: Commands are case-sensitive.
   </pre>
