@@ -750,6 +750,7 @@ void saveSerialConfig() // Save alle Data
   prefs.putString("espax_user", espaxuser);
   prefs.putString("espax_pass", espaxpass);
   prefs.putBool("espaxon", espaxon);
+  prefs.putInt("tftLight", tftLight); // TFT Hintergrundbeleuchtung speichern
   prefs.end();
   textOutln("# Config saved");
 }
@@ -786,6 +787,7 @@ bool loadSerialConfig() // Load saved config
   espaxuser = prefs.getString("espax_user", "ESPAX_USER");
   espaxpass = prefs.getString("espax_pass", "ESPAX_PASS");
   espaxon = prefs.getBool("espaxon", false);
+  tftLight = prefs.getInt("tftLight", 255); // TFT Hintergrundbeleuchtung laden
   prefs.end();
   textOutln("# Saved config restored");
   return true;
