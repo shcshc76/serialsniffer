@@ -2163,6 +2163,26 @@ struct IRCommandEntry
   const char *message; // Nur Nachricht anzeigen (optional)
 };
 
+const char *helpPages[] = {
+  "# Seite 1\n"
+  " 1 RX Simulation\n"
+  " 2 Display heartbeat\n"
+  " 3 TFT Update",
+
+  "# Seite 2\n"
+  " 7 Clear LOG\n"
+  " 8 Save config\n"
+  " 9 enable mqtt",
+
+  "# Seite 3\n"
+  " ON Restart device\n"
+  " Weitere Hilfe folgt..."
+};
+
+const uint8_t helpPageCount = sizeof(helpPages) / sizeof(helpPages[0]);
+uint8_t currentHelpPage = 0;
+
+
 IRCommandEntry irCommands[] = {
     {0x1, true, "Z", "z", nullptr},        // RX simulation
     {0x2, true, "V", "v", nullptr},        // Heartbeat
@@ -2173,8 +2193,7 @@ IRCommandEntry irCommands[] = {
     {0x8, false, "S", nullptr, nullptr},   // Save config
     {0x9, true, "J", "j", nullptr},        // MQTT
     {0xC, false, "X", nullptr, nullptr},   // Restart
-    {0x0, false, nullptr, nullptr,
-     "# 1 RX Simulation\n  2 Display heartbeat\n  3 TFT Update\n  7 Clear LOG\n  8 Save config\n  9 enable mqtt\n ON Restart device"} // Menü
+    {0x0, false, nullptr, nullptr, "HELP"} // Platzhalter
 };
 
 // =================== Wi-Fi ===================
@@ -2231,7 +2250,14 @@ void processIRCommandTable(uint8_t command, uint8_t flags)
   {
     if (entry.command == command)
     {
-      if (entry.message)
+      if (entry.command == 0x0) {
+        // Sonderfall: Hilfeseiten blättern
+        displayMessage(helpPages[currentHelpPage]);
+        currentHelpPage = (currentHelpPage + 1) % helpPageCount;
+        return;
+      }
+
+      if (entry.message && strcmp(entry.message, "HELP") != 0)
       {
         displayMessage(entry.message);
       }
@@ -2239,7 +2265,7 @@ void processIRCommandTable(uint8_t command, uint8_t flags)
       {
         parseSerialCommand(toggle ? entry.cmdOff : entry.cmdOn);
       }
-      else
+      else if (entry.cmdOn)
       {
         parseSerialCommand(entry.cmdOn);
       }
@@ -2250,6 +2276,7 @@ void processIRCommandTable(uint8_t command, uint8_t flags)
   Serial.print("Unknown IR command: 0x");
   Serial.println(command, HEX);
 }
+
 
 // =================== IR Remote ===================
 void handleIRRemote()
