@@ -18,7 +18,6 @@
 #include <IRremote.h>
 #include <PubSubClient.h>
 #include "time.h"
-#include <analogWrite.h>
 
 // TFT_eSPI settings
 SPIClass hspi = SPIClass(HSPI);
@@ -28,7 +27,7 @@ int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
 const int maxCharsPerLine = 38;
 TFT_eSPI tft = TFT_eSPI(); // Invoke library
-int tftLight = 255; // Hintergrundbeleuchtung (0-255)
+int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
 
 #define MON_RX 5 // RX pin
 #define MON_TX 6 // TX pin
@@ -615,51 +614,51 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
   }
 
   // === MQTT JSON DATA ===
-if (mqttON && mqttclient.connected())
-{
-  if (outBuffer.indexOf("<SOH>") > -1 && lastJsonString != "{}")
+  if (mqttON && mqttclient.connected())
   {
-    JsonDocument doc;  // ArduinoJson 7.x Standard
-    DeserializationError error = deserializeJson(doc, lastJsonString);
-
-    if (error)
+    if (outBuffer.indexOf("<SOH>") > -1 && lastJsonString != "{}")
     {
-      Serial.print("JSON Parse Error: ");
-      Serial.println(error.f_str());
-    }
-    else
-    {
-      transmissionSuccess = true;
-      String datetime   = doc["datetime"]        | "N/A";
-      String direction  = doc["direction"]       | "N/A";
-      String soh_code   = doc["SOH_code"]        | "N/A";
-      String soh_desc   = doc["SOH_description"] | "N/A";
+      JsonDocument doc; // ArduinoJson 7.x Standard
+      DeserializationError error = deserializeJson(doc, lastJsonString);
 
-      mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
-      mqttclient.publish("serialsniffer/datetime", datetime.c_str(), datetime.length());
-      mqttclient.publish("serialsniffer/direction", direction.c_str(), direction.length());
-      mqttclient.publish("serialsniffer/soh_code", soh_code.c_str(), soh_code.length());
-      mqttclient.publish("serialsniffer/soh_description", soh_desc.c_str(), soh_desc.length());
-
-      // Einzelne Records verarbeiten
-      JsonArray records = doc["records"];
-      for (JsonObject record : records)
+      if (error)
       {
-        String recordType = record["Record type"] | "N/A";
-        recordType.replace(' ', '_'); // MQTT-tauglich
-        String recordData = record["Data"] | "N/A";
-        String topic = "serialsniffer/" + recordType;
-        mqttclient.publish(topic.c_str(), recordData.c_str(), recordData.length());
+        Serial.print("JSON Parse Error: ");
+        Serial.println(error.f_str());
+      }
+      else
+      {
+        transmissionSuccess = true;
+        String datetime = doc["datetime"] | "N/A";
+        String direction = doc["direction"] | "N/A";
+        String soh_code = doc["SOH_code"] | "N/A";
+        String soh_desc = doc["SOH_description"] | "N/A";
+
+        mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
+        mqttclient.publish("serialsniffer/datetime", datetime.c_str(), datetime.length());
+        mqttclient.publish("serialsniffer/direction", direction.c_str(), direction.length());
+        mqttclient.publish("serialsniffer/soh_code", soh_code.c_str(), soh_code.length());
+        mqttclient.publish("serialsniffer/soh_description", soh_desc.c_str(), soh_desc.length());
+
+        // Einzelne Records verarbeiten
+        JsonArray records = doc["records"];
+        for (JsonObject record : records)
+        {
+          String recordType = record["Record type"] | "N/A";
+          recordType.replace(' ', '_'); // MQTT-tauglich
+          String recordData = record["Data"] | "N/A";
+          String topic = "serialsniffer/" + recordType;
+          mqttclient.publish(topic.c_str(), recordData.c_str(), recordData.length());
+        }
       }
     }
+    else if (outBuffer.startsWith("#"))
+    {
+      // Fallback für nicht-JSON-Kommandos
+      mqttclient.publish("serialsniffer/input/command", outBuffer.c_str(), outBuffer.length());
+      transmissionSuccess = true;
+    }
   }
-  else if (outBuffer.startsWith("#"))
-  {
-    // Fallback für nicht-JSON-Kommandos
-    mqttclient.publish("serialsniffer/input/command", outBuffer.c_str(), outBuffer.length());
-    transmissionSuccess = true;
-  }
-}
 
   else if (mqttON && !mqttclient.connected())
   {
@@ -1604,6 +1603,20 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   { // clear log buffer
     clearLog();
   }
+  else if (cmd == "lup")
+  { // Light up TFT
+    tftLight += 10;
+    if (tftLight > 255)
+      tftLight = 255;
+    analogWrite(3, tftLight);
+  }
+  else if (cmd == "ldn")
+  { // Light down TFT
+    tftLight -= 10;
+    if (tftLight < 0)
+      tftLight = 0;
+    analogWrite(3, tftLight);
+  }
   else if (cmd == "xcall")
   { // Send ESPAX data
     if (espaxon)
@@ -1740,6 +1753,8 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# q|Q - Disable or enable display update on TFT");
     textOutln("# clr - Clear log buffer");
     textOutln("# xcall - Send ESPAX data");
+    textOutln("# lup - Increase TFT backlight");
+    textOutln("# ldn - Decrease TFT backlight");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
@@ -1986,13 +2001,13 @@ void setup()
 {
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
-  
+
   // Helligkeit des TFT-Backlights
-  pinMode(3, OUTPUT); // Built-in LED pin
-  analogWrite(3, tftLight);  // Turn off built-in LED
+  pinMode(3, OUTPUT);       // Built-in LED pin
+  analogWrite(3, tftLight); // Turn off built-in LED
 
   // Initialize OLED display
-  Wire.begin(7, 8);             // SDA, SCL pins for I2C
+  Wire.begin(7, 8); // SDA, SCL pins for I2C
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // 0x3C ist die Standard-I2C-Adresse
     Serial.println("SSD1306-Initialisierung fehlgeschlagen");
@@ -2153,6 +2168,8 @@ IRCommandEntry irCommands[] = {
     {0x2, true, "V", "v", nullptr},        // Heartbeat
     {0x3, true, "Q", "q", nullptr},        // TFT update
     {0x7, false, "clr", nullptr, nullptr}, // Clear log
+    {0x20, false, "lup", nullptr, nullptr}, // Display Light Up
+    {0x21, false, "ldn", nullptr, nullptr}, // Display Light Down
     {0x8, false, "S", nullptr, nullptr},   // Save config
     {0x9, true, "J", "j", nullptr},        // MQTT
     {0xC, false, "X", nullptr, nullptr},   // Restart
