@@ -18,6 +18,7 @@
 #include <IRremote.h>
 #include <PubSubClient.h>
 #include "time.h"
+#include <analogWrite.h>
 
 // TFT_eSPI settings
 SPIClass hspi = SPIClass(HSPI);
@@ -27,6 +28,7 @@ int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
 const int maxCharsPerLine = 38;
 TFT_eSPI tft = TFT_eSPI(); // Invoke library
+int tftLight = 255; // Hintergrundbeleuchtung (0-255)
 
 #define MON_RX 5 // RX pin
 #define MON_TX 6 // TX pin
@@ -1983,8 +1985,9 @@ void setup()
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
   
-  pinMode(LED_BUILTIN, OUTPUT); // Built-in LED pin
-  analogWrite(LED_BUILTIN, 255);  // Turn off built-in LED
+  // Helligkeit des TFT-Backlights
+  pinMode(3, OUTPUT); // Built-in LED pin
+  analogWrite(3, tftLight);  // Turn off built-in LED
 
   // Initialize OLED display
   Wire.begin(7, 8);             // SDA, SCL pins for I2C
