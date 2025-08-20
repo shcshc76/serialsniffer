@@ -2002,10 +2002,6 @@ void setup()
   Serial.begin(115200); // Initialize USB console
   delay(5000);          // allow USB to initialize
 
-  // Helligkeit des TFT-Backlights
-  pinMode(3, OUTPUT);       // Pin 3 für Backlight
-  analogWrite(3, tftLight); // Set initial brightness
-
   // Initialize OLED display
   Wire.begin(7, 8); // SDA, SCL pins for I2C
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
@@ -2101,6 +2097,10 @@ void setup()
   tft.println("  IP:" + IP.toString());
   currentLine = 3;
 
+  // Helligkeit des TFT-Backlights
+  pinMode(3, OUTPUT);       // Pin 3 für Backlight
+  analogWrite(3, tftLight); // Set initial brightness
+
   // Starte den MQTT Task
   xTaskCreatePinnedToCore(
       mqttTask,         // Funktion
@@ -2164,36 +2164,34 @@ struct IRCommandEntry
 };
 
 const char *helpPages[] = {
-  "# Seite 1\n"
-  " 1 RX Simulation\n"
-  " 2 Display heartbeat\n"
-  " 3 TFT Update",
+    "# Seite 1\n"
+    " 1 RX Simulation\n"
+    " 2 Display heartbeat\n"
+    " 3 TFT Update",
 
-  "# Seite 2\n"
-  " 7 Clear LOG\n"
-  " 8 Save config\n"
-  " 9 enable mqtt",
+    "# Seite 2\n"
+    " 7 Clear LOG\n"
+    " 8 Save config\n"
+    " 9 enable mqtt",
 
-  "# Seite 3\n"
-  " ON Restart device\n"
-  " Weitere Hilfe folgt..."
-};
+    "# Seite 3\n"
+    " ON Restart device\n"
+    " Weitere Hilfe folgt..."};
 
 const uint8_t helpPageCount = sizeof(helpPages) / sizeof(helpPages[0]);
 uint8_t currentHelpPage = 0;
 
-
 IRCommandEntry irCommands[] = {
-    {0x1, true, "Z", "z", nullptr},        // RX simulation
-    {0x2, true, "V", "v", nullptr},        // Heartbeat
-    {0x3, true, "Q", "q", nullptr},        // TFT update
-    {0x7, false, "clr", nullptr, nullptr}, // Clear log
+    {0x1, true, "Z", "z", nullptr},         // RX simulation
+    {0x2, true, "V", "v", nullptr},         // Heartbeat
+    {0x3, true, "Q", "q", nullptr},         // TFT update
+    {0x7, false, "clr", nullptr, nullptr},  // Clear log
     {0x20, false, "lup", nullptr, nullptr}, // Display Light Up
     {0x21, false, "ldn", nullptr, nullptr}, // Display Light Down
-    {0x8, false, "S", nullptr, nullptr},   // Save config
-    {0x9, true, "J", "j", nullptr},        // MQTT
-    {0xC, false, "X", nullptr, nullptr},   // Restart
-    {0x0, false, nullptr, nullptr, "HELP"} // Platzhalter
+    {0x8, false, "S", nullptr, nullptr},    // Save config
+    {0x9, true, "J", "j", nullptr},         // MQTT
+    {0xC, false, "X", nullptr, nullptr},    // Restart
+    {0x0, false, nullptr, nullptr, "HELP"}  // Platzhalter
 };
 
 // =================== Wi-Fi ===================
@@ -2250,7 +2248,8 @@ void processIRCommandTable(uint8_t command, uint8_t flags)
   {
     if (entry.command == command)
     {
-      if (entry.command == 0x0) {
+      if (entry.command == 0x0)
+      {
         // Sonderfall: Hilfeseiten blättern
         displayMessage(helpPages[currentHelpPage]);
         currentHelpPage = (currentHelpPage + 1) % helpPageCount;
@@ -2276,7 +2275,6 @@ void processIRCommandTable(uint8_t command, uint8_t flags)
   Serial.print("Unknown IR command: 0x");
   Serial.println(command, HEX);
 }
-
 
 // =================== IR Remote ===================
 void handleIRRemote()
