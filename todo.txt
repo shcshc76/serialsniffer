@@ -1,5 +1,5 @@
 ERLEDIGT code html c und ccs trennen
-espax
+ERLEDIGT espax
 ERLEDIGT menü für config
 ERLEDIGT eot 1enq 2 enq unterdrücken rx
 ERLEDIGT ack unterdrücken tx
@@ -9,15 +9,15 @@ ERLEDIGT ST7789 Display Unterstützung
 ERLEDIGT syslog server über webif auch string zulassen. aktuell wird anscheinend nur ip zugelassen
 ERLEDIGT Meldungen auch auf ST7789 Display anzeigen
 ERLEDIGT Zeichnung von Schaltung erstellen
-neues Gehäuse
+ERLEDIGT neues Gehäuse
 ERLEDIGT heartbeat Anzeige schaltbar machen
 ERLEDIGT clear Screen per CLI Befehl
 ERLEDIGT readme bilder link anpassen
 ERLEDIGT display pause
-Display Helligkeit einstellbar
+ERLEDIGT Display Helligkeit einstellbar
 ERLEDIGT send data to mqtt broker
 mdns
 ERLEDIGT IR Remote
 seriell log auch ohne oled 
 output level prüfen
-mqtt konfigurierbar machen
+ERLEDIGT mqtt konfigurierbar machen
