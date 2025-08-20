@@ -615,52 +615,52 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
   }
 
   // === MQTT JSON DATA ===
-  if (mqttON && mqttclient.connected())
+if (mqttON && mqttclient.connected())
+{
+  if (outBuffer.indexOf("<SOH>") > -1 && lastJsonString != "{}")
   {
-    if (outBuffer.indexOf("<SOH>") > -1 && lastJsonString != "{}")
+    JsonDocument doc;  // ArduinoJson 7.x Standard
+    DeserializationError error = deserializeJson(doc, lastJsonString);
+
+    if (error)
     {
-      const size_t capacity = 1024;
-      DynamicJsonDocument doc(capacity);
-      DeserializationError error = deserializeJson(doc, lastJsonString);
-
-      if (error)
-      {
-        Serial.print("JSON Parse Error: ");
-        Serial.println(error.f_str());
-      }
-      else
-      {
-        transmissionSuccess = true;
-        String datetime = doc["datetime"] | "N/A";
-        String direction = doc["direction"] | "N/A";
-        String soh_code = doc["SOH_code"] | "N/A";
-        String soh_desc = doc["SOH_description"] | "N/A";
-
-        mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
-        mqttclient.publish("serialsniffer/datetime", datetime.c_str(), datetime.length());
-        mqttclient.publish("serialsniffer/direction", direction.c_str(), direction.length());
-        mqttclient.publish("serialsniffer/soh_code", soh_code.c_str(), soh_code.length());
-        mqttclient.publish("serialsniffer/soh_description", soh_desc.c_str(), soh_desc.length());
-
-        // Einzelne Records verarbeiten
-        JsonArray records = doc["records"];
-        for (JsonObject record : records)
-        {
-          String recordType = record["Record type"] | "N/A";
-          recordType.replace(' ', '_'); // MQTT-tauglich
-          String recordData = record["Data"] | "N/A";
-          String topic = "serialsniffer/" + recordType;
-          mqttclient.publish(topic.c_str(), recordData.c_str(), recordData.length());
-        }
-      }
+      Serial.print("JSON Parse Error: ");
+      Serial.println(error.f_str());
     }
-    else if (outBuffer.startsWith("#"))
+    else
     {
-      // Fallback für nicht-JSON-Kommandos
-      mqttclient.publish("serialsniffer/input/command", outBuffer.c_str(), outBuffer.length());
       transmissionSuccess = true;
+      String datetime   = doc["datetime"]        | "N/A";
+      String direction  = doc["direction"]       | "N/A";
+      String soh_code   = doc["SOH_code"]        | "N/A";
+      String soh_desc   = doc["SOH_description"] | "N/A";
+
+      mqttclient.publish("serialsniffer/raw", lastJsonString.c_str(), lastJsonString.length());
+      mqttclient.publish("serialsniffer/datetime", datetime.c_str(), datetime.length());
+      mqttclient.publish("serialsniffer/direction", direction.c_str(), direction.length());
+      mqttclient.publish("serialsniffer/soh_code", soh_code.c_str(), soh_code.length());
+      mqttclient.publish("serialsniffer/soh_description", soh_desc.c_str(), soh_desc.length());
+
+      // Einzelne Records verarbeiten
+      JsonArray records = doc["records"];
+      for (JsonObject record : records)
+      {
+        String recordType = record["Record type"] | "N/A";
+        recordType.replace(' ', '_'); // MQTT-tauglich
+        String recordData = record["Data"] | "N/A";
+        String topic = "serialsniffer/" + recordType;
+        mqttclient.publish(topic.c_str(), recordData.c_str(), recordData.length());
+      }
     }
   }
+  else if (outBuffer.startsWith("#"))
+  {
+    // Fallback für nicht-JSON-Kommandos
+    mqttclient.publish("serialsniffer/input/command", outBuffer.c_str(), outBuffer.length());
+    transmissionSuccess = true;
+  }
+}
+
   else if (mqttON && !mqttclient.connected())
   {
     Serial.println("#### MQTT not connected, skipping send");
