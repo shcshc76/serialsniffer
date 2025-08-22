@@ -1008,7 +1008,7 @@ void clearLog() // Clear the log buffer
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(2);
   tft.setCursor(0, 10);
-  tft.println("  IP:" + IP.toString());
+  tft.println("  " + IP.toString());
   currentLine = 3;
 }
 
@@ -1941,7 +1941,7 @@ void displayMessage(String message) // Display a message on the displays
         tft.fillScreen(TFT_BLUE);
         tft.setTextSize(2);
         tft.setCursor(0, 10);
-        tft.println("  IP:" + IP.toString());
+        tft.println("  " + IP.toString());
         tft.setTextSize(1);
         currentLine = 3;
       }
@@ -2086,7 +2086,7 @@ void setup()
   tft.println();
   tft.println("  Serial Sniffer");
   tft.println();
-  tft.println("  IP:" + IP.toString());
+  tft.println("  " + IP.toString());
   tft.println("    115200 8N1");
   maxLines = tft.height() / lineHeight;
   delay(5000);
@@ -2094,7 +2094,7 @@ void setup()
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(2);
   tft.setCursor(0, 10);
-  tft.println("  IP:" + IP.toString());
+  tft.println("  " + IP.toString());
   currentLine = 3;
 
   // Helligkeit des TFT-Backlights
