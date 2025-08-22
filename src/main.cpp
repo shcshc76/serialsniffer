@@ -15,7 +15,7 @@
 #include "SPIFFS.h"
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
-#include <IRremote.h>
+#include <IRremote.hpp>
 #include <PubSubClient.h>
 #include "time.h"
 
