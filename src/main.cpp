@@ -2444,7 +2444,7 @@ void handleespax()
 void loop()
 {
   handleWiFi();
-  handleTimeUpdate();
+  //handleTimeUpdate(); // Glaube ich brauche das nicht wirklich, weil der Client das jede Stunde selbst macht
   handleRxSimulation();
   handleHeartbeatSimulation();
   handleSerialBuffers();
