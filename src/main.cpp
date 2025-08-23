@@ -2097,7 +2097,7 @@ void setup()
   tft.setCursor(0, 10);
   tft.println("  " + IP.toString());
   currentLine = 3;
-
+/*
   // SD card initialisieren
   if (!SD.begin(SD_CS))
   {
@@ -2113,7 +2113,7 @@ void setup()
       file.close();
     }
   }
-
+*/
   // Helligkeit des TFT-Backlights
   pinMode(3, OUTPUT);       // Pin 3 für Backlight
   analogWrite(3, tftLight); // Set initial brightness
@@ -2122,7 +2122,7 @@ void setup()
   xTaskCreatePinnedToCore(
       mqttTask,         // Funktion
       "MQTT Loop Task", // Name
-      4096,             // Stack-Größe
+      8192,             // Stack-Größe
       NULL,             // Parameter
       1,                // Priorität
       &mqttTaskHandle,  // TaskHandle
