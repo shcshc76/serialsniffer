@@ -218,6 +218,47 @@
                                         m(MQTT_PASS)</button>
                                 </div>
                             </div>
+                            <!-- ESPAX Settings -->
+                            <div class="mb-3">
+                                <label for="espaxServerInput" class="form-label">ESPAX Server</label>
+                                <div class="input-group">
+                                    <input type="text" id="espaxServerInput" class="form-control"
+                                        placeholder="ESPAX Server IP" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('G' + espaxServerInput.value)">Send
+                                        G(ESPAX_SERVER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="espaxportInput" class="form-label">ESPAX Port</label>
+                                <div class="input-group">
+                                    <input type="text" id="espaxportInput" class="form-control"
+                                        placeholder="ESPAX Server Port" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('g' + espaxportInput.value)">Send
+                                        g(ESPAX_PORT)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="espaxuserInput" class="form-label">ESPAX User</label>
+                                <div class="input-group">
+                                    <input type="text" id="espaxuserInput" class="form-control"
+                                        placeholder="ESPAX User" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('A' + espaxuserInput.value)">Send
+                                        A(ESPAX_USER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="espaxpassInput" class="form-label">ESPAX Pass</label>
+                                <div class="input-group">
+                                    <input type="password" id="espaxpassInput" class="form-control"
+                                        placeholder="ESPAX Password" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('a' + espaxpassInput.value)">Send
+                                        a(ESPAX_PASS)</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -267,6 +308,10 @@
                                 mqtt</button>
                             <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('j')">Disable
                                 mqtt</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('I')">Enable
+                                ESPAX</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('i')">Disable
+                                ESPAX</button>
                             <button class="btn btn-outline-danger btn-sm command-button"
                                 onclick="sendCmd('X')">Restart</button>
                             <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
