@@ -107,7 +107,8 @@ bool mqttON = false; // MQTT nutzen
 TaskHandle_t mqttTaskHandle;
 
 // ESPAX
-bool espaxon = false; // ESPAX nutzen
+bool espaxon = false;        // ESPAX nutzen
+bool espaxConnected = false; // ESPAX verbunden
 WiFiClient espaxclient;
 #define MAGIC 0x4558
 const uint8_t FLAGS[4] = {0x00, 0x00, 0x02, 0x2a};
@@ -466,6 +467,7 @@ bool doLogin()
     sendSCondition();
     Serial.println("sendSCondition-Antwort:");
     Serial.println(readXMLResponse());
+    espaxConnected = true;
     return true;
   }
   return false;
@@ -1620,7 +1622,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   }
   else if (cmd == "xcall")
   { // Send ESPAX data
-    if (espaxon)
+    if (espaxon && espaxConnected)
     {
       textOutln("# Sending ESPAX data...");
       // Example call, replace with actual data
@@ -1630,7 +1632,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     }
     else
     {
-      textOutln("# ESPAX connection is disabled, cannot send data");
+      textOutln("# ESPAX  is disabled or not connected, cannot send data");
     }
   }
   else if (c == 'I' || c == 'i')
@@ -2053,7 +2055,7 @@ void setup()
     }
     Serial.println("\nZeit synchronisiert: " + getTimestamp());
 
-    if (espaxon)
+    if (espaxon) // Wenn ESPAX aktiviert ist, verbinde
     {
       if (!espaxclient.connect(espaxserverIP.c_str(), espaxserverPort))
       {
@@ -2063,11 +2065,11 @@ void setup()
       }
       Serial.println("Verbunden zum Server");
 
-      if (!ensureConnected())
+      if (!ensureConnected()) // Verbunden?
       {
         Serial.println("Initiale Verbindung fehlgeschlagen, wird später erneut versucht");
       }
-      else if (!doLogin())
+      else if (!doLogin()) // Login
       {
         Serial.println("Login fehlgeschlagen – wird später erneut versucht");
       }
@@ -2097,23 +2099,23 @@ void setup()
   tft.setCursor(0, 10);
   tft.println("  " + IP.toString());
   currentLine = 3;
-/*
-  // SD card initialisieren
-  if (!SD.begin(SD_CS))
-  {
-    Serial.println("❌ SD nicht gefunden!");
-    }
-  else
-  {
-    Serial.println("✅ SD OK!");
-    File file = SD.open("/test.txt", FILE_WRITE);
-    if (file)
+  /*
+    // SD card initialisieren
+    if (!SD.begin(SD_CS))
     {
-      file.println("Hallo von ESP32-S3!");
-      file.close();
+      Serial.println("❌ SD nicht gefunden!");
+      }
+    else
+    {
+      Serial.println("✅ SD OK!");
+      File file = SD.open("/test.txt", FILE_WRITE);
+      if (file)
+      {
+        file.println("Hallo von ESP32-S3!");
+        file.close();
+      }
     }
-  }
-*/
+  */
   // Helligkeit des TFT-Backlights
   pinMode(3, OUTPUT);       // Pin 3 für Backlight
   analogWrite(3, tftLight); // Set initial brightness
@@ -2404,10 +2406,12 @@ void handleespax()
     if (!doLogin())
     {
       Serial.println("Login erneut fehlgeschlagen");
+      sessionID = ""; // sicherheitshalber
+      espaxConnected = false;
     }
     lastLoginAttempt = now;
   }
-
+  // Heartbeat senden, wenn verbunden und Session aktiv
   if (espaxclient.connected() && sessionID.length() > 0)
   {
 
@@ -2416,7 +2420,21 @@ void handleespax()
       sendHeartbeat();
 
       Serial.println("sendHeartbeat-Antwort:");
-      Serial.println(readXMLResponse());
+      String xml = readXMLResponse();
+      Serial.println(xml);
+      int start = xml.indexOf("<RSP-CODE>") + 10;
+      int end = xml.indexOf("</RSP-CODE>");
+      String rspCode = xml.substring(start, end);
+      if (rspCode != "200")
+      {
+        Serial.println("Heartbeat fehlgeschlagen, Session evtl. abgelaufen");
+        sessionID = ""; // Session ungültig
+        espaxConnected = false;
+      }
+      else
+      {
+        espaxConnected = true;
+      }
       lastHeartbeat = now;
     }
   }
