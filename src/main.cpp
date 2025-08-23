@@ -15,6 +15,7 @@
 #include "SPIFFS.h"
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
+#include <SD.h>
 #include <IRremote.hpp>
 #include <PubSubClient.h>
 #include "time.h"
@@ -2096,6 +2097,22 @@ void setup()
   tft.setCursor(0, 10);
   tft.println("  " + IP.toString());
   currentLine = 3;
+
+  // SD card initialisieren
+  if (!SD.begin(SD_CS))
+  {
+    Serial.println("❌ SD nicht gefunden!");
+    }
+  else
+  {
+    Serial.println("✅ SD OK!");
+    File file = SD.open("/test.txt", FILE_WRITE);
+    if (file)
+    {
+      file.println("Hallo von ESP32-S3!");
+      file.close();
+    }
+  }
 
   // Helligkeit des TFT-Backlights
   pinMode(3, OUTPUT);       // Pin 3 für Backlight
