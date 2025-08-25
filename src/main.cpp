@@ -42,6 +42,9 @@ int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
 
 #define IR_RECEIVE_PIN 4 // Pin for IR receiver
 
+// SD card settings
+bool useSD = false;
+
 // OLED display settings
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -2099,12 +2102,15 @@ void setup()
   tft.setCursor(0, 10);
   tft.println("  " + IP.toString());
   currentLine = 3;
-  /*
+  if (useSD)
+  {
+    digitalWrite(TFT_CS, HIGH); // TFT "freigeben"
+    delay(1000);
     // SD card initialisieren
     if (!SD.begin(SD_CS))
     {
       Serial.println("❌ SD nicht gefunden!");
-      }
+    }
     else
     {
       Serial.println("✅ SD OK!");
@@ -2115,7 +2121,7 @@ void setup()
         file.close();
       }
     }
-  */
+  }
   // Helligkeit des TFT-Backlights
   pinMode(3, OUTPUT);       // Pin 3 für Backlight
   analogWrite(3, tftLight); // Set initial brightness
@@ -2444,7 +2450,7 @@ void handleespax()
 void loop()
 {
   handleWiFi();
-  //handleTimeUpdate(); // Glaube ich brauche das nicht wirklich, weil der Client das jede Stunde selbst macht
+  // handleTimeUpdate(); // Glaube ich brauche das nicht wirklich, weil der Client das jede Stunde selbst macht
   handleRxSimulation();
   handleHeartbeatSimulation();
   handleSerialBuffers();
