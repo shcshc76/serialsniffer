@@ -2348,6 +2348,7 @@ void handleRxSimulation()
 
     memcpy(rxBuf, simulatedData, len);
     printBuffer("RX", rxBuf, len);
+    handleSerial(SerialRX, "RX", rxBuf, rxLen, rxLast);
     rxSimLastTime = millis();
   }
 }
