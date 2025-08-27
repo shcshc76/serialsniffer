@@ -11,3 +11,5 @@ Monitor two UART lines (RX+TX) using an esp32-s3-devkitc-1. Serial parameters ca
 
 - IR Pins von unten: gn,bl,lila
 - Klemmstein von links: GND, GND, T1(A), R1(A), T2(B), R2(B)
+- Serial hinten links TX
+- Serial hinten rechts RX
