@@ -30,8 +30,8 @@ const int maxCharsPerLine = 38;
 TFT_eSPI tft = TFT_eSPI(); // Invoke library
 int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
 
-#define MON_RX 5 // RX pin
-#define MON_TX 6 // TX pin
+#define MON_RX 6 // RX pin
+#define MON_TX 5 // TX pin
 
 #define MON_BAUD 9600 // initial baud rate
 
