@@ -2107,6 +2107,8 @@ void setup()
   if (useSD)
   {
     digitalWrite(TFT_CS, HIGH); // TFT "freigeben"
+    pinMode(SD_CS, OUTPUT);
+    digitalWrite(SD_CS, LOW); // SD "aktivieren"
     delay(1000);
     // SD card initialisieren
     if (!SD.begin(SD_CS))
@@ -2123,6 +2125,8 @@ void setup()
         file.close();
       }
     }
+    digitalWrite(SD_CS, HIGH); // SD "freigeben"
+    digitalWrite(TFT_CS, LOW); // TFT "aktivieren"
   }
   // Helligkeit des TFT-Backlights
   pinMode(3, OUTPUT);       // Pin 3 für Backlight
