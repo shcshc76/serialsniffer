@@ -21,7 +21,8 @@
 #include "time.h"
 
 // TFT_eSPI settings
-SPIClass hspi = SPIClass(HSPI);
+//SPIClass hspi = SPIClass(HSPI);
+
 bool tftOk = false;
 int lineHeight = 12; // Höhe einer Textzeile (anpassen je nach Schriftart)
 int currentLine = 0; // Aktuelle Zeilenposition
@@ -2082,6 +2083,14 @@ void setup()
     }
   }
 
+
+  // CS-Pins als Ausgang & inaktiv setzen
+  pinMode(TFT_CS, OUTPUT); digitalWrite(TFT_CS, HIGH);
+  pinMode(SD_CS,  OUTPUT); digitalWrite(SD_CS,  HIGH);
+
+  // SPI starten
+  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI);
+
   tft.init();
   // tft.setRotation(2);
   tftOk = true;
@@ -2107,11 +2116,11 @@ void setup()
   if (useSD)
   {
     digitalWrite(TFT_CS, HIGH); // TFT "freigeben"
-    pinMode(SD_CS, OUTPUT);
+    
     digitalWrite(SD_CS, LOW); // SD "aktivieren"
-    delay(1000);
+    //delay(1000);
     // SD card initialisieren
-    if (!SD.begin(SD_CS))
+    if (!SD.begin(SD_CS, SPI, 16000000))
     {
       Serial.println("❌ SD nicht gefunden!");
     }
