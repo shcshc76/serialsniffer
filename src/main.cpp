@@ -1415,6 +1415,17 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   // Ausgabe
   textOutln(line, 0);
 
+  // Nur wenn SD-Karte vorhanden ist, dort speichern
+  if (sdOk)
+  {
+    File file = SD.open("/LOG.txt", FILE_APPEND);
+    if (file)
+    {
+      file.println(line);
+      file.close();
+    }
+  }
+
   // JSON-Ausgabe, falls Daten erkannt werden
   String json = parseRawData(symbolicToControlChars(line)); // JSON parsing and storing
   if (json.endsWith("}]}"))
@@ -2085,8 +2096,6 @@ void setup()
     }
   }
 
- 
-
   // SPI starten
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
 
@@ -2138,7 +2147,6 @@ void setup()
         file.close();
       }
     }
-
   }
 
   // Starte den MQTT Task
