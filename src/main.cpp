@@ -758,6 +758,7 @@ void saveSerialConfig() // Save alle Data
   prefs.putString("espax_pass", espaxpass);
   prefs.putBool("espaxon", espaxon);
   prefs.putInt("tftLight", tftLight); // TFT Hintergrundbeleuchtung speichern
+  prefs.putBool("useSD", useSD);
   prefs.end();
   textOutln("# Config saved");
 }
@@ -795,6 +796,7 @@ bool loadSerialConfig() // Load saved config
   espaxpass = prefs.getString("espax_pass", "ESPAX_PASS");
   espaxon = prefs.getBool("espaxon", false);
   tftLight = prefs.getInt("tftLight", 255); // TFT Hintergrundbeleuchtung laden
+  useSD = prefs.getBool("useSD", false);
   prefs.end();
   textOutln("# Saved config restored");
   return true;
@@ -1774,6 +1776,8 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# xcall - Send ESPAX data");
     textOutln("# lup - Increase TFT backlight");
     textOutln("# ldn - Decrease TFT backlight");
+    textOutln("# csdon - Use SD");
+    textOutln("# csdoff - Do not use SD");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
@@ -1782,6 +1786,31 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# Restarting device...");
     saveSerialConfig();
     ESP.restart();
+  }
+  else if (cmd == "csdon")
+  { // Enable SD card usage
+    if (!useSD)
+    {
+      useSD = true;
+
+      textOutln("# SD card enabled");
+    }
+    else
+    {
+      textOutln("# SD card already enabled");
+    }
+  }
+  else if (cmd == "csdoff")
+  { // Disable SD card usage
+    if (useSD)
+    {
+      useSD = false;
+      textOutln("# SD card disabled");
+    }
+    else
+    {
+      textOutln("# SD card already disabled");
+    }
   }
   else if (c == 'M')
   { // Set MQTT server
@@ -2215,7 +2244,8 @@ const char *helpPages[] = {
     "# Seite 1\n"
     " 1 RX Simulation\n"
     " 2 Display heartbeat\n"
-    " 3 TFT Update",
+    " 3 TFT Update\n"
+    " 4 Use SD card",
 
     "# Seite 2\n"
     " 7 Clear LOG\n"
@@ -2233,6 +2263,7 @@ IRCommandEntry irCommands[] = {
     {0x1, true, "Z", "z", nullptr},         // RX simulation
     {0x2, true, "V", "v", nullptr},         // Heartbeat
     {0x3, true, "Q", "q", nullptr},         // TFT update
+    {0x4, true, "csdon", "csdoff", nullptr}, // Use SD card
     {0x7, false, "clr", nullptr, nullptr},  // Clear log
     {0x20, false, "lup", nullptr, nullptr}, // Display Light Up
     {0x21, false, "ldn", nullptr, nullptr}, // Display Light Down
@@ -2287,7 +2318,7 @@ void handleSerialInput()
     }
   }
 }
-
+// =================== IR Command Processing ===================
 void processIRCommandTable(uint8_t command, uint8_t flags)
 {
   bool toggle = flags & IRDATA_FLAGS_TOGGLE_BIT;
