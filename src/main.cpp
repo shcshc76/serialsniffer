@@ -2130,11 +2130,11 @@ void setup()
     {
       Serial.println("✅ SD OK!");
       sdOk = true;
-      File file = SD.open("/test.txt", FILE_WRITE);
+      File file = SD.open("/status.txt", FILE_WRITE);
       if (file)
       {
         file.println("Hallo von ESP32-S3! vom serialsniffer");
-        file.println("Timestamp: " + getDateTimeString());
+        file.println("Timestamp: " + getTimestamp());
         file.close();
       }
     }
