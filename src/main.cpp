@@ -45,6 +45,7 @@ int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
 
 // SD card settings
 bool useSD = false;
+bool sdOk = false;
 
 // OLED display settings
 #define SCREEN_WIDTH 128
@@ -2084,15 +2085,12 @@ void setup()
     }
   }
 
-  // CS-Pins als Ausgang & inaktiv setzen
-  pinMode(TFT_CS, OUTPUT);
-  digitalWrite(TFT_CS, HIGH);
-  pinMode(SD_CS, OUTPUT);
-  digitalWrite(SD_CS, HIGH);
+ 
 
   // SPI starten
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
-  if (!useSD)
+
+  if (!useSD) // Wenn SD Card nicht genutzt wird
   {
     tft.init();
     // tft.setRotation(2);
@@ -2116,13 +2114,13 @@ void setup()
     tft.setCursor(0, 10);
     tft.println("  " + IP.toString());
     currentLine = 3;
+    // Helligkeit des TFT-Backlights
+    pinMode(3, OUTPUT);       // Pin 3 für Backlight
+    analogWrite(3, tftLight); // Set initial brightness
   }
-  if (useSD)
-  {
-    digitalWrite(TFT_CS, HIGH); // TFT "freigeben"
 
-    digitalWrite(SD_CS, LOW); // SD "aktivieren"
-    // delay(1000);
+  if (useSD) // Wenn SD Card genutzt wird
+  {
     //  SD card initialisieren
     if (!SD.begin(SD_CS, SPI, 16000000))
     {
@@ -2131,19 +2129,17 @@ void setup()
     else
     {
       Serial.println("✅ SD OK!");
+      sdOk = true;
       File file = SD.open("/test.txt", FILE_WRITE);
       if (file)
       {
         file.println("Hallo von ESP32-S3! vom serialsniffer");
+        file.println("Timestamp: " + getDateTimeString());
         file.close();
       }
     }
-    digitalWrite(SD_CS, HIGH); // SD "freigeben"
-    digitalWrite(TFT_CS, LOW); // TFT "aktivieren"
+
   }
-  // Helligkeit des TFT-Backlights
-  pinMode(3, OUTPUT);       // Pin 3 für Backlight
-  analogWrite(3, tftLight); // Set initial brightness
 
   // Starte den MQTT Task
   xTaskCreatePinnedToCore(
