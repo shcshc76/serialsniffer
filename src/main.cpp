@@ -2363,8 +2363,8 @@ void handleIRRemote()
 
   if (IrReceiver.decodedIRData.protocol == UNKNOWN)
   {
-    Serial.println(F("Received noise or an unknown (or not yet enabled) protocol"));
-    IrReceiver.printIRResultRawFormatted(&Serial, true);
+    // Serial.println(F("Received noise or an unknown (or not yet enabled) protocol"));
+    // IrReceiver.printIRResultRawFormatted(&Serial, true);
     IrReceiver.resume();
     return;
   }
