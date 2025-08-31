@@ -2248,6 +2248,7 @@ const char *helpPages[] = {
     " 4 Use SD card",
 
     "# Seite 2\n"
+    " 6 ESPAX on/off\n"
     " 7 Clear LOG\n"
     " 8 Save config\n"
     " 9 enable mqtt",
@@ -2264,6 +2265,7 @@ IRCommandEntry irCommands[] = {
     {0x2, true, "V", "v", nullptr},         // Heartbeat
     {0x3, true, "Q", "q", nullptr},         // TFT update
     {0x4, true, "csdon", "csdoff", nullptr}, // Use SD card
+    {0x6, true, "I", "i", nullptr},         // ESPAX on/off
     {0x7, false, "clr", nullptr, nullptr},  // Clear log
     {0x20, false, "lup", nullptr, nullptr}, // Display Light Up
     {0x21, false, "ldn", nullptr, nullptr}, // Display Light Down
