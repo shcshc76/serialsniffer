@@ -1049,11 +1049,11 @@ void startWebserver() // Start the web server
   status += ", Target URL: " + targetURL;
   status += "\nMQTT Server: " + mqttServer + ":" + String(mqttPort);
   status += "\nMQTT User: " + mqttUser;
-  status += "\nMQTT ON: " + String(mqttON ? "Enabled" : "Disabled");
+  status += "\nUse MQTT: " + String(mqttON ? "Enabled" : "Disabled");
   status += "\nESPAX Server: " + espaxserverIP + ":" + String(espaxserverPort);
   status += "\nESPAX User: " + espaxuser;
-  status += "\nESPAX ON: " + String(espaxon ? "Enabled" : "Disabled");
-  status += "\nSD Card ON: " + String(useSD ? "Enabled" : "Disabled");
+  status += "\nSend ESPAX: " + String(espaxon ? "Enabled" : "Disabled");
+  status += "\nUse SD Card: " + String(useSD ? "Enabled" : "Disabled");
   status += "\nNTP Time: " + getDateTimeString();
   status += "\nOutput Level: " + String(outputLevel);
   status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
