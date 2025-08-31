@@ -1053,6 +1053,7 @@ void startWebserver() // Start the web server
   status += "\nESPAX Server: " + espaxserverIP + ":" + String(espaxserverPort);
   status += "\nESPAX User: " + espaxuser;
   status += "\nESPAX ON: " + String(espaxon ? "Enabled" : "Disabled");
+  status += "\SD Card ON: " + String(useSD ? "Enabled" : "Disabled");
   status += "\nNTP Time: " + getDateTimeString();
   status += "\nOutput Level: " + String(outputLevel);
   status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
