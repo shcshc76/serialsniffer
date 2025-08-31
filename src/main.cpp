@@ -21,7 +21,7 @@
 #include "time.h"
 
 // TFT_eSPI settings
-//SPIClass hspi = SPIClass(HSPI);
+// SPIClass hspi = SPIClass(HSPI);
 
 bool tftOk = false;
 int lineHeight = 12; // Höhe einer Textzeile (anpassen je nach Schriftart)
@@ -2007,9 +2007,10 @@ void reconnectMQTT()
 void setup()
 {
   Serial.begin(115200); // Initialize USB console
-    while (!Serial) {
+  while (!Serial)
+  {
     delay(10);
-  }          // allow USB to initialize
+  } // allow USB to initialize
 
   // Initialize OLED display
   Wire.begin(7, 8); // SDA, SCL pins for I2C
@@ -2083,13 +2084,14 @@ void setup()
     }
   }
 
-
   // CS-Pins als Ausgang & inaktiv setzen
-  pinMode(TFT_CS, OUTPUT); digitalWrite(TFT_CS, HIGH);
-  pinMode(SD_CS,  OUTPUT); digitalWrite(SD_CS,  HIGH);
+  pinMode(TFT_CS, OUTPUT);
+  digitalWrite(TFT_CS, HIGH);
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, HIGH);
 
   // SPI starten
-  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI);
+  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
 
   tft.init();
   // tft.setRotation(2);
@@ -2116,10 +2118,10 @@ void setup()
   if (useSD)
   {
     digitalWrite(TFT_CS, HIGH); // TFT "freigeben"
-    
+
     digitalWrite(SD_CS, LOW); // SD "aktivieren"
-    //delay(1000);
-    // SD card initialisieren
+    // delay(1000);
+    //  SD card initialisieren
     if (!SD.begin(SD_CS, SPI, 16000000))
     {
       Serial.println("❌ SD nicht gefunden!");
