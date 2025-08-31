@@ -2092,29 +2092,31 @@ void setup()
 
   // SPI starten
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
+  if (!useSD)
+  {
+    tft.init();
+    // tft.setRotation(2);
+    tftOk = true;
 
-  tft.init();
-  // tft.setRotation(2);
-  tftOk = true;
-
-  // large block of text
-  tft.fillScreen(TFT_RED);
-  tft.setTextColor(TFT_WHITE);
-  tft.setTextSize(2);
-  tft.setCursor(0, 0);
-  tft.println();
-  tft.println("  Serial Sniffer");
-  tft.println();
-  tft.println("  " + IP.toString());
-  tft.println("    115200 8N1");
-  maxLines = tft.height() / lineHeight;
-  delay(5000);
-  tft.fillScreen(TFT_BLUE);
-  tft.setTextColor(TFT_WHITE);
-  tft.setTextSize(2);
-  tft.setCursor(0, 10);
-  tft.println("  " + IP.toString());
-  currentLine = 3;
+    // large block of text
+    tft.fillScreen(TFT_RED);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(2);
+    tft.setCursor(0, 0);
+    tft.println();
+    tft.println("  Serial Sniffer");
+    tft.println();
+    tft.println("  " + IP.toString());
+    tft.println("    115200 8N1");
+    maxLines = tft.height() / lineHeight;
+    delay(5000);
+    tft.fillScreen(TFT_BLUE);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(2);
+    tft.setCursor(0, 10);
+    tft.println("  " + IP.toString());
+    currentLine = 3;
+  }
   if (useSD)
   {
     digitalWrite(TFT_CS, HIGH); // TFT "freigeben"
@@ -2132,7 +2134,7 @@ void setup()
       File file = SD.open("/test.txt", FILE_WRITE);
       if (file)
       {
-        file.println("Hallo von ESP32-S3!");
+        file.println("Hallo von ESP32-S3! vom serialsniffer");
         file.close();
       }
     }
