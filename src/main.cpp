@@ -13,8 +13,7 @@
 #include <Adafruit_SSD1306.h>
 #include <ArduinoJson.h>
 #include "SPIFFS.h"
-#include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
-#include <SPI.h>
+#include "LGFX_ST7789.hpp"
 #include <SD.h>
 #include <IRremote.hpp>
 #include <PubSubClient.h>
@@ -28,7 +27,7 @@ int lineHeight = 12; // Höhe einer Textzeile (anpassen je nach Schriftart)
 int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
 const int maxCharsPerLine = 38;
-TFT_eSPI tft = TFT_eSPI(); // Invoke library
+LGFX tft;
 int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
 
 #define MON_RX 6 // RX pin
@@ -46,6 +45,11 @@ int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
 // SD card settings
 bool useSD = false;
 bool sdOk = false;
+constexpr int PIN_SCK  = 10;
+constexpr int PIN_MISO = 2;
+constexpr int PIN_MOSI = 11;
+constexpr int SD_CS    = 1;
+SPIClass spi(HSPI);
 
 // OLED display settings
 #define SCREEN_WIDTH 128
@@ -2127,7 +2131,7 @@ void setup()
   }
 
   // SPI starten
-  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
+  spi.begin(PIN_SCK, PIN_MISO, PIN_MOSI, SD_CS);
 
   if (!useSD) // Wenn SD Card nicht genutzt wird
   {
