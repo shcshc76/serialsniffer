@@ -215,7 +215,8 @@ void sendMessage(const String &xml)
   espaxclient.write((const uint8_t *)xml.c_str(), xmlLen);
   espaxclient.flush();
 
-  Serial.printf("Gesendet: %u Bytes (Header + %u Bytes XML)\n", totalLen, xmlLen);
+  Serial.printf("ESPAX gesendet: %u Bytes (Header + %u Bytes XML)\n", totalLen, xmlLen);
+  Serial.println(xml);
 }
 
 // ---- ESPAX Login ----
