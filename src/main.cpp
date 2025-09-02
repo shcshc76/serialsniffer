@@ -28,7 +28,7 @@ int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
 const int maxCharsPerLine = 38;
 LGFX tft;
-int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
+int tftLight = 255; // Hintergrundbeleuchtung (0-255)
 
 #define MON_RX 6 // RX pin
 #define MON_TX 5 // TX pin
@@ -45,10 +45,10 @@ int tftLight = 255;        // Hintergrundbeleuchtung (0-255)
 // SD card settings
 bool useSD = false;
 bool sdOk = false;
-constexpr int PIN_SCK  = 10;
+constexpr int PIN_SCK = 10;
 constexpr int PIN_MISO = 2;
 constexpr int PIN_MOSI = 11;
-constexpr int SD_CS    = 1;
+constexpr int SD_CS = 1;
 SPIClass spi(HSPI);
 
 // OLED display settings
@@ -2130,42 +2130,39 @@ void setup()
     }
   }
 
+  tft.init();
+  // tft.setRotation(2);
+  tftOk = true;
+
+  // large block of text
+  tft.fillScreen(TFT_RED);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(0, 0);
+  tft.println();
+  tft.println("  Serial Sniffer");
+  tft.println();
+  tft.println("  " + IP.toString());
+  tft.println("    115200 8N1");
+  maxLines = tft.height() / lineHeight;
+  delay(5000);
+  tft.fillScreen(TFT_BLUE);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(0, 10);
+  tft.println("  " + IP.toString());
+  currentLine = 3;
+  // Helligkeit des TFT-Backlights
+  pinMode(3, OUTPUT);       // Pin 3 für Backlight
+  analogWrite(3, tftLight); // Set initial brightness
+
   // SPI starten
   spi.begin(PIN_SCK, PIN_MISO, PIN_MOSI, SD_CS);
-
-  if (!useSD) // Wenn SD Card nicht genutzt wird
-  {
-    tft.init();
-    // tft.setRotation(2);
-    tftOk = true;
-
-    // large block of text
-    tft.fillScreen(TFT_RED);
-    tft.setTextColor(TFT_WHITE);
-    tft.setTextSize(2);
-    tft.setCursor(0, 0);
-    tft.println();
-    tft.println("  Serial Sniffer");
-    tft.println();
-    tft.println("  " + IP.toString());
-    tft.println("    115200 8N1");
-    maxLines = tft.height() / lineHeight;
-    delay(5000);
-    tft.fillScreen(TFT_BLUE);
-    tft.setTextColor(TFT_WHITE);
-    tft.setTextSize(2);
-    tft.setCursor(0, 10);
-    tft.println("  " + IP.toString());
-    currentLine = 3;
-    // Helligkeit des TFT-Backlights
-    pinMode(3, OUTPUT);       // Pin 3 für Backlight
-    analogWrite(3, tftLight); // Set initial brightness
-  }
 
   if (useSD) // Wenn SD Card genutzt wird
   {
     //  SD card initialisieren
-    if (!SD.begin(SD_CS, SPI, 16000000))
+    if (!SD.begin(SD_CS, spi, 25000000))
     {
       Serial.println("❌ SD nicht gefunden!");
     }
@@ -2266,18 +2263,18 @@ const uint8_t helpPageCount = sizeof(helpPages) / sizeof(helpPages[0]);
 uint8_t currentHelpPage = 0;
 
 IRCommandEntry irCommands[] = {
-    {0x1, true, "Z", "z", nullptr},         // RX simulation
-    {0x2, true, "V", "v", nullptr},         // Heartbeat
-    {0x3, true, "Q", "q", nullptr},         // TFT update
+    {0x1, true, "Z", "z", nullptr},          // RX simulation
+    {0x2, true, "V", "v", nullptr},          // Heartbeat
+    {0x3, true, "Q", "q", nullptr},          // TFT update
     {0x4, true, "csdon", "csdoff", nullptr}, // Use SD card
-    {0x6, true, "I", "i", nullptr},         // ESPAX on/off
-    {0x7, false, "clr", nullptr, nullptr},  // Clear log
-    {0x20, false, "lup", nullptr, nullptr}, // Display Light Up
-    {0x21, false, "ldn", nullptr, nullptr}, // Display Light Down
-    {0x8, false, "S", nullptr, nullptr},    // Save config
-    {0x9, true, "J", "j", nullptr},         // MQTT
-    {0xC, false, "X", nullptr, nullptr},    // Restart
-    {0x0, false, nullptr, nullptr, "HELP"}  // Platzhalter
+    {0x6, true, "I", "i", nullptr},          // ESPAX on/off
+    {0x7, false, "clr", nullptr, nullptr},   // Clear log
+    {0x20, false, "lup", nullptr, nullptr},  // Display Light Up
+    {0x21, false, "ldn", nullptr, nullptr},  // Display Light Down
+    {0x8, false, "S", nullptr, nullptr},     // Save config
+    {0x9, true, "J", "j", nullptr},          // MQTT
+    {0xC, false, "X", nullptr, nullptr},     // Restart
+    {0x0, false, nullptr, nullptr, "HELP"}   // Platzhalter
 };
 
 // =================== Wi-Fi ===================
