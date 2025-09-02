@@ -1065,6 +1065,15 @@ void startWebserver() // Start the web server
   // weitere Infos
   request->send(200, "text/plain", status); });
 
+  // Download LOG.txt über Webinterface
+  server.on("/downloadlog", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+    if (SD.exists("/LOG.txt")) {
+      request->send(SD, "/LOG.txt", "text/plain", true); // true = Download erzwingen
+    } else {
+      request->send(404, "text/plain", "LOG.txt nicht gefunden.");
+    } });
+
   server.on("/connect", HTTP_GET, [](AsyncWebServerRequest *request)
             {
 

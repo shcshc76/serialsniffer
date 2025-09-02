@@ -70,6 +70,9 @@
             <div class="mt-3">
                 <a href="/log" class="btn btn-outline-light">Show Live Log</a>
             </div>
+            <div class="mt-3">
+                <a href="/downloadlog" class="btn btn-outline-light">LOG.txt herunterladen</a>
+            </div>
             <div class="info mt-3" id="responseMsg"></div>
         </div>
 
@@ -312,10 +315,12 @@
                                 ESPAX</button>
                             <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('i')">Disable
                                 ESPAX</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csdon')">Enable
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('csdon')">Enable
                                 SD Card</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csdoff')">Disable
-                                SD Card</button>                                
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('csdoff')">Disable
+                                SD Card</button>
                             <button class="btn btn-outline-danger btn-sm command-button"
                                 onclick="sendCmd('X')">Restart</button>
                             <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
