@@ -235,8 +235,8 @@ void sendLogin()
       espaxpass + "</LI-PASSWORD>\n"
                   "  </REQ.LOGIN>\n"
                   "</ESPA-X>";
-
   sendMessage(xml);
+  Serial.println("ESPA X Login gesendet");
 }
 
 // ---- ESPAX Nach Login ----
@@ -249,8 +249,8 @@ void sendSCondition()
                        "  <REQ.S-CONDITION invokeID=\"" +
       getInvokeID() + "\" sessionID=\"" + sessionID + "\"/>\n"
                                                       "</ESPA-X>";
-
   sendMessage(xml);
+  Serial.println("ESPA X S-Condition gesendet");
 }
 
 // ---- ESPAX Heartbeat ----
@@ -265,7 +265,7 @@ void sendHeartbeat()
                                                       "</ESPA-X>";
 
   sendMessage(xml);
-  Serial.println("Heartbeat gesendet");
+  Serial.println("ESPA X Heartbeat gesendet");
 }
 
 // ---- ESPAX PREF generieren ----
