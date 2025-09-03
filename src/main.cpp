@@ -2082,10 +2082,7 @@ void reconnectMQTT()
 void setup()
 {
   Serial.begin(115200); // Initialize USB console
-  while (!Serial)
-  {
-    delay(10);
-  } // allow USB to initialize
+  delay(1000);
 
   // Initialize OLED display
   Wire.begin(7, 8); // SDA, SCL pins for I2C
