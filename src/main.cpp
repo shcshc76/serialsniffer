@@ -118,6 +118,7 @@ TaskHandle_t mqttTaskHandle;
 // ESPAX
 bool espaxon = false;        // ESPAX nutzen
 bool espaxConnected = false; // ESPAX verbunden
+bool showESPA = true;        // ESPAX Nachrichten anzeigen/ senden und speichern
 WiFiClient espaxclient;
 #define MAGIC 0x4558
 const uint8_t FLAGS[4] = {0x00, 0x00, 0x02, 0x2a};
@@ -217,6 +218,10 @@ void sendMessage(const String &xml)
 
   Serial.printf("ESPAX gesendet: %u Bytes (Header + %u Bytes XML)\n", totalLen, xmlLen);
   Serial.println(xml);
+  if (showESPA)
+  {
+    displayMessage(xml);
+  }
 }
 
 // ---- ESPAX Login ----
