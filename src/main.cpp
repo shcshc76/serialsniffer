@@ -176,6 +176,7 @@ void displayMessage(String message);        // Display message on OLED
 void clearLog();                            // Clear the log buffer
 void reconnectMQTT();                       // Reconnect to MQTT broker
 void textOutln(String text, uint8_t level); // Output text with newline
+void sendBuffer(String msg);                // Send buffer to target URL
 
 // ---- Hilfsfunktionen Time ----
 String getTimestamp()
@@ -194,6 +195,21 @@ String getTimestamp()
 String getInvokeID() // Generate a unique Invoke ID for each command
 {
   return String(invokeCounter++);
+}
+
+void showESPAX(String msg, String dir="")
+{
+  if (showESPA)
+  {
+    displayMessage(msg);                       // TFT Anzeige
+    sendBuffer("# "+dir+" ESPA-X Message: " + msg);   // an div. Ziele senden
+    // WebLog anhängen
+    webLogBuffer += "# "+dir+" ESPA-X Message: \n" + msg + "\n";
+    if (webLogBuffer.length() > WEB_LOG_MAX)
+    {
+      webLogBuffer.remove(0, webLogBuffer.length() / 2);
+    }
+  }
 }
 
 // ---- Sende ESPA-X Nachricht ----
@@ -218,10 +234,7 @@ void sendMessage(const String &xml)
 
   Serial.printf("ESPAX gesendet: %u Bytes (Header + %u Bytes XML)\n", totalLen, xmlLen);
   Serial.println(xml);
-  if (showESPA)
-  {
-    displayMessage(xml);
-  }
+  showESPAX(xml,"Send"); // Wenn gewünscht alles übertragen und anzeigen
 }
 
 // ---- ESPAX Login ----
@@ -445,6 +458,7 @@ String readXMLResponse(unsigned long timeoutMs = 5000)
     return "";
   }
 
+  showESPAX(response,"Received"); // Wenn gewünscht alles übertragen und anzeigen
   return response;
 }
 
@@ -574,13 +588,16 @@ String getDateTimeString()
   }
 }
 
-void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
+void sendBuffer(String msg = "") // msg optional
 {
-  if (!wifiConnected || outBuffer.length() == 0)
+  // Falls kein Parameter mitgegeben wurde, nutze outBuffer
+  String sendData = (msg.length() > 0) ? msg : outBuffer;
+
+  if (!wifiConnected || sendData.length() == 0)
   {
     if (outputLevel >= 4)
     {
-      Serial.println("#### WiFi not connected or buffer empty, skipping send");
+      Serial.println("#### WiFi not connected or nothing to send");
     }
     return;
   }
@@ -596,7 +613,7 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
       http.begin(targetURL);
       http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
-      String postBody = "data=" + urlEncode(outBuffer);
+      String postBody = "data=" + urlEncode(sendData);
       int httpResponseCode = http.POST(postBody);
       http.end();
 
@@ -605,7 +622,7 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
         transmissionSuccess = true;
         if (outputLevel >= 4)
         {
-          Serial.println("#### HTTP data sent: " + outBuffer);
+          Serial.println("#### HTTP data sent: " + sendData);
         }
       }
       else
@@ -617,26 +634,25 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
         }
       }
     }
-    else
+    else if (outputLevel >= 2)
     {
-      if (outputLevel >= 2)
-        Serial.println("Invalid URL: Must start with http:// or https://");
+      Serial.println("Invalid URL: Must start with http:// or https://");
     }
   }
 
   // === SYSLOG SEND ===
   if (syslog_ip.length() > 0)
   {
-    syslog.log(LOG_INFO, outBuffer.c_str());
-    transmissionSuccess = true; // assume success; adjust if syslog client supports status feedback
+    syslog.log(LOG_INFO, sendData.c_str());
+    transmissionSuccess = true;
   }
 
-  // === MQTT JSON DATA ===
+  // === MQTT SEND ===
   if (mqttON && mqttclient.connected())
   {
-    if (outBuffer.indexOf("<SOH>") > -1 && lastJsonString != "{}")
+    if (sendData.indexOf("<SOH>") > -1 && lastJsonString != "{}")
     {
-      JsonDocument doc; // ArduinoJson 7.x Standard
+      JsonDocument doc;
       DeserializationError error = deserializeJson(doc, lastJsonString);
 
       if (error)
@@ -658,39 +674,37 @@ void sendBuffer() // Send outBuffer to Syslog, HTTP, or MQTT
         mqttclient.publish("serialsniffer/soh_code", soh_code.c_str(), soh_code.length());
         mqttclient.publish("serialsniffer/soh_description", soh_desc.c_str(), soh_desc.length());
 
-        // Einzelne Records verarbeiten
         JsonArray records = doc["records"];
         for (JsonObject record : records)
         {
           String recordType = record["Record type"] | "N/A";
-          recordType.replace(' ', '_'); // MQTT-tauglich
+          recordType.replace(' ', '_');
           String recordData = record["Data"] | "N/A";
           String topic = "serialsniffer/" + recordType;
           mqttclient.publish(topic.c_str(), recordData.c_str(), recordData.length());
         }
       }
     }
-    else if (outBuffer.startsWith("#"))
+    else if (sendData.startsWith("#"))
     {
-      // Fallback für nicht-JSON-Kommandos
-      mqttclient.publish("serialsniffer/input/command", outBuffer.c_str(), outBuffer.length());
+      mqttclient.publish("serialsniffer/input/command", sendData.c_str(), sendData.length());
       transmissionSuccess = true;
     }
   }
-
   else if (mqttON && !mqttclient.connected())
   {
     Serial.println("#### MQTT not connected, skipping send");
   }
 
-  // === CLEAR BUFFER IF SENT ===
+  // === CLEAR BUFFER ONLY IF outBuffer genutzt wurde ===
   if (transmissionSuccess)
   {
-    outBuffer = "";
+    if (msg.length() == 0) // Nur löschen, wenn wir wirklich den outBuffer benutzt haben
+      outBuffer = "";
   }
   else if (outputLevel >= 2)
   {
-    Serial.println("#### No transmission succeeded, buffer retained");
+    Serial.println("#### No transmission succeeded, data retained");
   }
 }
 
