@@ -179,7 +179,8 @@ void textOutln(String text, uint8_t level); // Output text with newline
 void sendBuffer(String msg);                // Send buffer to target URL
 String getDateTimeString();                 // Get current date and time as string
 
-String getUptimeString() {
+String getUptimeString()
+{
   unsigned long ms = millis() / 1000;
   unsigned long days = ms / 86400;
   ms %= 86400;
@@ -191,15 +192,6 @@ String getUptimeString() {
   snprintf(buf, sizeof(buf), "%lud %02luh %02lum %02lus", days, hours, minutes, seconds);
   return String(buf);
 }
-
-extern "C" uint8_t temprature_sens_read();
-
-float getCPUTemperature() {
-  // Interne Temperaturmessung (ESP32, grob, nicht kalibriert!)
-  // Rückgabewert in Grad Celsius
-  return (temprature_sens_read() - 32) / 1.8;
-}
-
 
 // ---- Hilfsfunktionen Time ----
 String getTimestamp()
@@ -1098,6 +1090,9 @@ void startWebserver() // Start the web server
   server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   String status = "IP: " + WiFi.localIP().toString();
+  status += "\nUptime: " + getUptimeString();
+  status += "\nCPU Temp: " + String(temperatureRead(),1) + " °C";
+  status += "\nFree Heap: " + String(ESP.getFreeHeap()) + " bytes";  
   status += "\nSSID: " + wifiSSID;
   status += "\nBaudrate: " + String(currentBaud);
   status += ", Data Bits: " + String(currentDataBits);
@@ -1119,9 +1114,7 @@ void startWebserver() // Start the web server
   status += "\nOutput Level: " + String(outputLevel);
   status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
   status += "\nTimeout: " + String(timeout) + " ms";
-  status += "\nUptime: " + getUptimeString();
-  status += "\nCPU Temp: " + String(getCPUTemperature(), 1) + " °C";
-  status += "\nFree Heap: " + String(ESP.getFreeHeap()) + " bytes";
+ 
   
   request->send(200, "text/plain", status); });
 
