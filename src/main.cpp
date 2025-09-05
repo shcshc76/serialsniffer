@@ -1090,6 +1090,7 @@ void startWebserver() // Start the web server
   server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   String status = "IP: " + WiFi.localIP().toString();
+  status += "\nNTP Time: " + getDateTimeString();  
   status += "\nUptime: " + getUptimeString();
   status += "\nCPU Temp: " + String(temperatureRead(),1) + " °C";
   status += "\nFree Heap: " + String(ESP.getFreeHeap()) + " bytes";  
@@ -1110,12 +1111,10 @@ void startWebserver() // Start the web server
   status += "\nSend ESPAX: " + String(espaxon ? "Enabled" : "Disabled");
   status += "\nShow ESPAX LOG: " + String(showESPA ? "Enabled" : "Disabled");
   status += "\nUse SD Card: " + String(useSD ? "Enabled" : "Disabled");
-  status += "\nNTP Time: " + getDateTimeString();
   status += "\nOutput Level: " + String(outputLevel);
   status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
   status += "\nTimeout: " + String(timeout) + " ms";
  
-  
   request->send(200, "text/plain", status); });
 
   // Dateien auflisten (SD)
