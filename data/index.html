@@ -70,8 +70,10 @@
             <div class="mt-3">
                 <a href="/log" class="btn btn-outline-light">Show Live Log</a>
             </div>
-            <div class="mt-3">
-                <a href="/downloadlog" class="btn btn-outline-light">LOG.txt herunterladen</a>
+            <!-- Dateiliste SD-Karte -->
+            <div class="card p-3 mb-4">
+                <h5 class="card-title">Fiels on SD-Card</h5>
+                <div id="fileList">Loading...</div>
             </div>
             <div class="info mt-3" id="responseMsg"></div>
         </div>
@@ -79,7 +81,7 @@
         <!-- Status -->
         <div class="card p-3 mb-4">
             <h5 class="card-title">Device status</h5>
-            <div id="status">Wird geladen...</div>
+            <div id="status">Loading...</div>
         </div>
 
         <!-- Manual Command -->
@@ -377,6 +379,20 @@
                 });
         }
 
+        function fetchFileList() {
+            fetch('/filelist')
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('fileList').innerHTML = html;
+                    // Nach dem Laden die Delete-Links abfangen
+                    document.querySelectorAll('#fileList a[data-delete]').forEach(link => {
+                        link.addEventListener('click', function (e) {
+                            if (!confirm('Wirklich löschen?')) e.preventDefault();
+                        });
+                    });
+                });
+        }
+
         function sendCommand() {
             const cmd = document.getElementById('cmdInput').value;
             if (!cmd) return;
@@ -446,7 +462,14 @@
             }
             sendCmd('t' + val);
         }
-
+        // Nach dem Laden die Dateiliste holen
+        fetchFileList();
+        // Optional: Nach Löschen oder Download neu laden
+        document.addEventListener('click', function (e) {
+            if (e.target.matches('#fileList a[data-delete]')) {
+                setTimeout(fetchFileList, 500); // Nach kurzer Zeit neu laden
+            }
+        });
         fetchStatus();
     </script>
     <!-- Help Modal -->

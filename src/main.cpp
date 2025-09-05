@@ -1085,15 +1085,6 @@ void startWebserver() // Start the web server
   // weitere Infos
   request->send(200, "text/plain", status); });
 
-  // Download LOG.txt über Webinterface
-  server.on("/downloadlog", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
-    if (SD.exists("/LOG.txt")) {
-      request->send(SD, "/LOG.txt", "text/plain", true); // true = Download erzwingen
-    } else {
-      request->send(404, "text/plain", "LOG.txt nicht gefunden.");
-    } });
-
   // Dateien auflisten (SD)
   server.on("/filelist", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -1105,7 +1096,7 @@ void startWebserver() // Start the web server
         String fname = String(file.name());
         html += "<li>" + fname;
         html += " [<a href=\"/download?file=" + fname + "\">Download</a>]";
-        html += " [<a href=\"/delete?file=" + fname + "\" onclick=\"return confirm('Really delete??');\">Delete</a>]";
+        html += " [<a href=\"/delete?file=" + fname + "\" data-delete=\"1\">Delete</a>]";
         html += "</li>";
         file = root.openNextFile();
       }
