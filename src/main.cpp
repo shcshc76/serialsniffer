@@ -185,7 +185,7 @@ String getTimestamp()
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo))
   {
-    Serial.println("Zeit nicht verfügbar");
+    Serial.println("Time not available");
     return "1970-01-01T00:00:00";
   }
   char buf[25];
@@ -1169,7 +1169,7 @@ saveSerialConfig(); // Save WiFi settings
   tryWiFiConnect();
   // Dann Antwort senden:
 
-  String response = "Verbindungsversuch mit SSID: " + wifiSSID + " gestartet.";
+  String response = "Trying to connect to SSID: " + wifiSSID + " gestartet.";
   request->send(200, "text/plain", response); });
 
   // Serve the log data
@@ -1182,7 +1182,7 @@ saveSerialConfig(); // Save WiFi settings
   server.on("/clearlog", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   clearLog(); // Clear the log buffer
-  request->send(200, "text/plain", "Log gelöscht."); });
+  request->send(200, "text/plain", "Log cleared."); });
 
   server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/log.html", "text/html"); });
@@ -1256,11 +1256,11 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         WiFi.mode(WIFI_AP);
         WiFi.softAP("SerialSniffer_Config");
         IP = WiFi.softAPIP();
-        textOutln("## Fallback-AP gestartet. IP: " + IP.toString());
+        textOutln("## Fallback AP started. IP: " + IP.toString());
         textOutln("## WiFi connection failed, check SSID and password", 2);
         textOutln("## Please connect to the fallback AP and configure WiFi settings", 2);
         textOutln("## Use the web server to set WiFi SSID and password", 2);
-        displayMessage("Fallback-AP (SerialSniffer_Config) gestartet. IP: " + IP.toString());
+        displayMessage("Fallback AP (SerialSniffer_Config) started. IP: " + IP.toString());
         startWebserver(); // Start web server
       }
     }
@@ -1316,7 +1316,7 @@ String decodeField0(const String &code)
     return "Call Status";
   if (code == "8")
     return "System Status";
-  return "Unbekannt";
+  return "Unknown";
 }
 
 String symbolicToControlChars(const String &input) // Convert symbolic control characters to actual control characters
@@ -1341,7 +1341,7 @@ String parseRawData(const String &rawData)
   int sohIndex = rawData.indexOf((char)SOH);
   if (sohIndex == -1 || sohIndex + 1 >= rawData.length())
   {
-    return "Kein SOH";
+    return "No SOH";
   }
 
   String sohCode = rawData.substring(sohIndex + 1, sohIndex + 2);
@@ -2177,18 +2177,18 @@ void setup()
   Wire.begin(7, 8); // SDA, SCL pins for I2C
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // 0x3C ist die Standard-I2C-Adresse
-    Serial.println("SSD1306-Initialisierung fehlgeschlagen");
+    Serial.println("SSD1306 initialization failed");
     displayOk = false;
   }
   else
   {
-    Serial.println("SSD1306-Initialisierung OK");
+    Serial.println("SSD1306 initialization OK");
     displayOk = true;
   }
 
   if (!SPIFFS.begin(true))
   { // Initialize SPIFFS
-    textOutln("## SPIFFS konnte nicht gestartet werden.", 2);
+    textOutln("## SPIFFS could not be started.", 2);
     return;
   }
 
@@ -2214,32 +2214,32 @@ void setup()
   {
     // NTP initialisieren
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    Serial.println("Warte auf Zeit-Sync...");
+    Serial.println("Waiting for time sync...");
     struct tm timeinfo;
     while (!getLocalTime(&timeinfo))
     {
       delay(500);
       Serial.print(".");
     }
-    Serial.println("\nZeit synchronisiert: " + getTimestamp());
+    Serial.println("\nTime synchronized: " + getDateTimeString());
 
     if (espaxon) // Wenn ESPAX aktiviert ist, verbinde
     {
       if (!espaxclient.connect(espaxserverIP.c_str(), espaxserverPort))
       {
-        Serial.println("Verbindung zum Server fehlgeschlagen");
+        Serial.println("Connection to espa-x server failed");
         while (true)
           delay(1000);
       }
-      Serial.println("Verbunden zum Server");
+      Serial.println("Connected to the espa-x server");
 
       if (!ensureConnected()) // Verbunden?
       {
-        Serial.println("Initiale Verbindung fehlgeschlagen, wird später erneut versucht");
+        Serial.println("Initial connection to espa-x server failed, will try again later");
       }
       else if (!doLogin()) // Login
       {
-        Serial.println("Login fehlgeschlagen – wird später erneut versucht");
+        Serial.println("Login to espa-x server failed – will try again later");
       }
       lastLoginAttempt = millis();
     }
@@ -2279,7 +2279,7 @@ void setup()
     //  SD card initialisieren
     if (!SD.begin(SD_CS, spi, 25000000))
     {
-      Serial.println("❌ SD nicht gefunden!");
+      Serial.println("❌ SD not found!");
     }
     else
     {
@@ -2607,7 +2607,7 @@ void handleespax()
       String rspCode = xml.substring(start, end);
       if (rspCode != "200")
       {
-        Serial.println("Heartbeat fehlgeschlagen, Session evtl. abgelaufen");
+        Serial.println("Espa-x heartbeat failed, session possibly expired");
         sessionID = ""; // Session ungültig
         espaxConnected = false;
       }
