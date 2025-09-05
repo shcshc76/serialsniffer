@@ -142,6 +142,25 @@ Note: Commands are case-sensitive.
                 });
         }
 
+        // Scroll-Event-Listener für manuelle Kontrolle
+        document.addEventListener("DOMContentLoaded", () => {
+            const logElem = document.getElementById("log");
+
+            logElem.addEventListener("scroll", () => {
+                const nearBottom = logElem.scrollTop + logElem.clientHeight >= logElem.scrollHeight - 5;
+
+                if (!nearBottom && autoScroll) {
+                    // User hat hochgescrollt -> Autoscroll aus
+                    autoScroll = false;
+                    document.getElementById("autoscrollToggle").checked = false;
+                } else if (nearBottom && !autoScroll) {
+                    // User ist wieder unten -> Autoscroll an
+                    autoScroll = true;
+                    document.getElementById("autoscrollToggle").checked = true;
+                }
+            });
+        });
+
         function clearLog() { // Logdaten löschen
             fetch('/clearlog').then(() => fetchLog());
         }
