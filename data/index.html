@@ -166,7 +166,7 @@
                         <div class="accordion-body">
                             <!-- Syslog IP -->
                             <div class="mb-3">
-                                <label for="syslogInput" class="form-label">Syslog IP-Adresse</label>
+                                <label for="syslogInput" class="form-label">Syslog Server</label>
                                 <div class="input-group">
                                     <input type="text" id="syslogInput" class="form-control"
                                         placeholder="SYSLOG Server IP" />
@@ -175,7 +175,7 @@
                             </div>
                             <!-- Target URL -->
                             <div class="mb-3">
-                                <label for="urlInput" class="form-label">HTTP Ziel-URL</label>
+                                <label for="urlInput" class="form-label">HTTP Dest-URL</label>
                                 <div class="input-group">
                                     <input type="text" id="urlInput" class="form-control"
                                         placeholder="http://example.com/post" />
@@ -358,7 +358,7 @@
             const password = document.getElementById('password').value.trim();
 
             if (!ssid || !password) {
-                responseMsg.textContent = 'SSID und Passwort dürfen nicht leer sein!';
+                responseMsg.textContent = 'SSID and password must not be empty!';
                 responseMsg.classList.add('text-danger');
                 return;
             }
@@ -370,7 +370,7 @@
                     responseMsg.classList.remove('text-danger');
                 })
                 .catch(err => {
-                    responseMsg.textContent = 'Fehler beim Verbinden: ' + err;
+                    responseMsg.textContent = 'Error connecting: ' + err;
                     responseMsg.classList.add('text-danger');
                 });
         });
@@ -391,7 +391,7 @@
                     // Nach dem Laden die Delete-Links abfangen
                     document.querySelectorAll('#fileList a[data-delete]').forEach(link => {
                         link.addEventListener('click', function (e) {
-                            if (!confirm('Wirklich löschen?')) e.preventDefault();
+                            if (!confirm('Really delete??')) e.preventDefault();
                         });
                     });
                 });
@@ -413,7 +413,7 @@
         function sendBaudCommand() {
             const val = document.getElementById('baudRateInput').value;
             if (!val || isNaN(val)) {
-                alert("Bitte gültige Baudrate eingeben!");
+                alert("Please enter a valid baud rate!");
                 return;
             }
             sendCmd('b' + val);
@@ -422,7 +422,7 @@
         function sendDataBits() {
             const val = document.getElementById('dataBitsInput').value;
             if (!val || isNaN(val) || val < 5 || val > 8) {
-                alert("Bitte Datenbits zwischen 5 und 8 eingeben!");
+                alert("Please enter data bits between 5 and 8!");
                 return;
             }
             sendCmd('B' + val);
@@ -431,7 +431,7 @@
         function sendStopBits() {
             const val = document.getElementById('stopBitsInput').value;
             if (val !== '1' && val !== '2') {
-                alert("Nur 1 oder 2 als Stopbit erlaubt!");
+                alert("Only 1 or 2 allowed as stop bit!");
                 return;
             }
             sendCmd('s' + val);
@@ -440,7 +440,7 @@
         function sendSyslog() {
             const val = document.getElementById('syslogInput').value.trim();
             if (val.length === 0) {
-                alert("Bitte gültige Adresse eingeben!");
+                alert("Please enter a valid address!");
                 return;
             }
             sendCmd('Y' + val);
@@ -450,7 +450,7 @@
             const val = document.getElementById('urlInput').value.trim();
             if (val.length > 0) {
                 if (!val.startsWith('http')) {
-                    alert("Bitte gültige URL eingeben!");
+                    alert("Please enter a valid URL!");
                     return;
                 }
             }
@@ -461,7 +461,7 @@
         function sendTimeout() {
             const val = document.getElementById('timeoutInput').value;
             if (!val || isNaN(val) || parseInt(val) < 0) {
-                alert("Bitte gültigen Timeout in Millisekunden eingeben!");
+                alert("Please enter a valid timeout in milliseconds!");
                 return;
             }
             sendCmd('t' + val);
