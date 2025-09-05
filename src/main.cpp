@@ -1083,6 +1083,14 @@ void startWebserver() // Start the web server
   server.on("/bootstrap.min.css", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/bootstrap.min.css", "text/css"); });
 
+  server.on("/bootstrap-icons.css", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/bootstrap-icons.css", "text/css"); });
+  server.on("/fonts/bootstrap-icons.woff2", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/fonts/bootstrap-icons.woff2", "font/woff2"); });
+
+  server.on("/fonts/bootstrap-icons.woff", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/fonts/bootstrap-icons.woff", "font/woff"); });
+
   server.on("/bootstrap.bundle.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/bootstrap.bundle.min.js", "text/javascript"); });
 
