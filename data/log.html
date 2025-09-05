@@ -5,14 +5,24 @@
     <meta charset="UTF-8">
     <title>ESP32 Serial Log (Live)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap 5 CDN -->
+    <!-- Bootstrap 5 CSS -->
     <link href="/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
-            background-color: #0e0e0e;
-            color: #00ff00;
-            font-family: monospace;
-            padding: 2rem;
+            background-color: #181a1b;
+            color: #e0ffe0;
+            font-family: 'Fira Mono', 'Consolas', monospace;
+            padding-top: 2rem;
+        }
+
+        .card {
+            background-color: #23272b;
+            border: 1px solid #333;
+            color: #e0ffe0;
+            box-shadow: 0 2px 8px #0008;
+            margin-bottom: 1.5rem;
         }
 
         #log {
@@ -20,62 +30,111 @@
             background-color: #000;
             padding: 1rem;
             border: 1px solid #333;
-            height: 60vh;
-            max-height: 80vh;
+            height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
             font-size: 0.95rem;
         }
 
-        input.form-control {
-            background-color: #111;
+        .form-control, .btn {
+            border-radius: 0.3rem;
+        }
+
+        label {
+            font-size: 0.95rem;
+            color: #bfffbf;
+        }
+
+        .btn-success, .btn-outline-success {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: #fff;
+        }
+
+        .btn-outline-success {
+            background: none;
+            color: #28a745;
+        }
+
+        .btn-outline-success:hover {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: #fff;
+        }
+
+        .form-check-label {
+            color: #bfffbf;
+        }
+
+        pre {
             color: #0f0;
-            border: 1px solid #333;
+            background-color: #000;
+            padding: 1rem;
+            overflow-x: auto;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h5 class="mb-4">ESP32 Serial Log</h5>
+<div class="container">
+    <h1 class="mb-4 text-center"><i class="bi bi-terminal"></i> ESP32 Serial Log</h1>
+
+    <!-- Log Card -->
+    <div class="card p-3">
+        <h5 class="card-title"><i class="bi bi-file-earmark-text"></i> Live Log</h5>
         <div id="log">Loading log...</div>
-        <div class="mt-3">
-            <button onclick="clearLog()" class="btn btn-danger">Clear Log</button>
-            <a href="/" class="btn btn-secondary ms-2">Back to Home</a>
-            <div class="form-check form-switch d-inline-block ms-3">
-                <input class="form-check-input" type="checkbox" id="autoscrollToggle" checked
-                    onchange="toggleAutoscroll()">
+
+        <div class="mt-3 d-flex flex-wrap align-items-center">
+            <button onclick="clearLog()" class="btn btn-danger me-2 mb-2">Clear Log</button>
+            <a href="/" class="btn btn-secondary me-2 mb-2">Back to Home</a>
+            <div class="form-check form-switch d-inline-block ms-2 mb-2">
+                <input class="form-check-input" type="checkbox" id="autoscrollToggle" checked onchange="toggleAutoscroll()">
                 <label class="form-check-label" for="autoscrollToggle">Autoscroll</label>
             </div>
         </div>
-        <div class="mt-3">
-            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('v')">Show no
-                heartbeat</button>
-            <button type="button" class="btn btn-primary" onclick="sendQuickCommand('V')">Show heartbeat</button>
-            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('q')">Disable TFT
-                update</button>
-            <button type="button" class="btn btn-primary me-2" onclick="sendQuickCommand('Q')">Enable TFT
-                update</button>
-        </div>
 
-        <div class="container mt-3">
-            <h5>Last message (JSON):</h5>
-            <pre id="jsonOutput" style="white-space: pre-wrap; background:#111; padding:1rem;"></pre>
-
+        <div class="mt-3 d-flex flex-wrap">
+            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('v')">Show no heartbeat</button>
+            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('V')">Show heartbeat</button>
+            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('q')">Disable TFT update</button>
+            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('Q')">Enable TFT update</button>
         </div>
-        <form id="cmdForm" class="row g-2 mt-3" onsubmit="sendCommand(); return false;">
+    </div>
+
+    <!-- JSON Output Card -->
+    <div class="card p-3">
+        <h5 class="card-title"><i class="bi bi-code-slash"></i> Last message (JSON)</h5>
+        <pre id="jsonOutput">Loading...</pre>
+    </div>
+
+    <!-- Manual Command Card -->
+    <div class="card p-3">
+        <h5 class="card-title"><i class="bi bi-send"></i> Send Command</h5>
+        <form id="cmdForm" class="row g-2" onsubmit="sendCommand(); return false;">
             <div class="col-md-8">
-                <h5 class="card-title">Send Command</h5>
                 <div class="input-group">
-                    <input type="text" id="cmdInput" class="form-control"
-                        placeholder="Insert Command (e. g. 'b9600', 'h')" required>
+                    <input type="text" id="cmdInput" class="form-control" placeholder="Insert Command (e.g., 'b9600', 'h')" required>
                     <button type="submit" class="btn btn-success">Send</button>
                 </div>
             </div>
         </form>
     </div>
-    <div class="container">
-        <h5 class="card-title">Available commands</h5>
-        <pre style="color: #0f0; background-color: #000; padding: 1rem;">
+
+    <!-- Available Commands Card -->
+    <div class="card p-3">
+        <h5 class="card-title"><i class="bi bi-list"></i> Available Commands</h5>
+        <pre>
 b(baud)        - Set baud rate (e.g., b9600)
 B(data_bits)   - Set data bits (5-8, e.g., B8)
 s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
@@ -114,102 +173,91 @@ clr|IR-7       - Clear log buffer
 lup|IR-UP      - Increase TFT backlight
 ldn|IR-DOWN    - Decrease TFT backlight
 X|IR-ON        - Restart device
-csdoff|csdon   - Disbale or enable SD card usage
+csdoff|csdon   - Disable or enable SD card usage
 ? or h         - Help
 Note: Commands are case-sensitive.
-  </pre>
+        </pre>
     </div>
-    <script>
-        let lastLog = "";
-        let autoScroll = true;
+</div>
 
-        function toggleAutoscroll() {
-            autoScroll = document.getElementById("autoscrollToggle").checked;
-        }
+<script>
+let lastLog = "";
+let autoScroll = true;
 
-        function fetchLog() {
-            fetch('/logdata')
-                .then(res => res.text())
-                .then(data => {
-                    if (data !== lastLog) {
-                        lastLog = data;
-                        const logElem = document.getElementById('log');
-                        logElem.textContent = data;
-                        if (autoScroll) {
-                            logElem.scrollTop = logElem.scrollHeight;
-                        }
-                    }
-                });
-        }
+function toggleAutoscroll() {
+    autoScroll = document.getElementById("autoscrollToggle").checked;
+}
 
-        // Scroll-Event-Listener für manuelle Kontrolle
-        document.addEventListener("DOMContentLoaded", () => {
-            const logElem = document.getElementById("log");
-
-            logElem.addEventListener("scroll", () => {
-                const nearBottom = logElem.scrollTop + logElem.clientHeight >= logElem.scrollHeight - 5;
-
-                if (!nearBottom && autoScroll) {
-                    // User hat hochgescrollt -> Autoscroll aus
-                    autoScroll = false;
-                    document.getElementById("autoscrollToggle").checked = false;
-                } else if (nearBottom && !autoScroll) {
-                    // User ist wieder unten -> Autoscroll an
-                    autoScroll = true;
-                    document.getElementById("autoscrollToggle").checked = true;
-                }
-            });
+function fetchLog() {
+    fetch('/logdata')
+        .then(res => res.text())
+        .then(data => {
+            if (data !== lastLog) {
+                lastLog = data;
+                const logElem = document.getElementById('log');
+                logElem.textContent = data;
+                if (autoScroll) logElem.scrollTop = logElem.scrollHeight;
+            }
         });
+}
 
-        function clearLog() { // Logdaten löschen
-            fetch('/clearlog').then(() => fetchLog());
+document.addEventListener("DOMContentLoaded", () => {
+    const logElem = document.getElementById("log");
+    logElem.addEventListener("scroll", () => {
+        const nearBottom = logElem.scrollTop + logElem.clientHeight >= logElem.scrollHeight - 5;
+        if (!nearBottom && autoScroll) {
+            autoScroll = false;
+            document.getElementById("autoscrollToggle").checked = false;
+        } else if (nearBottom && !autoScroll) {
+            autoScroll = true;
+            document.getElementById("autoscrollToggle").checked = true;
         }
+    });
+});
 
-        function sendCommand() {
-            const input = document.getElementById('cmdInput');
-            const cmd = input.value.trim();
-            if (!cmd) return;
+function clearLog() {
+    fetch('/clearlog').then(() => fetchLog());
+}
 
-            const sendBtn = document.querySelector('#cmdForm button[type="submit"]');
-            sendBtn.disabled = true;
-            sendBtn.textContent = 'Sending...';
+function sendCommand() {
+    const input = document.getElementById('cmdInput');
+    const cmd = input.value.trim();
+    if (!cmd) return;
+    const sendBtn = document.querySelector('#cmdForm button[type="submit"]');
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending...';
+    fetch('/get?input1=' + encodeURIComponent(cmd))
+        .then(() => {
+            input.value = '';
+            fetchLog();
+        })
+        .finally(() => {
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send';
+        });
+}
 
-            fetch('/get?input1=' + encodeURIComponent(cmd))
-                .then(() => {
-                    input.value = '';
-                    fetchLog();
-                })
-                .finally(() => {
-                    sendBtn.disabled = false;
-                    sendBtn.textContent = 'Send';
-                });
-        }
-        function sendQuickCommand(cmd) {
-            fetch('/get?input1=' + encodeURIComponent(cmd))
-                .then(() => {
-                    fetchLog();
-                    document.getElementById('cmdInput').value = '';
-                })
-                .catch(err => console.error('Error while sending:', err));
-        }
+function sendQuickCommand(cmd) {
+    fetch('/get?input1=' + encodeURIComponent(cmd))
+        .then(() => {
+            fetchLog();
+            document.getElementById('cmdInput').value = '';
+        });
+}
 
-        function fetchJson() { // JSON-Daten abrufen und anzeigen
-            fetch('/json')
-                .then(response => response.json())
-                .then(data => {
-                    const output = document.getElementById('jsonOutput');
-                    output.textContent = JSON.stringify(data, null, 2); // schön formatiert
-                })
-                .catch(err => {
-                    console.error("Error fetching JSON:", err);
-                });
-        }
+function fetchJson() {
+    fetch('/json')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
+        });
+}
 
-        // alle 2 Sekunden abrufen
-        setInterval(fetchJson, 2000);
-        setInterval(fetchLog, 2000);
-        fetchLog();
-    </script>
+setInterval(fetchLog, 2000);
+setInterval(fetchJson, 2000);
+fetchLog();
+fetchJson();
+</script>
+
 </body>
-
 </html>
