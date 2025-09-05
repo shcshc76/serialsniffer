@@ -22,7 +22,7 @@
 // TFT_eSPI settings
 // SPIClass hspi = SPIClass(HSPI);
 
-bool tftOk = false; // TFT Status
+bool tftOk = false;  // TFT Status
 int lineHeight = 12; // Höhe einer Textzeile (anpassen je nach Schriftart)
 int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
@@ -118,7 +118,7 @@ TaskHandle_t mqttTaskHandle;
 // ESPAX
 bool espaxon = false;        // ESPAX nutzen
 bool espaxConnected = false; // ESPAX verbunden
-bool showESPA = false;        // ESPAX Nachrichten anzeigen/ senden und speichern
+bool showESPA = false;       // ESPAX Nachrichten anzeigen/ senden und speichern
 WiFiClient espaxclient;
 #define MAGIC 0x4558
 const uint8_t FLAGS[4] = {0x00, 0x00, 0x02, 0x2a};
@@ -177,6 +177,7 @@ void clearLog();                            // Clear the log buffer
 void reconnectMQTT();                       // Reconnect to MQTT broker
 void textOutln(String text, uint8_t level); // Output text with newline
 void sendBuffer(String msg);                // Send buffer to target URL
+String getDateTimeString();                 // Get current date and time as string
 
 // ---- Hilfsfunktionen Time ----
 String getTimestamp()
@@ -203,6 +204,17 @@ void showESPAX(String msg, String dir = "")
   {
     displayMessage(msg);                                // TFT Anzeige
     sendBuffer("# " + dir + " ESPA-X Message: " + msg); // an div. Ziele senden
+    // Auf SD Karte schreiben
+    if (useSD && sdOk)
+    {
+      File file = SD.open("/espax.log", FILE_APPEND);
+      if (file)
+      {
+        file.println("# NTP " + getDateTimeString() + " " + dir + " ESPA-X Message: ");
+        file.println(msg);
+        file.close();
+      }
+    }
     // WebLog anhängen
     webLogBuffer += "# " + dir + " ESPA-X Message: \n" + msg + "\n";
     if (webLogBuffer.length() > WEB_LOG_MAX)
@@ -1499,7 +1511,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   // Nur wenn SD-Karte vorhanden ist, dort speichern
   if (sdOk)
   {
-    File file = SD.open("/LOG.txt", FILE_APPEND);
+    File file = SD.open("/System.log", FILE_APPEND);
     if (file)
     {
       file.println(line);
@@ -1858,7 +1870,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# csdon - Use SD");
     textOutln("# csdoff - Do not use SD");
     textOutln("# csespaxon - Show espa-x LOG");
-    textOutln("# csespaxoff - Do not show espa-x LOG");    
+    textOutln("# csespaxoff - Do not show espa-x LOG");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
