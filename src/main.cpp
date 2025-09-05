@@ -197,14 +197,14 @@ String getInvokeID() // Generate a unique Invoke ID for each command
   return String(invokeCounter++);
 }
 
-void showESPAX(String msg, String dir="")
+void showESPAX(String msg, String dir = "")
 {
   if (showESPA)
   {
-    displayMessage(msg);                       // TFT Anzeige
-    sendBuffer("# "+dir+" ESPA-X Message: " + msg);   // an div. Ziele senden
+    displayMessage(msg);                                // TFT Anzeige
+    sendBuffer("# " + dir + " ESPA-X Message: " + msg); // an div. Ziele senden
     // WebLog anhängen
-    webLogBuffer += "# "+dir+" ESPA-X Message: \n" + msg + "\n";
+    webLogBuffer += "# " + dir + " ESPA-X Message: \n" + msg + "\n";
     if (webLogBuffer.length() > WEB_LOG_MAX)
     {
       webLogBuffer.remove(0, webLogBuffer.length() / 2);
@@ -234,7 +234,7 @@ void sendMessage(const String &xml)
 
   Serial.printf("ESPAX gesendet: %u Bytes (Header + %u Bytes XML)\n", totalLen, xmlLen);
   Serial.println(xml);
-  showESPAX(xml,"Send"); // Wenn gewünscht alles übertragen und anzeigen
+  showESPAX(xml, "Send"); // Wenn gewünscht alles übertragen und anzeigen
 }
 
 // ---- ESPAX Login ----
@@ -458,7 +458,7 @@ String readXMLResponse(unsigned long timeoutMs = 5000)
     return "";
   }
 
-  showESPAX(response,"Received"); // Wenn gewünscht alles übertragen und anzeigen
+  showESPAX(response, "Received"); // Wenn gewünscht alles übertragen und anzeigen
   return response;
 }
 
@@ -1092,6 +1092,57 @@ void startWebserver() // Start the web server
       request->send(SD, "/LOG.txt", "text/plain", true); // true = Download erzwingen
     } else {
       request->send(404, "text/plain", "LOG.txt nicht gefunden.");
+    } });
+
+  // Dateien auflisten (SD)
+  server.on("/filelist", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+    String html = "<h2>Files on SD-Card</h2><ul>";
+    if (sdOk) {
+      File root = SD.open("/");
+      File file = root.openNextFile();
+      while (file) {
+        String fname = String(file.name());
+        html += "<li>" + fname;
+        html += " [<a href=\"/download?file=" + fname + "\">Download</a>]";
+        html += " [<a href=\"/delete?file=" + fname + "\" onclick=\"return confirm('Really delete??');\">Delete</a>]";
+        html += "</li>";
+        file = root.openNextFile();
+      }
+      root.close();
+    } else {
+      html += "<li>SD card not available</li>";
+    }
+    html += "</ul>";
+    request->send(200, "text/html", html); });
+
+  // Datei-Download
+  server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+    if (!request->hasParam("file")) {
+      request->send(400, "text/plain", "Parameter 'file' missing.");
+      return;
+    }
+    String fname = request->getParam("file")->value();
+    if (SD.exists("/"+fname)) {
+      request->send(SD, "/"+fname, "application/octet-stream", true);
+    } else {
+      request->send(404, "text/plain", "File not found");
+    } });
+
+  // Datei löschen
+  server.on("/delete", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+    if (!request->hasParam("file")) {
+      request->send(400, "text/plain", "Parameter 'file' missing.");
+      return;
+    }
+    String fname = request->getParam("file")->value();
+    if (SD.exists("/"+fname)) {
+      SD.remove("/"+fname);
+      request->send(200, "text/html", "File deleted.<br><a href=\"/filelist\">Back to file list</a>");
+    } else {
+      request->send(404, "text/plain", "File not found.");
     } });
 
   server.on("/connect", HTTP_GET, [](AsyncWebServerRequest *request)
