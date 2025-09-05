@@ -22,7 +22,7 @@
 // TFT_eSPI settings
 // SPIClass hspi = SPIClass(HSPI);
 
-bool tftOk = false;
+bool tftOk = false; // TFT Status
 int lineHeight = 12; // Höhe einer Textzeile (anpassen je nach Schriftart)
 int currentLine = 0; // Aktuelle Zeilenposition
 int maxLines;        // Maximale Anzahl Zeilen pro Bildschirmhöhe
@@ -43,8 +43,8 @@ int tftLight = 255; // Hintergrundbeleuchtung (0-255)
 #define IR_RECEIVE_PIN 4 // Pin for IR receiver
 
 // SD card settings
-bool useSD = false;
-bool sdOk = false;
+bool useSD = false; // SD Card nutzen?
+bool sdOk = false;  // SD Card Status
 constexpr int PIN_SCK = 10;
 constexpr int PIN_MISO = 2;
 constexpr int PIN_MOSI = 11;
@@ -118,7 +118,7 @@ TaskHandle_t mqttTaskHandle;
 // ESPAX
 bool espaxon = false;        // ESPAX nutzen
 bool espaxConnected = false; // ESPAX verbunden
-bool showESPA = true;        // ESPAX Nachrichten anzeigen/ senden und speichern
+bool showESPA = false;        // ESPAX Nachrichten anzeigen/ senden und speichern
 WiFiClient espaxclient;
 #define MAGIC 0x4558
 const uint8_t FLAGS[4] = {0x00, 0x00, 0x02, 0x2a};
@@ -783,6 +783,7 @@ void saveSerialConfig() // Save alle Data
   prefs.putBool("espaxon", espaxon);
   prefs.putInt("tftLight", tftLight); // TFT Hintergrundbeleuchtung speichern
   prefs.putBool("useSD", useSD);
+  prefs.putBool("showESPA", showESPA);
   prefs.end();
   textOutln("# Config saved");
 }
@@ -821,6 +822,7 @@ bool loadSerialConfig() // Load saved config
   espaxon = prefs.getBool("espaxon", false);
   tftLight = prefs.getInt("tftLight", 255); // TFT Hintergrundbeleuchtung laden
   useSD = prefs.getBool("useSD", false);
+  showESPA = prefs.getBool("showESPA", false);
   prefs.end();
   textOutln("# Saved config restored");
   return true;
@@ -1077,6 +1079,7 @@ void startWebserver() // Start the web server
   status += "\nESPAX Server: " + espaxserverIP + ":" + String(espaxserverPort);
   status += "\nESPAX User: " + espaxuser;
   status += "\nSend ESPAX: " + String(espaxon ? "Enabled" : "Disabled");
+  status += "\nShow ESPAX LOG: " + String(showESPA ? "Enabled" : "Disabled");
   status += "\nUse SD Card: " + String(useSD ? "Enabled" : "Disabled");
   status += "\nNTP Time: " + getDateTimeString();
   status += "\nOutput Level: " + String(outputLevel);
@@ -1854,6 +1857,8 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# ldn - Decrease TFT backlight");
     textOutln("# csdon - Use SD");
     textOutln("# csdoff - Do not use SD");
+    textOutln("# csespaxon - Show espa-x LOG");
+    textOutln("# csespaxoff - Do not show espa-x LOG");    
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
@@ -1888,6 +1893,32 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       textOutln("# SD card already disabled");
     }
   }
+  else if (cmd == "csespaxon")
+  { // Enable ESPAX logging
+    if (!showESPA)
+    {
+      showESPA = true;
+
+      textOutln("# ESPAX log display enabled");
+    }
+    else
+    {
+      textOutln("# ESPAX log display already enabled");
+    }
+  }
+  else if (cmd == "csespaxoff")
+  { // Disable ESPAX logging
+    if (showESPA)
+    {
+      showESPA = false;
+      textOutln("# ESPAX log display disabled");
+    }
+    else
+    {
+      textOutln("# ESPAX log display already disabled");
+    }
+  }
+
   else if (c == 'M')
   { // Set MQTT server
     mqttServer = val;

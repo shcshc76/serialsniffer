@@ -317,6 +317,10 @@
                                 ESPAX</button>
                             <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('i')">Disable
                                 ESPAX</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csespaxon')">Enable
+                                ESPAX LOG</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csespaxoff')">Disable
+                                ESPAX LOG</button>    
                             <button class="btn btn-outline-success btn-sm command-button"
                                 onclick="sendCmd('csdon')">Enable
                                 SD Card</button>
@@ -511,6 +515,8 @@ g(ESPAX_PORT)  - Set ESPAX server port (e.g., g2023)
 A(ESPAX_USER)  - Set ESPAX user (e.g., AMyESPAXUser)
 a(ESPAX_PASS)  - Set ESPAX password (e.g., aMyESPAXPass)
 i|I|           - Disable or enable ESPAX connection
+csespaxon      - Show espa-x LOG
+csespaxoff     - Do not show espa-x LOG
 S|IR-8         - Save config
 z|Z|IR-1       - Disable or enable RX simulation
 v|V|IR-2       - Disable or enable display heartbeat
