@@ -1090,11 +1090,12 @@ void startWebserver() // Start the web server
   server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   String status = "IP: " + WiFi.localIP().toString();
+  status += "\nSSID: " + wifiSSID;
+  status += ", WiFi RSSI: " + String(WiFi.RSSI()) + " dBm";   
   status += "\nNTP Time: " + getDateTimeString();  
   status += "\nUptime: " + getUptimeString();
   status += "\nCPU Temp: " + String(temperatureRead(),1) + " °C";
   status += "\nFree Heap: " + String(ESP.getFreeHeap()) + " bytes";  
-  status += "\nSSID: " + wifiSSID;
   status += "\nBaudrate: " + String(currentBaud);
   status += ", Data Bits: " + String(currentDataBits);
   status += ", Parity: " + String(currentParity);
