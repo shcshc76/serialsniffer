@@ -72,7 +72,7 @@
             </div>
             <!-- Dateiliste SD-Karte -->
             <div class="card p-3 mb-4">
-                <h5 class="card-title">Fiels on SD-Card</h5>
+                <h5 class="card-title">Files on SD-Card</h5>
                 <div id="fileList">Loading...</div>
             </div>
             <div class="info mt-3" id="responseMsg"></div>
@@ -468,7 +468,7 @@
         }
         // Nach dem Laden die Dateiliste holen
         fetchFileList();
-        // Optional: Nach Löschen oder Download neu laden
+        // Nach Löschen oder Download neu laden
         document.addEventListener('click', function (e) {
             if (e.target.matches('#fileList a[data-delete]')) {
                 setTimeout(fetchFileList, 500); // Nach kurzer Zeit neu laden

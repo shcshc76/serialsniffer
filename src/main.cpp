@@ -1103,12 +1103,16 @@ void startWebserver() // Start the web server
   // Dateien auflisten (SD)
   server.on("/filelist", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-    String html = "<h2>Files on SD-Card</h2><ul>";
+    String html = "";
     if (sdOk) {
       File root = SD.open("/");
       File file = root.openNextFile();
       while (file) {
         String fname = String(file.name());
+        if(fname.startsWith(".")) { // Skip hidden files
+          file = root.openNextFile();
+          continue;
+        }
         html += "<li>" + fname;
         html += " [<a href=\"/download?file=" + fname + "\">Download</a>]";
         html += " [<a href=\"/delete?file=" + fname + "\" data-delete=\"1\">Delete</a>]";
@@ -1146,7 +1150,7 @@ void startWebserver() // Start the web server
     String fname = request->getParam("file")->value();
     if (SD.exists("/"+fname)) {
       SD.remove("/"+fname);
-      request->send(200, "text/html", "File deleted.<br><a href=\"/filelist\">Back to file list</a>");
+      request->send(200, "text/html", "File deleted.<br><a href=\"/\">Back to home</a>");
     } else {
       request->send(404, "text/plain", "File not found.");
     } });
@@ -1511,7 +1515,7 @@ void printBuffer(const char *type, uint8_t *buf, size_t len)
   // Nur wenn SD-Karte vorhanden ist, dort speichern
   if (sdOk)
   {
-    File file = SD.open("/System.log", FILE_APPEND);
+    File file = SD.open("/system.log", FILE_APPEND);
     if (file)
     {
       file.println(line);
@@ -2281,11 +2285,11 @@ void setup()
     {
       Serial.println("✅ SD OK!");
       sdOk = true;
-      File file = SD.open("/status.txt", FILE_WRITE);
+      File file = SD.open("/system.log", FILE_APPEND);
       if (file)
       {
-        file.println("Hallo von ESP32-S3! vom serialsniffer");
-        file.println("Timestamp: " + getTimestamp());
+        file.println("Serialsniffer started");
+        file.println("Timestamp: " + getDateTimeString());
         file.close();
       }
     }
