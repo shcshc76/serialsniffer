@@ -1267,11 +1267,11 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         // mDNS initialisieren:
         if (MDNS.begin("serialsniffer"))
         {
-          textOutln("mDNS responder started as serialsniffer.local");
+          textOutln("# mDNS responder started as serialsniffer.local");
         }
         else
         {
-          textOutln("Error setting up MDNS responder!");
+          textOutln("# Error setting up MDNS responder!");
         }
 
         // Start the NTP client
