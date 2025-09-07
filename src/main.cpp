@@ -18,6 +18,7 @@
 #include <IRremote.hpp>
 #include <PubSubClient.h>
 #include "time.h"
+#include <ESPmDNS.h>
 
 // TFT_eSPI settings
 // SPIClass hspi = SPIClass(HSPI);
@@ -1262,6 +1263,16 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         IP = WiFi.localIP();
         displayMessage("OK IP: " + WiFi.localIP().toString());
         startWebserver(); // Start web server
+
+        // mDNS initialisieren:
+        if (MDNS.begin("serialsniffer"))
+        {
+          textOutln("mDNS responder started as serialsniffer.local");
+        }
+        else
+        {
+          textOutln("Error setting up MDNS responder!");
+        }
 
         // Start the NTP client
         timeClient.begin();
