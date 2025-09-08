@@ -36,7 +36,8 @@
             font-size: 0.95rem;
         }
 
-        .form-control, .btn {
+        .form-control,
+        .btn {
             border-radius: 0.3rem;
         }
 
@@ -45,7 +46,8 @@
             color: #bfffbf;
         }
 
-        .btn-success, .btn-outline-success {
+        .btn-success,
+        .btn-outline-success {
             background-color: #28a745;
             border-color: #28a745;
             color: #fff;
@@ -83,58 +85,66 @@
             padding: 1rem;
             overflow-x: auto;
         }
+
+
     </style>
 </head>
 
 <body>
-<div class="container">
-    <h1 class="mb-4 text-center"><i class="bi bi-terminal"></i> ESP32 Serial Log</h1>
+    <div class="container">
+        <h1 class="mb-4 text-center"><i class="bi bi-terminal"></i> ESP32 Serial Log</h1>
 
-    <!-- Log Card -->
-    <div class="card p-3">
-        <h5 class="card-title"><i class="bi bi-file-earmark-text"></i> Live Log</h5>
-        <div id="log">Loading log...</div>
+        <!-- Log Card -->
+        <div class="card p-3">
+            <h5 class="card-title"><i class="bi bi-file-earmark-text"></i> Live Log</h5>
+            <div id="log">Loading log...</div>
 
-        <div class="mt-3 d-flex flex-wrap align-items-center">
-            <button onclick="clearLog()" class="btn btn-danger me-2 mb-2">Clear Log</button>
-            <a href="/" class="btn btn-secondary me-2 mb-2">Back to Home</a>
-            <div class="form-check form-switch d-inline-block ms-2 mb-2">
-                <input class="form-check-input" type="checkbox" id="autoscrollToggle" checked onchange="toggleAutoscroll()">
-                <label class="form-check-label" for="autoscrollToggle">Autoscroll</label>
-            </div>
-        </div>
-
-        <div class="mt-3 d-flex flex-wrap">
-            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('v')">Show no heartbeat</button>
-            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('V')">Show heartbeat</button>
-            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('q')">Disable TFT update</button>
-            <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('Q')">Enable TFT update</button>
-        </div>
-    </div>
-
-    <!-- JSON Output Card -->
-    <div class="card p-3">
-        <h5 class="card-title"><i class="bi bi-code-slash"></i> Last message (JSON)</h5>
-        <pre id="jsonOutput">Loading...</pre>
-    </div>
-
-    <!-- Manual Command Card -->
-    <div class="card p-3">
-        <h5 class="card-title"><i class="bi bi-send"></i> Send Command</h5>
-        <form id="cmdForm" class="row g-2" onsubmit="sendCommand(); return false;">
-            <div class="col-md-8">
-                <div class="input-group">
-                    <input type="text" id="cmdInput" class="form-control" placeholder="Insert Command (e.g., 'b9600', 'h')" required>
-                    <button type="submit" class="btn btn-success">Send</button>
+            <div class="mt-3 d-flex flex-wrap align-items-center">
+                <button onclick="clearLog()" class="btn btn-danger me-2 mb-2">Clear Log</button>
+                <a href="/" class="btn btn-secondary me-2 mb-2">Back to Home</a>
+                <div class="form-check form-switch d-inline-block ms-2 mb-2">
+                    <input class="form-check-input" type="checkbox" id="autoscrollToggle" checked
+                        onchange="toggleAutoscroll()">
+                    <label class="form-check-label" for="autoscrollToggle">Autoscroll</label>
                 </div>
             </div>
-        </form>
-    </div>
 
-    <!-- Available Commands Card -->
-    <div class="card p-3">
-        <h5 class="card-title"><i class="bi bi-list"></i> Available Commands</h5>
-        <pre>
+            <div class="mt-3 d-flex flex-wrap">
+                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('v')">Show no
+                    heartbeat</button>
+                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('V')">Show
+                    heartbeat</button>
+                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('q')">Disable
+                    TFT update</button>
+                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('Q')">Enable
+                    TFT update</button>
+            </div>
+        </div>
+
+        <!-- JSON Output Card -->
+        <div class="card p-3">
+            <h5 class="card-title"><i class="bi bi-code-slash"></i> Last message (JSON)</h5>
+            <pre id="jsonOutput">Loading...</pre>
+        </div>
+
+        <!-- Manual Command Card -->
+        <div class="card p-3">
+            <h5 class="card-title"><i class="bi bi-send"></i> Send Command</h5>
+            <form id="cmdForm" class="row g-2" onsubmit="sendCommand(); return false;">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" id="cmdInput" class="form-control"
+                            placeholder="Insert Command (e.g., 'b9600', 'h')" required>
+                        <button type="submit" class="btn btn-success">Send</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Available Commands Card -->
+        <div class="card p-3">
+            <h5 class="card-title"><i class="bi bi-list"></i> Available Commands</h5>
+            <pre>
 b(baud)        - Set baud rate (e.g., b9600)
 B(data_bits)   - Set data bits (5-8, e.g., B8)
 s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
@@ -177,94 +187,90 @@ csdoff|csdon   - Disable or enable SD card usage
 ? or h         - Help
 Note: Commands are case-sensitive.
         </pre>
+        </div>
     </div>
-</div>
 
-<script>
-let lastLog = "";
-let autoScroll = true;
+    <script>
+        let lastLog = "";
+        let autoScroll = true;
 
-function toggleAutoscroll() {
-    autoScroll = document.getElementById("autoscrollToggle").checked;
-}
-
-function highlightLog(text) {
-    return text
-        .replace(/ERROR/g, '<span class="log-error">ERROR</span>')
-        .replace(/WARN(ING)?/g, '<span class="log-warning">WARN</span>')
-        .replace(/INFO/g, '<span class="log-info">INFO</span>');
-}
-
-function fetchLog() {
-    fetch('/logdata')
-        .then(res => res.text())
-        .then(data => {
-            if (data !== lastLog) {
-                lastLog = data;
-                const logElem = document.getElementById('log');
-                logElem.innerHTML = highlightLog(data);
-                if (autoScroll) logElem.scrollTop = logElem.scrollHeight;
-            }
-        });
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const logElem = document.getElementById("log");
-    logElem.addEventListener("scroll", () => {
-        const nearBottom = logElem.scrollTop + logElem.clientHeight >= logElem.scrollHeight - 5;
-        if (!nearBottom && autoScroll) {
-            autoScroll = false;
-            document.getElementById("autoscrollToggle").checked = false;
-        } else if (nearBottom && !autoScroll) {
-            autoScroll = true;
-            document.getElementById("autoscrollToggle").checked = true;
+        function toggleAutoscroll() {
+            autoScroll = document.getElementById("autoscrollToggle").checked;
         }
-    });
-});
 
-function clearLog() {
-    fetch('/clearlog').then(() => fetchLog());
-}
 
-function sendCommand() {
-    const input = document.getElementById('cmdInput');
-    const cmd = input.value.trim();
-    if (!cmd) return;
-    const sendBtn = document.querySelector('#cmdForm button[type="submit"]');
-    sendBtn.disabled = true;
-    sendBtn.textContent = 'Sending...';
-    fetch('/get?input1=' + encodeURIComponent(cmd))
-        .then(() => {
-            input.value = '';
-            fetchLog();
-        })
-        .finally(() => {
-            sendBtn.disabled = false;
-            sendBtn.textContent = 'Send';
+
+        function fetchLog() {
+            fetch('/logdata')
+                .then(res => res.text())
+                .then(data => {
+                    if (data !== lastLog) {
+                        lastLog = data;
+                        const logElem = document.getElementById('log');
+                        logElem.textContent = data;
+                        if (autoScroll) logElem.scrollTop = logElem.scrollHeight;
+                    }
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const logElem = document.getElementById("log");
+            logElem.addEventListener("scroll", () => {
+                const nearBottom = logElem.scrollTop + logElem.clientHeight >= logElem.scrollHeight - 5;
+                if (!nearBottom && autoScroll) {
+                    autoScroll = false;
+                    document.getElementById("autoscrollToggle").checked = false;
+                } else if (nearBottom && !autoScroll) {
+                    autoScroll = true;
+                    document.getElementById("autoscrollToggle").checked = true;
+                }
+            });
         });
-}
 
-function sendQuickCommand(cmd) {
-    fetch('/get?input1=' + encodeURIComponent(cmd))
-        .then(() => {
-            fetchLog();
-            document.getElementById('cmdInput').value = '';
-        });
-}
+        function clearLog() {
+            fetch('/clearlog').then(() => fetchLog());
+        }
 
-function fetchJson() {
-    fetch('/json')
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
-        });
-}
+        function sendCommand() {
+            const input = document.getElementById('cmdInput');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+            const sendBtn = document.querySelector('#cmdForm button[type="submit"]');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+            fetch('/get?input1=' + encodeURIComponent(cmd))
+                .then(() => {
+                    input.value = '';
+                    fetchLog();
+                })
+                .finally(() => {
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = 'Send';
+                });
+        }
 
-setInterval(fetchLog, 2000);
-setInterval(fetchJson, 2000);
-fetchLog();
-fetchJson();
-</script>
+        function sendQuickCommand(cmd) {
+            fetch('/get?input1=' + encodeURIComponent(cmd))
+                .then(() => {
+                    fetchLog();
+                    document.getElementById('cmdInput').value = '';
+                });
+        }
+
+        function fetchJson() {
+            fetch('/json')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
+                });
+        }
+
+        setInterval(fetchLog, 2000);
+        setInterval(fetchJson, 2000);
+        fetchLog();
+        fetchJson();
+    </script>
 
 </body>
+
 </html>
