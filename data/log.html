@@ -188,6 +188,13 @@ function toggleAutoscroll() {
     autoScroll = document.getElementById("autoscrollToggle").checked;
 }
 
+function highlightLog(text) {
+    return text
+        .replace(/ERROR/g, '<span class="log-error">ERROR</span>')
+        .replace(/WARN(ING)?/g, '<span class="log-warning">WARN</span>')
+        .replace(/INFO/g, '<span class="log-info">INFO</span>');
+}
+
 function fetchLog() {
     fetch('/logdata')
         .then(res => res.text())
@@ -195,7 +202,7 @@ function fetchLog() {
             if (data !== lastLog) {
                 lastLog = data;
                 const logElem = document.getElementById('log');
-                logElem.textContent = data;
+                logElem.innerHTML = highlightLog(data);
                 if (autoScroll) logElem.scrollTop = logElem.scrollHeight;
             }
         });
