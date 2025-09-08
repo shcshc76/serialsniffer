@@ -87,6 +87,17 @@
         }
 
 
+        .log-espa444-rx {
+            color: #ffdd57;
+        }
+
+        .log-espa444-tx {
+            color: #31d179;
+        }        
+
+        .log-info {
+            color: #57d9ff;
+        }
     </style>
 </head>
 
@@ -198,6 +209,31 @@ Note: Commands are case-sensitive.
             autoScroll = document.getElementById("autoscrollToggle").checked;
         }
 
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+
+
+    function highlightLog(text) {
+        let safe = escapeHtml(text); // schützt vor HTML-Injection
+        // Jede Zeile einzeln verarbeiten
+        return safe.split('\n').map(line => {
+            if (line.startsWith('#')) {
+                return `<span class="log-info">${line}</span>`;
+            }
+            if (line.startsWith('NTP') && line.includes('RX')) {
+                return `<span class="log-espa444-rx">${line}</span>`;
+            }
+            if (line.startsWith('NTP') && line.includes('TX')) {
+                return `<span class="log-espa444-tx">${line}</span>`;
+            }                        
+            return line;
+        }).join('\n');
+    }
 
 
         function fetchLog() {
@@ -207,11 +243,12 @@ Note: Commands are case-sensitive.
                     if (data !== lastLog) {
                         lastLog = data;
                         const logElem = document.getElementById('log');
-                        logElem.textContent = data;
+                        logElem.innerHTML = highlightLog(data);
                         if (autoScroll) logElem.scrollTop = logElem.scrollHeight;
                     }
                 });
         }
+
 
         document.addEventListener("DOMContentLoaded", () => {
             const logElem = document.getElementById("log");
