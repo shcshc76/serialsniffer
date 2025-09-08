@@ -136,6 +136,13 @@ uint32_t invokeCounter = 0;
 unsigned long lastHeartbeat = 0;
 const unsigned long heartbeatInterval = 50000; // 50 Sekunden
 
+//Espa444
+String espa444Calladr="1002";
+String espa444msg="Testnachricht vom Serialsniffer";
+int espa444att=1;
+String espa444prio="Standard";
+
+
 // NTP Server
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 0;     // falls UTC
@@ -331,6 +338,8 @@ void sendCall(const String &groupID,
               int delaySec,
               int attempts)
 {
+  String prioused="";
+  if(prio.length()<=1) prioused="Standard";
   /*
  <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
 "<ESPA-X version=\"1.00\" xmlns=\"http://ns.espa-x.org/espa-x\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://ns.espa-x.org/espa-x http://schema.espa-x.org/espa-x100.xsd\" timestamp=\"2025-08-15T12:21:11\">\n"
@@ -392,7 +401,7 @@ void sendCall(const String &groupID,
                          "    <CP-ATTEMPTS>" +
       String(attempts) + "</CP-ATTEMPTS>\n"
                          "    <CP-PRIO>" +
-      prio + "</CP-PRIO>\n"
+      prioused + "</CP-PRIO>\n"
              "    <CP-CBCKNO>" +
       callingNo + "</CP-CBCKNO>\n"
                   "    <CP-NCIFNO/>\n"
@@ -1434,9 +1443,42 @@ String parseRawData(const String &rawData)
     JsonObject rec = records.add<JsonObject>();
     rec["Data Identifier"] = field0;
 
-    String decodedType = decodeField0(field0);
+    String decodedType = decodeField0(field0); // Decode Field 0 to string
     rec["Record type"] = decodedType.length() > 0 ? decodedType : "Unknown";
     rec["Data"] = field1;
+    if (field0.toInt() == 1)
+    {
+      espa444Calladr=field1; // Calladresse für ESPA-444 speichern
+    }
+    else if (field0.toInt() == 2)
+    {
+      espa444msg=field1;// Display message
+    }
+    else if (field0.toInt() == 3)
+    {
+      // Beep coding
+    }
+    else if (field0.toInt() == 4)
+    {
+      // Call type
+    }
+    else if (field0.toInt() == 5)
+    {
+      espa444att=field1.toInt(); // Number of transmissions
+    }
+    else if (field0.toInt() == 6)
+    {
+     espa444prio=field1; // Priority
+    }
+    else if (field0.toInt() == 7)
+    {
+      // Call Status
+    }
+    else if (field0.toInt() == 8)
+    {
+      // System Status
+    }
+
   };
 
   //
