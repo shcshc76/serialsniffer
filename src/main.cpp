@@ -2155,7 +2155,7 @@ void displayMessage(String message, int colortft) // Display a message on the di
         tft.setTextSize(1);
         currentLine = 3;
       }
-
+      tft.setTextColor(colortft);
       tft.setCursor(0, currentLine * lineHeight);
       tft.println(line);
       currentLine++;
