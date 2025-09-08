@@ -171,14 +171,14 @@ Preferences prefs;
 String outBuffer = "";
 String lastJsonString = "{}"; // Last JSON string
 
-void parseSerialCommand(String cmd);        // Parse and execute serial commands
-void tryWiFiConnect();                      // Attempt to connect to WiFi
-void displayMessage(String message);        // Display message on OLED
-void clearLog();                            // Clear the log buffer
-void reconnectMQTT();                       // Reconnect to MQTT broker
-void textOutln(String text, uint8_t level); // Output text with newline
-void sendBuffer(String msg);                // Send buffer to target URL
-String getDateTimeString();                 // Get current date and time as string
+void parseSerialCommand(String cmd);               // Parse and execute serial commands
+void tryWiFiConnect();                             // Attempt to connect to WiFi
+void displayMessage(String message, int colortft); // Display message on OLED
+void clearLog();                                   // Clear the log buffer
+void reconnectMQTT();                              // Reconnect to MQTT broker
+void textOutln(String text, uint8_t level);        // Output text with newline
+void sendBuffer(String msg);                       // Send buffer to target URL
+String getDateTimeString();                        // Get current date and time as string
 
 String getUptimeString()
 {
@@ -217,7 +217,8 @@ void showESPAX(String msg, String dir = "")
 {
   if (showESPA)
   {
-    displayMessage(msg);                                // TFT Anzeige
+    // displayMessage(msg);                        // TFT Anzeige
+    displayMessage("ESPA-X " + dir, TFT_GOLD);          // TFT Anzeige
     sendBuffer("# " + dir + " ESPA-X Message: " + msg); // an div. Ziele senden
     // Auf SD Karte schreiben
     if (useSD && sdOk)
@@ -757,8 +758,8 @@ void textOutln(String text = "", uint8_t level = 1) // Output text with newline
   {
     webLogBuffer.remove(0, webLogBuffer.length() / 2);
   }
-  sendBuffer();         // Send buffer to Syslog or HTTP URL
-  displayMessage(text); // Display message on Displays
+  sendBuffer();                    // Send buffer to Syslog or HTTP URL
+  displayMessage(text, TFT_WHITE); // Display message on Displays
 }
 
 void textOut(String text = "", uint8_t level = 1) // Output text without newline
@@ -1261,7 +1262,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         textOutln("OK");
         textOutln("## WiFi connected, IP: " + WiFi.localIP().toString(), 2);
         IP = WiFi.localIP();
-        displayMessage("OK IP: " + WiFi.localIP().toString());
+        displayMessage("OK IP: " + WiFi.localIP().toString(), TFT_WHITE);
         startWebserver(); // Start web server
 
         // mDNS initialisieren:
@@ -1297,7 +1298,7 @@ void tryWiFiConnect() // Connect to WiFi and NTP server
         textOutln("## WiFi connection failed, check SSID and password", 2);
         textOutln("## Please connect to the fallback AP and configure WiFi settings", 2);
         textOutln("## Use the web server to set WiFi SSID and password", 2);
-        displayMessage("Fallback AP (SerialSniffer_Config) started. IP: " + IP.toString());
+        displayMessage("Fallback AP (SerialSniffer_Config) started. IP: " + IP.toString(), TFT_WHITE);
         startWebserver(); // Start web server
       }
     }
@@ -2078,7 +2079,7 @@ bool isEOLChar(uint8_t c) // Check if character is an EOL character
 
 String serialCmd = "";
 
-void displayMessage(String message) // Display a message on the displays
+void displayMessage(String message, int colortft) // Display a message on the displays
 {
   if (message.length() == 0)
   {
@@ -2132,7 +2133,7 @@ void displayMessage(String message) // Display a message on the displays
   }
   if (tftOk && updateDisplay && (!filteredMessage.startsWith("#") || filteredMessage.startsWith("# JSON"))) // TFT Display OK und keine Befehle ausgeben?
   {
-    tft.setTextColor(TFT_WHITE);
+    tft.setTextColor(colortft);
     tft.setTextSize(1);
     int start = 0;
     int len = filteredMessage.length();
@@ -2149,6 +2150,7 @@ void displayMessage(String message) // Display a message on the displays
         tft.fillScreen(TFT_BLUE);
         tft.setTextSize(2);
         tft.setCursor(0, 10);
+        tft.setTextColor(TFT_LIGHTGREY);
         tft.println("  " + IP.toString());
         tft.setTextSize(1);
         currentLine = 3;
@@ -2299,7 +2301,7 @@ void setup()
   maxLines = tft.height() / lineHeight;
   delay(5000);
   tft.fillScreen(TFT_BLUE);
-  tft.setTextColor(TFT_WHITE);
+  tft.setTextColor(TFT_LIGHTGREY);
   tft.setTextSize(2);
   tft.setCursor(0, 10);
   tft.println("  " + IP.toString());
@@ -2435,7 +2437,7 @@ void handleWiFi()
   if (wifiConnected && WiFi.status() != WL_CONNECTED)
   {
     textOutln("### Wifi connection dropped. Reconnecting.", 3);
-    displayMessage("Wifi connection dropped. Reconnecting.");
+    displayMessage("Wifi connection dropped. Reconnecting.", TFT_WHITE);
     tryWiFiConnect();
   }
 }
@@ -2486,14 +2488,14 @@ void processIRCommandTable(uint8_t command, uint8_t flags)
       if (entry.command == 0x0)
       {
         // Sonderfall: Hilfeseiten blättern
-        displayMessage(helpPages[currentHelpPage]);
+        displayMessage(helpPages[currentHelpPage], TFT_WHITE);
         currentHelpPage = (currentHelpPage + 1) % helpPageCount;
         return;
       }
 
       if (entry.message && strcmp(entry.message, "HELP") != 0)
       {
-        displayMessage(entry.message);
+        displayMessage(entry.message, TFT_WHITE);
       }
       else if (entry.usesToggle)
       {
