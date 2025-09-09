@@ -93,7 +93,7 @@
 
         .log-espa444-tx {
             color: #31d179;
-        }        
+        }
 
         .log-info {
             color: #57d9ff;
@@ -136,6 +136,12 @@
         <div class="card p-3">
             <h5 class="card-title"><i class="bi bi-code-slash"></i> Last message (JSON)</h5>
             <pre id="jsonOutput">Loading...</pre>
+        </div>
+
+        <!-- ESPA-X Send Card -->
+        <div class="card p-3">
+            <h5 class="card-title"><i class="bi bi-code-slash"></i> Send ESPA-X</h5>
+            <pre id="espaxOutput">Loading...</pre>
         </div>
 
         <!-- Manual Command Card -->
@@ -218,22 +224,22 @@ Note: Commands are case-sensitive.
 
 
 
-    function highlightLog(text) {
-        let safe = escapeHtml(text); // schützt vor HTML-Injection
-        // Jede Zeile einzeln verarbeiten
-        return safe.split('\n').map(line => {
-            if (line.startsWith('#')) {
-                return `<span class="log-info">${line}</span>`;
-            }
-            if (line.startsWith('NTP') && line.includes('RX')) {
-                return `<span class="log-espa444-rx">${line}</span>`;
-            }
-            if (line.startsWith('NTP') && line.includes('TX')) {
-                return `<span class="log-espa444-tx">${line}</span>`;
-            }                        
-            return line;
-        }).join('\n');
-    }
+        function highlightLog(text) {
+            let safe = escapeHtml(text); // schützt vor HTML-Injection
+            // Jede Zeile einzeln verarbeiten
+            return safe.split('\n').map(line => {
+                if (line.startsWith('#')) {
+                    return `<span class="log-info">${line}</span>`;
+                }
+                if (line.startsWith('NTP') && line.includes('RX')) {
+                    return `<span class="log-espa444-rx">${line}</span>`;
+                }
+                if (line.startsWith('NTP') && line.includes('TX')) {
+                    return `<span class="log-espa444-tx">${line}</span>`;
+                }
+                return line;
+            }).join('\n');
+        }
 
 
         function fetchLog() {
@@ -302,10 +308,22 @@ Note: Commands are case-sensitive.
                 });
         }
 
+        function fetchespax() {
+            fetch('/espax')
+                .then(res => res.text())
+                .then(data => {
+                    const logElem = document.getElementById('espaxOutput');
+                    logElem.innerHTML = highlightLog(data);                   
+                });
+        }
+
+
         setInterval(fetchLog, 2000);
+        setInterval(fetchespax, 2000);
         setInterval(fetchJson, 2000);
         fetchLog();
         fetchJson();
+        fetchespax();
     </script>
 
 </body>

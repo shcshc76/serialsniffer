@@ -1220,6 +1220,9 @@ saveSerialConfig(); // Save WiFi settings
   server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "application/json", lastJsonString); });
 
+  server.on("/espax", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "text/plain", "Call Address: "+espa444Calladr+"\nCallback: "+espa444callback+"\nMessage: "+espa444msg+"\Attempts: "+espa444att); });          
+
   server.on("/clearlog", HTTP_GET, [](AsyncWebServerRequest *request)
             {
   clearLog(); // Clear the log buffer
