@@ -415,15 +415,40 @@
             fetch('/status')
                 .then(res => res.text())
                 .then(text => {
-                    const lines = text.trim().split(/\r?\n/); // Status-Zeilen trennen
-                    let html = '<div class="row text-start">';
+                    const lines = text.trim().split(/\r?\n/);
+
+                    let html = `
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped table-sm align-middle mb-0">
+                        <tbody>
+            `;
+
                     lines.forEach(line => {
-                        html += `
-                    <div class="col-md-6 mb-2">
-                        ${line}
-                    </div>`;
+                        // Wenn deine Zeilen so aussehen: "Key: Value"
+                        const parts = line.split(/:\s*/);
+                        if (parts.length === 2) {
+                            html += `
+                        <tr>
+                            <td style="width:40%;"><strong>${parts[0]}</strong></td>
+                            <td>${parts[1]}</td>
+                        </tr>
+                    `;
+                        } else {
+                            // Falls mal kein Doppelpunkt vorhanden ist → ganze Zeile in einer Spalte
+                            html += `
+                        <tr>
+                            <td colspan="2">${line}</td>
+                        </tr>
+                    `;
+                        }
                     });
-                    html += '</div>';
+
+                    html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
                     document.getElementById('status').innerHTML = html;
                 })
                 .catch(() => {
@@ -431,6 +456,7 @@
                         '<span class="text-danger">Fehler beim Laden!</span>';
                 });
         }
+
 
         function fetchFileList() {
             fetch('/filelist')
