@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>ESP32 Serial Sniffer</title>
@@ -15,441 +16,525 @@
             font-family: 'Fira Mono', 'Consolas', monospace;
             padding-top: 2rem;
         }
+
         .card {
             background-color: #23272b;
             border: 1px solid #333;
             color: #e0ffe0;
             box-shadow: 0 2px 8px #0008;
         }
-        .form-control, .btn {
+
+        .form-control,
+        .btn {
             border-radius: 0.3rem;
         }
+
         label {
             font-size: 0.95rem;
             color: #bfffbf;
         }
-        .btn-success, .btn-outline-success {
+
+        .btn-success,
+        .btn-outline-success {
             background-color: #28a745;
             border-color: #28a745;
             color: #fff;
         }
+
         .btn-outline-success {
             background: none;
             color: #28a745;
         }
+
         .btn-outline-success:hover {
             background-color: #28a745;
             color: #fff;
         }
+
         .btn-outline-danger {
             border-color: #dc3545;
             color: #dc3545;
         }
+
         .btn-outline-danger:hover {
             background-color: #dc3545;
             color: #fff;
         }
+
         .table-dark {
             background-color: #23272b;
         }
+
         .table thead th {
             color: #bfffbf;
         }
+
         .badge {
             font-size: 1em;
         }
+
         .command-button {
             margin: 0.25rem;
         }
+
         .spinner-border {
             width: 1.5rem;
             height: 1.5rem;
         }
+
         .footer {
             font-size: 0.85rem;
             color: #888;
         }
+
         .accordion-button {
             background-color: #23272b;
             color: #bfffbf;
         }
+
         .accordion-body {
             background-color: #181a1b;
         }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <h1 class="mb-4 text-center"><i class="bi bi-usb-plug"></i> ESP32 Serial Sniffer</h1>
+    <div class="container">
+        <h1 class="mb-4 text-center"><i class="bi bi-usb-plug"></i> ESP32 Serial Sniffer</h1>
 
-    <!-- WLAN Connection -->
-    <div class="card p-3 mb-4">
-        <h5 class="card-title"><i class="bi bi-wifi"></i> Connect to WiFi</h5>
-        <form id="wifiForm" class="row g-2">
-            <div class="col-md-5">
-                <label for="ssid" class="form-label">WiFi SSID</label>
-                <input type="text" id="ssid" name="ssid" class="form-control" placeholder="SSID" required />
+        <!-- WLAN Connection -->
+        <div class="card p-3 mb-4">
+            <h5 class="card-title"><i class="bi bi-wifi"></i> Connect to WiFi</h5>
+            <form id="wifiForm" class="row g-2">
+                <div class="col-md-5">
+                    <label for="ssid" class="form-label">WiFi SSID</label>
+                    <input type="text" id="ssid" name="ssid" class="form-control" placeholder="SSID" required />
+                </div>
+                <div class="col-md-5">
+                    <label for="password" class="form-label">WiFi Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Password"
+                        required />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100"><i class="bi bi-wifi"></i> Connect</button>
+                </div>
+            </form>
+            <div class="mt-3">
+                <a href="/log" class="btn btn-outline-light"><i class="bi bi-terminal"></i> Show Live Log</a>
             </div>
-            <div class="col-md-5">
-                <label for="password" class="form-label">WiFi Password</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Password" required />
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-success w-100"><i class="bi bi-wifi"></i> Connect</button>
-            </div>
-        </form>
-        <div class="mt-3">
-            <a href="/log" class="btn btn-outline-light"><i class="bi bi-terminal"></i> Show Live Log</a>
+            <div class="info mt-3" id="responseMsg"></div>
         </div>
-        <div class="info mt-3" id="responseMsg"></div>
-    </div>
 
-    <!-- SD Card File List -->
-    <div class="card p-3 mb-4">
-        <h5 class="card-title"><i class="bi bi-sd-card"></i> Files on SD Card</h5>
-        <div id="fileList" class="table-responsive text-center">
-            <div class="spinner-border text-success" role="status"></div>
-        </div>
-    </div>
-
-    <!-- Status -->
-    <div class="card p-3 mb-4">
-        <h5 class="card-title"><i class="bi bi-info-circle"></i> Device Status</h5>
-        <div id="status"><div class="spinner-border text-success" role="status"></div></div>
-    </div>
-
-    <!-- Manual Command -->
-    <div class="card p-3 mb-4">
-        <h5 class="card-title"><i class="bi bi-terminal"></i> Send Command</h5>
-        <form id="cmdForm" onsubmit="sendCommand(); return false;">
-            <div class="input-group">
-                <input type="text" id="cmdInput" class="form-control" placeholder="e.g. b9600, Ti, X">
-                <button type="submit" class="btn btn-success"><i class="bi bi-send"></i> Send</button>
+        <!-- SD Card File List -->
+        <div class="card p-3 mb-4">
+            <h5 class="card-title"><i class="bi bi-sd-card"></i> Files on SD Card</h5>
+            <div id="fileList" class="table-responsive text-center">
+                <div class="spinner-border text-success" role="status"></div>
             </div>
-        </form>
-    </div>
+        </div>
 
-    <!-- Accordion Command Menu -->
-    <div class="card p-3 mt-4">
-        <h5 class="card-title"><i class="bi bi-list"></i> Available Commands</h5>
-        <div class="accordion" id="commandAccordion">
+        <!-- Status -->
+        <div class="card p-3 mb-4">
+            <h5 class="card-title"><i class="bi bi-info-circle"></i> Device Status</h5>
+            <div id="status">
+                <div class="spinner-border text-success" role="status"></div>
+            </div>
+        </div>
 
-            <!-- Serial Config -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingSerial">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        <!-- Manual Command -->
+        <div class="card p-3 mb-4">
+            <h5 class="card-title"><i class="bi bi-terminal"></i> Send Command</h5>
+            <form id="cmdForm" onsubmit="sendCommand(); return false;">
+                <div class="input-group">
+                    <input type="text" id="cmdInput" class="form-control" placeholder="e.g. b9600, Ti, X">
+                    <button type="submit" class="btn btn-success"><i class="bi bi-send"></i> Send</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Accordion Command Menu -->
+        <div class="card p-3 mt-4">
+            <h5 class="card-title"><i class="bi bi-list"></i> Available Commands</h5>
+            <div class="accordion" id="commandAccordion">
+
+                <!-- Serial Config -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSerial">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                             data-bs-target="#collapseSerial">
-                        Serial Configuration
-                    </button>
-                </h2>
-                <div id="collapseSerial" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
-                    <div class="accordion-body">
-                        <div class="mb-3">
-                            <label for="baudRateInput" class="form-label">Set Baudrate</label>
-                            <div class="input-group">
-                                <input type="number" id="baudRateInput" class="form-control" placeholder="9600" />
-                                <button class="btn btn-outline-success" onclick="sendBaudCommand()">Send b(baud)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="dataBitsInput" class="form-label">Set Data Bits (5–8)</label>
-                            <div class="input-group">
-                                <input type="number" min="5" max="8" id="dataBitsInput" class="form-control" placeholder="8" />
-                                <button class="btn btn-outline-success" onclick="sendDataBits()">Send B(bits)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="stopBitsInput" class="form-label">Set Stop Bits (1 or 2)</label>
-                            <div class="input-group">
-                                <input type="number" min="1" max="2" id="stopBitsInput" class="form-control" placeholder="1" />
-                                <button class="btn btn-outline-success" onclick="sendStopBits()">Send s(stop)</button>
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('N')">N (No parity)</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('E')">E (Even)</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('O')">O (Odd)</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('p')">Print config</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('f')">Flush</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('r')">Reinit</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Network Settings -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingNet">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#collapseNet">
-                        Network Settings
-                    </button>
-                </h2>
-                <div id="collapseNet" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
-                    <div class="accordion-body">
-                        <!-- Syslog IP -->
-                        <div class="mb-3">
-                            <label for="syslogInput" class="form-label">Syslog Server</label>
-                            <div class="input-group">
-                                <input type="text" id="syslogInput" class="form-control" placeholder="SYSLOG Server IP" />
-                                <button class="btn btn-outline-success" onclick="sendSyslog()">Send Y(ip)</button>
-                            </div>
-                        </div>
-                        <!-- Target URL -->
-                        <div class="mb-3">
-                            <label for="urlInput" class="form-label">HTTP Dest-URL</label>
-                            <div class="input-group">
-                                <input type="text" id="urlInput" class="form-control" placeholder="http://example.com/post" />
-                                <button class="btn btn-outline-success" onclick="sendUrl()">Send U(url)</button>
-                            </div>
-                        </div>
-                        <!-- MQTT Settings -->
-                        <div class="mb-3">
-                            <label for="mqttServerInput" class="form-label">MQTT Server</label>
-                            <div class="input-group">
-                                <input type="text" id="mqttServerInput" class="form-control" placeholder="MQTT Server IP" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('M' + mqttServerInput.value)">Send M(MQTT_SERVER)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="mqttportInput" class="form-label">MQTT Port</label>
-                            <div class="input-group">
-                                <input type="text" id="mqttportInput" class="form-control" placeholder="MQTT Server Port" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('m' + mqttportInput.value)">Send m(MQTT_PORT)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="mqttuserInput" class="form-label">MQTT User</label>
-                            <div class="input-group">
-                                <input type="text" id="mqttuserInput" class="form-control" placeholder="MQTT User" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('K' + mqttuserInput.value)">Send K(MQTT_USER)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="mqttpassInput" class="form-label">MQTT Pass</label>
-                            <div class="input-group">
-                                <input type="password" id="mqttpassInput" class="form-control" placeholder="MQTT Password" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('k' + mqttpassInput.value)">Send m(MQTT_PASS)</button>
-                            </div>
-                        </div>
-                        <!-- ESPAX Settings -->
-                        <div class="mb-3">
-                            <label for="espaxServerInput" class="form-label">ESPAX Server</label>
-                            <div class="input-group">
-                                <input type="text" id="espaxServerInput" class="form-control" placeholder="ESPAX Server IP" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('G' + espaxServerInput.value)">Send G(ESPAX_SERVER)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="espaxportInput" class="form-label">ESPAX Port</label>
-                            <div class="input-group">
-                                <input type="text" id="espaxportInput" class="form-control" placeholder="ESPAX Server Port" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('g' + espaxportInput.value)">Send g(ESPAX_PORT)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="espaxuserInput" class="form-label">ESPAX User</label>
-                            <div class="input-group">
-                                <input type="text" id="espaxuserInput" class="form-control" placeholder="ESPAX User" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('A' + espaxuserInput.value)">Send A(ESPAX_USER)</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="espaxpassInput" class="form-label">ESPAX Pass</label>
-                            <div class="input-group">
-                                <input type="password" id="espaxpassInput" class="form-control" placeholder="ESPAX Password" />
-                                <button class="btn btn-outline-success" onclick="sendCmd('a' + espaxpassInput.value)">Send a(ESPAX_PASS)</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System & Debug -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingSys">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#collapseSys">
-                        System & Debug
-                    </button>
-                </h2>
-                <div id="collapseSys" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
-                    <div class="accordion-body">
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D1')">Debug Level 1</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D2')">Debug Level 2</button>
-                        <div class="mb-3">
-                            <label for="timeoutInput" class="form-label">Set Timeout (ms)</label>
-                            <div class="input-group">
-                                <input type="number" id="timeoutInput" class="form-control" placeholder="15" />
-                                <button class="btn btn-outline-success" onclick="sendTimeout()">Send t(timeout)</button>
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('L')">Enable EOL</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('l')">Disable EOL</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('z')">Disable RX Sim</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('Z')">Enable RX Sim</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('v')">Disable display heartbeat</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('V')">Enable display heartbeat</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save Config</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('J')">Enable mqtt</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('j')">Disable mqtt</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('I')">Enable ESPAX</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('i')">Disable ESPAX</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csespaxon')">Enable ESPAX LOG</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csespaxoff')">Disable ESPAX LOG</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csdon')">Enable SD Card</button>
-                        <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('csdoff')">Disable SD Card</button>
-                        <button class="btn btn-outline-danger btn-sm command-button" onclick="sendCmd('X')"><i class="bi bi-arrow-repeat"></i> Restart</button>
-                        <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal" data-bs-target="#helpModal">
-                            <i class="bi bi-question-circle"></i> Help
+                            Serial Configuration
                         </button>
+                    </h2>
+                    <div id="collapseSerial" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                        <div class="accordion-body">
+                            <div class="mb-3">
+                                <label for="baudRateInput" class="form-label">Set Baudrate</label>
+                                <div class="input-group">
+                                    <input type="number" id="baudRateInput" class="form-control" placeholder="9600" />
+                                    <button class="btn btn-outline-success" onclick="sendBaudCommand()">Send
+                                        b(baud)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dataBitsInput" class="form-label">Set Data Bits (5–8)</label>
+                                <div class="input-group">
+                                    <input type="number" min="5" max="8" id="dataBitsInput" class="form-control"
+                                        placeholder="8" />
+                                    <button class="btn btn-outline-success" onclick="sendDataBits()">Send
+                                        B(bits)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="stopBitsInput" class="form-label">Set Stop Bits (1 or 2)</label>
+                                <div class="input-group">
+                                    <input type="number" min="1" max="2" id="stopBitsInput" class="form-control"
+                                        placeholder="1" />
+                                    <button class="btn btn-outline-success" onclick="sendStopBits()">Send
+                                        s(stop)</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('N')">N (No
+                                parity)</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('E')">E
+                                (Even)</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('O')">O
+                                (Odd)</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('p')">Print
+                                config</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('f')">Flush</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('r')">Reinit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network Settings -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingNet">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseNet">
+                            Network Settings
+                        </button>
+                    </h2>
+                    <div id="collapseNet" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                        <div class="accordion-body">
+                            <!-- Syslog IP -->
+                            <div class="mb-3">
+                                <label for="syslogInput" class="form-label">Syslog Server</label>
+                                <div class="input-group">
+                                    <input type="text" id="syslogInput" class="form-control"
+                                        placeholder="SYSLOG Server IP" />
+                                    <button class="btn btn-outline-success" onclick="sendSyslog()">Send Y(ip)</button>
+                                </div>
+                            </div>
+                            <!-- Target URL -->
+                            <div class="mb-3">
+                                <label for="urlInput" class="form-label">HTTP Dest-URL</label>
+                                <div class="input-group">
+                                    <input type="text" id="urlInput" class="form-control"
+                                        placeholder="http://example.com/post" />
+                                    <button class="btn btn-outline-success" onclick="sendUrl()">Send U(url)</button>
+                                </div>
+                            </div>
+                            <!-- MQTT Settings -->
+                            <div class="mb-3">
+                                <label for="mqttServerInput" class="form-label">MQTT Server</label>
+                                <div class="input-group">
+                                    <input type="text" id="mqttServerInput" class="form-control"
+                                        placeholder="MQTT Server IP" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('M' + mqttServerInput.value)">Send M(MQTT_SERVER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mqttportInput" class="form-label">MQTT Port</label>
+                                <div class="input-group">
+                                    <input type="text" id="mqttportInput" class="form-control"
+                                        placeholder="MQTT Server Port" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('m' + mqttportInput.value)">Send m(MQTT_PORT)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mqttuserInput" class="form-label">MQTT User</label>
+                                <div class="input-group">
+                                    <input type="text" id="mqttuserInput" class="form-control"
+                                        placeholder="MQTT User" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('K' + mqttuserInput.value)">Send K(MQTT_USER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mqttpassInput" class="form-label">MQTT Pass</label>
+                                <div class="input-group">
+                                    <input type="password" id="mqttpassInput" class="form-control"
+                                        placeholder="MQTT Password" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('k' + mqttpassInput.value)">Send m(MQTT_PASS)</button>
+                                </div>
+                            </div>
+                            <!-- ESPAX Settings -->
+                            <div class="mb-3">
+                                <label for="espaxServerInput" class="form-label">ESPAX Server</label>
+                                <div class="input-group">
+                                    <input type="text" id="espaxServerInput" class="form-control"
+                                        placeholder="ESPAX Server IP" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('G' + espaxServerInput.value)">Send G(ESPAX_SERVER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="espaxportInput" class="form-label">ESPAX Port</label>
+                                <div class="input-group">
+                                    <input type="text" id="espaxportInput" class="form-control"
+                                        placeholder="ESPAX Server Port" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('g' + espaxportInput.value)">Send g(ESPAX_PORT)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="espaxuserInput" class="form-label">ESPAX User</label>
+                                <div class="input-group">
+                                    <input type="text" id="espaxuserInput" class="form-control"
+                                        placeholder="ESPAX User" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('A' + espaxuserInput.value)">Send A(ESPAX_USER)</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="espaxpassInput" class="form-label">ESPAX Pass</label>
+                                <div class="input-group">
+                                    <input type="password" id="espaxpassInput" class="form-control"
+                                        placeholder="ESPAX Password" />
+                                    <button class="btn btn-outline-success"
+                                        onclick="sendCmd('a' + espaxpassInput.value)">Send a(ESPAX_PASS)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System & Debug -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSys">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseSys">
+                            System & Debug
+                        </button>
+                    </h2>
+                    <div id="collapseSys" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+                        <div class="accordion-body">
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D1')">Debug
+                                Level 1</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('D2')">Debug
+                                Level 2</button>
+                            <div class="mb-3">
+                                <label for="timeoutInput" class="form-label">Set Timeout (ms)</label>
+                                <div class="input-group">
+                                    <input type="number" id="timeoutInput" class="form-control" placeholder="15" />
+                                    <button class="btn btn-outline-success" onclick="sendTimeout()">Send
+                                        t(timeout)</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('L')">Enable
+                                EOL</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('l')">Disable
+                                EOL</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('z')">Disable
+                                RX Sim</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('Z')">Enable
+                                RX Sim</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('v')">Disable
+                                display heartbeat</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('V')">Enable
+                                display heartbeat</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
+                                Config</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('J')">Enable
+                                mqtt</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('j')">Disable
+                                mqtt</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('I')">Enable
+                                ESPAX</button>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('i')">Disable
+                                ESPAX</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('csespaxon')">Enable ESPAX LOG</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('csespaxoff')">Disable ESPAX LOG</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('csdon')">Enable SD Card</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('csdoff')">Disable SD Card</button>
+                            <button class="btn btn-outline-danger btn-sm command-button" onclick="sendCmd('X')"><i
+                                    class="bi bi-arrow-repeat"></i> Restart</button>
+                            <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
+                                data-bs-target="#helpModal">
+                                <i class="bi bi-question-circle"></i> Help
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Footer -->
+        <footer class="mt-5 text-center footer">
+            ESP32 Serial Sniffer – Webinterface v1.0
+        </footer>
     </div>
 
-    <!-- Footer -->
-    <footer class="mt-5 text-center footer">
-        ESP32 Serial Sniffer – Webinterface v1.0
-    </footer>
-</div>
-
-<!-- Bootstrap JS -->
-<script src="/bootstrap.bundle.min.js"></script>
-<script>
-    const form = document.getElementById('wifiForm');
-    const responseMsg = document.getElementById('responseMsg');
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const ssid = document.getElementById('ssid').value.trim();
-        const password = document.getElementById('password').value.trim();
-        if (!ssid || !password) {
-            responseMsg.textContent = 'SSID and password must not be empty!';
-            responseMsg.classList.add('text-danger');
-            return;
-        }
-        fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
-            .then(response => response.text())
-            .then(text => {
-                responseMsg.textContent = text;
-                responseMsg.classList.remove('text-danger');
-            })
-            .catch(err => {
-                responseMsg.textContent = 'Error connecting: ' + err;
+    <!-- Bootstrap JS -->
+    <script src="/bootstrap.bundle.min.js"></script>
+    <script>
+        const form = document.getElementById('wifiForm');
+        const responseMsg = document.getElementById('responseMsg');
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const ssid = document.getElementById('ssid').value.trim();
+            const password = document.getElementById('password').value.trim();
+            if (!ssid || !password) {
+                responseMsg.textContent = 'SSID and password must not be empty!';
                 responseMsg.classList.add('text-danger');
-            });
-    });
-
-    function fetchStatus() {
-        fetch('/status')
-            .then(res => res.text())
-            .then(data => {
-                document.getElementById('status').innerText = data;
-            });
-    }
-
-    function fetchFileList() {
-        fetch('/filelist')
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById('fileList').innerHTML = html;
-                document.querySelectorAll('#fileList a[data-delete]').forEach(link => {
-                    link.addEventListener('click', function (e) {
-                        if (!confirm('Really delete this file?')) e.preventDefault();
-                    });
-                });
-            });
-    }
-
-    function sendCommand() {
-        const cmd = document.getElementById('cmdInput').value;
-        if (!cmd) return;
-        fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
-            document.getElementById('cmdInput').value = '';
-            fetchStatus();
-        });
-    }
-
-    function sendCmd(cmd) {
-        fetch('/get?input1=' + encodeURIComponent(cmd)).then(fetchStatus);
-    }
-
-    function sendBaudCommand() {
-        const val = document.getElementById('baudRateInput').value;
-        if (!val || isNaN(val)) {
-            alert("Please enter a valid baud rate!");
-            return;
-        }
-        sendCmd('b' + val);
-    }
-
-    function sendDataBits() {
-        const val = document.getElementById('dataBitsInput').value;
-        if (!val || isNaN(val) || val < 5 || val > 8) {
-            alert("Please enter data bits between 5 and 8!");
-            return;
-        }
-        sendCmd('B' + val);
-    }
-
-    function sendStopBits() {
-        const val = document.getElementById('stopBitsInput').value;
-        if (val !== '1' && val !== '2') {
-            alert("Only 1 or 2 allowed as stop bit!");
-            return;
-        }
-        sendCmd('s' + val);
-    }
-
-    function sendSyslog() {
-        const val = document.getElementById('syslogInput').value.trim();
-        if (val.length === 0) {
-            alert("Please enter a valid address!");
-            return;
-        }
-        sendCmd('Y' + val);
-    }
-
-    function sendUrl() {
-        const val = document.getElementById('urlInput').value.trim();
-        if (val.length > 0) {
-            if (!val.startsWith('http')) {
-                alert("Please enter a valid URL!");
                 return;
             }
-        }
-        sendCmd('U' + val);
-    }
+            fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
+                .then(response => response.text())
+                .then(text => {
+                    responseMsg.textContent = text;
+                    responseMsg.classList.remove('text-danger');
+                })
+                .catch(err => {
+                    responseMsg.textContent = 'Error connecting: ' + err;
+                    responseMsg.classList.add('text-danger');
+                });
+        });
 
-    function sendTimeout() {
-        const val = document.getElementById('timeoutInput').value;
-        if (!val || isNaN(val) || parseInt(val) < 0) {
-            alert("Please enter a valid timeout in milliseconds!");
-            return;
+        function fetchStatus() {
+            fetch('/status')
+                .then(res => res.text())
+                .then(text => {
+                    const lines = text.trim().split(/\r?\n/); // Status-Zeilen trennen
+                    let html = '<div class="row text-start">';
+                    lines.forEach(line => {
+                        html += `
+                    <div class="col-md-6 mb-2">
+                        ${line}
+                    </div>`;
+                    });
+                    html += '</div>';
+                    document.getElementById('status').innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('status').innerHTML =
+                        '<span class="text-danger">Fehler beim Laden!</span>';
+                });
         }
-        sendCmd('t' + val);
-    }
 
-    // Initial load
-    fetchFileList();
-    document.addEventListener('click', function (e) {
-        if (e.target.matches('#fileList a[data-delete]')) {
-            setTimeout(fetchFileList, 500);
+        function fetchFileList() {
+            fetch('/filelist')
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('fileList').innerHTML = html;
+                    document.querySelectorAll('#fileList a[data-delete]').forEach(link => {
+                        link.addEventListener('click', function (e) {
+                            if (!confirm('Really delete this file?')) e.preventDefault();
+                        });
+                    });
+                });
         }
-    });
-    fetchStatus();
-</script>
 
-<!-- Help Modal -->
-<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content bg-dark text-success" style="font-family: monospace;">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title" id="helpModalLabel">Available Commands</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+        function sendCommand() {
+            const cmd = document.getElementById('cmdInput').value;
+            if (!cmd) return;
+            fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
+                document.getElementById('cmdInput').value = '';
+                fetchStatus();
+            });
+        }
+
+        function sendCmd(cmd) {
+            fetch('/get?input1=' + encodeURIComponent(cmd)).then(fetchStatus);
+        }
+
+        function sendBaudCommand() {
+            const val = document.getElementById('baudRateInput').value;
+            if (!val || isNaN(val)) {
+                alert("Please enter a valid baud rate!");
+                return;
+            }
+            sendCmd('b' + val);
+        }
+
+        function sendDataBits() {
+            const val = document.getElementById('dataBitsInput').value;
+            if (!val || isNaN(val) || val < 5 || val > 8) {
+                alert("Please enter data bits between 5 and 8!");
+                return;
+            }
+            sendCmd('B' + val);
+        }
+
+        function sendStopBits() {
+            const val = document.getElementById('stopBitsInput').value;
+            if (val !== '1' && val !== '2') {
+                alert("Only 1 or 2 allowed as stop bit!");
+                return;
+            }
+            sendCmd('s' + val);
+        }
+
+        function sendSyslog() {
+            const val = document.getElementById('syslogInput').value.trim();
+            if (val.length === 0) {
+                alert("Please enter a valid address!");
+                return;
+            }
+            sendCmd('Y' + val);
+        }
+
+        function sendUrl() {
+            const val = document.getElementById('urlInput').value.trim();
+            if (val.length > 0) {
+                if (!val.startsWith('http')) {
+                    alert("Please enter a valid URL!");
+                    return;
+                }
+            }
+            sendCmd('U' + val);
+        }
+
+        function sendTimeout() {
+            const val = document.getElementById('timeoutInput').value;
+            if (!val || isNaN(val) || parseInt(val) < 0) {
+                alert("Please enter a valid timeout in milliseconds!");
+                return;
+            }
+            sendCmd('t' + val);
+        }
+
+        // Initial load
+        fetchFileList();
+        document.addEventListener('click', function (e) {
+            if (e.target.matches('#fileList a[data-delete]')) {
+                setTimeout(fetchFileList, 500);
+            }
+        });
+        fetchStatus();
+    </script>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content bg-dark text-success" style="font-family: monospace;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="helpModalLabel">Available Commands</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <pre style="color: #0f0; background-color: #000; padding: 1rem; margin-bottom: 0;">
+                </div>
+                <div class="modal-body">
+                    <pre style="color: #0f0; background-color: #000; padding: 1rem; margin-bottom: 0;">
 b(baud)        - Set baud rate (e.g., b9600)
 B(data_bits)   - Set data bits (5-8, e.g., B8)
 s(stop_bits)   - Set stop bits (1 or 2, e.g., s2)
@@ -492,12 +577,13 @@ csdoff|csdon   - Disable or enable SD card usage
 ? or h         - Help
 Note: Commands are case-sensitive.
                 </pre>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </body>
+
 </html>
