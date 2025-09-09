@@ -136,12 +136,13 @@ uint32_t invokeCounter = 0;
 unsigned long lastHeartbeat = 0;
 const unsigned long heartbeatInterval = 50000; // 50 Sekunden
 
-//Espa444
-String espa444Calladr="1002";
-String espa444msg="Testnachricht vom Serialsniffer";
-int espa444att=1;
-String espa444prio="Standard";
-
+// Espa444
+String espa444Calladr = "1002";
+String espa444msg = "Testnachricht vom Serialsniffer";
+int espa444att = 1;
+String espa444prio = "Standard";
+String espa444callback = "";
+bool espa444sendcb = true; // Wird Callbackrufnummer in Message mitgesendet?
 
 // NTP Server
 const char *ntpServer = "pool.ntp.org";
@@ -338,8 +339,11 @@ void sendCall(const String &groupID,
               int delaySec,
               int attempts)
 {
-  String prioused="";
-  if(prio.length()<=1) prioused="Standard";
+  String prioused = "";
+  if (prio.length() <= 1)
+    prioused = "Standard";
+  else
+    prioused = prio;
   /*
  <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
 "<ESPA-X version=\"1.00\" xmlns=\"http://ns.espa-x.org/espa-x\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://ns.espa-x.org/espa-x http://schema.espa-x.org/espa-x100.xsd\" timestamp=\"2025-08-15T12:21:11\">\n"
@@ -402,7 +406,7 @@ void sendCall(const String &groupID,
       String(attempts) + "</CP-ATTEMPTS>\n"
                          "    <CP-PRIO>" +
       prioused + "</CP-PRIO>\n"
-             "    <CP-CBCKNO>" +
+                 "    <CP-CBCKNO>" +
       callingNo + "</CP-CBCKNO>\n"
                   "    <CP-NCIFNO/>\n"
                   "    <CP-PR-DETAILS>All</CP-PR-DETAILS>\n"
@@ -1448,11 +1452,34 @@ String parseRawData(const String &rawData)
     rec["Data"] = field1;
     if (field0.toInt() == 1)
     {
-      espa444Calladr=field1; // Calladresse für ESPA-444 speichern
+      espa444Calladr = field1; // Calladresse für ESPA-444 speichern
+      Serial.println("ESPA444 Call Address: " + espa444Calladr);
     }
     else if (field0.toInt() == 2)
     {
-      espa444msg=field1;// Display message
+      if (espa444sendcb) // Wenn callback Rufnummer in Message
+      {
+        // Position vom '#' finden
+        int posHash = field1.indexOf('#');
+        if (posHash != -1)
+        {
+          // Erstes Leerzeichen nach '#'
+          int posSpace = field1.indexOf(' ', posHash);
+
+          // Rufnummer extrahieren
+          espa444callback = field1.substring(posHash + 1, posSpace);
+          Serial.println("ESPA444 Callback: " + espa444callback);
+          espa444msg = field1.substring(posSpace+1, field1.length()); // Display message ohne Rufnummer
+        }
+        else
+        {
+          espa444msg = field1; // Display message
+        }
+        
+      }
+      else
+        espa444msg = field1; // Display message
+        Serial.println("ESPA444 Message: " + espa444msg);
     }
     else if (field0.toInt() == 3)
     {
@@ -1464,11 +1491,13 @@ String parseRawData(const String &rawData)
     }
     else if (field0.toInt() == 5)
     {
-      espa444att=field1.toInt(); // Number of transmissions
+      espa444att = field1.toInt(); // Number of transmissions
+      Serial.println("ESPA444 Attemps: " + String(espa444att));
     }
     else if (field0.toInt() == 6)
     {
-     espa444prio=field1; // Priority
+      espa444prio = field1; // Priority
+      Serial.println("ESPA444 Priority: " + espa444prio);
     }
     else if (field0.toInt() == 7)
     {
@@ -1478,7 +1507,6 @@ String parseRawData(const String &rawData)
     {
       // System Status
     }
-
   };
 
   //
@@ -1819,7 +1847,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     {
       textOutln("# Sending ESPAX data...");
       // Example call, replace with actual data
-      sendCall("1002", "1900", "Test mit Delay Wiederholungen", "Standard", "Phone", 0, 1);
+      sendCall(espa444Calladr, espa444callback, espa444msg, espa444prio, "Phone", 0, espa444att);
       Serial.println("sendCall-Antwort:");
       Serial.println(readXMLResponse());
     }
