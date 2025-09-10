@@ -370,9 +370,11 @@
                             <button class="btn btn-outline-success btn-sm command-button"
                                 onclick="sendCmd('cespa444cbon')">Enable Callback Number in ESPA MSG</button>
                             <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('cespa444cboff')">Disable Callback Number in ESPA MSG</button> 
-                            <button class="btn btn-outline-danger btn-sm command-button" 
-                                onclick="sendCmd('X')"><i class="bi bi-arrow-repeat"></i> Restart</button>
+                                onclick="sendCmd('cespa444cboff')" data-bs-toggle="tooltip"
+                                title="There ist no callback number at the beginning of the message">Disable Callback
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm command-button" onclick="sendCmd('X')"><i
+                                    class="bi bi-arrow-repeat"></i> Restart</button>
                             <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
                                 data-bs-target="#helpModal">
                                 <i class="bi bi-question-circle"></i> Help
@@ -552,6 +554,11 @@
             }
         });
         fetchStatus();
+        document.addEventListener("DOMContentLoaded", () => {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            tooltipTriggerList.map(el => new bootstrap.Tooltip(el))
+        });
+
     </script>
 
     <!-- Help Modal -->
