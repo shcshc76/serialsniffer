@@ -1462,22 +1462,15 @@ String parseRawData(const String &rawData)
     {
       if (espa444sendcb) // Wenn callback Rufnummer in Message
       {
-        // Position vom '#' finden
-        int posHash = field1.indexOf('#');
-        if (posHash != -1)
-        {
-          // Erstes Leerzeichen nach '#'
-          int posSpace = field1.indexOf(' ', posHash);
+        
+          // Erstes Leerzeichen finden
+          int posSpace = field1.indexOf(' ');
 
           // Rufnummer extrahieren
-          espa444callback = field1.substring(posHash + 1, posSpace);
+          espa444callback = field1.substring(0, posSpace);
           Serial.println("ESPA444 Callback: " + espa444callback);
           espa444msg = field1.substring(posSpace+1, field1.length()); // Display message ohne Rufnummer
-        }
-        else
-        {
-          espa444msg = field1; // Display message
-        }
+        
         
       }
       else
