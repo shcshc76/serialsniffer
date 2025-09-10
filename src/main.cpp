@@ -825,6 +825,7 @@ void saveSerialConfig() // Save alle Data
   prefs.putInt("tftLight", tftLight); // TFT Hintergrundbeleuchtung speichern
   prefs.putBool("useSD", useSD);
   prefs.putBool("showESPA", showESPA);
+  prefs.putBool("espa444sendcb", espa444sendcb);
   prefs.end();
   textOutln("# Config saved");
 }
@@ -864,6 +865,7 @@ bool loadSerialConfig() // Load saved config
   tftLight = prefs.getInt("tftLight", 255); // TFT Hintergrundbeleuchtung laden
   useSD = prefs.getBool("useSD", false);
   showESPA = prefs.getBool("showESPA", false);
+  espa444sendcb = prefs.getBool("espa444sendcb", true);
   prefs.end();
   textOutln("# Saved config restored");
   return true;
@@ -1125,6 +1127,7 @@ void startWebserver() // Start the web server
   status += ", Stop Bits: " + String(currentStopBits);
   status += "\nRX Invert: " + String(rxInvert ? "Enabled" : "Disabled");
   status += ", TX Invert: " + String(txInvert ? "Enabled" : "Disabled");
+  status += "\nCallback in ESPA MSG: " + String(espa444sendcb ? "Enabled" : "Disabled");
   status += "\nSyslog IP: " + syslog_ip;
   status += ", Target URL: " + targetURL;
   status += "\nMQTT Server: " + mqttServer + ":" + String(mqttPort);
@@ -1221,7 +1224,7 @@ saveSerialConfig(); // Save WiFi settings
             { request->send(200, "application/json", lastJsonString); });
 
   server.on("/espax", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "text/plain", "Call Address: "+espa444Calladr+"\nCallback: "+espa444callback+"\nMessage: "+espa444msg+"\nAttempts: "+espa444att); });          
+            { request->send(200, "text/plain", "Call Address: " + espa444Calladr + "\nCallback: " + espa444callback + "\nMessage: " + espa444msg + "\nAttempts: " + espa444att); });
 
   server.on("/clearlog", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -1462,20 +1465,18 @@ String parseRawData(const String &rawData)
     {
       if (espa444sendcb) // Wenn callback Rufnummer in Message
       {
-        
-          // Erstes Leerzeichen finden
-          int posSpace = field1.indexOf(' ');
 
-          // Rufnummer extrahieren
-          espa444callback = field1.substring(0, posSpace);
-          Serial.println("ESPA444 Callback: " + espa444callback);
-          espa444msg = field1.substring(posSpace+1, field1.length()); // Display message ohne Rufnummer
-        
-        
+        // Erstes Leerzeichen finden
+        int posSpace = field1.indexOf(' ');
+
+        // Rufnummer extrahieren
+        espa444callback = field1.substring(0, posSpace);
+        Serial.println("ESPA444 Callback: " + espa444callback);
+        espa444msg = field1.substring(posSpace + 1, field1.length()); // Display message ohne Rufnummer
       }
       else
         espa444msg = field1; // Display message
-        Serial.println("ESPA444 Message: " + espa444msg);
+      Serial.println("ESPA444 Message: " + espa444msg);
     }
     else if (field0.toInt() == 3)
     {
@@ -1979,6 +1980,8 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# csdoff - Do not use SD");
     textOutln("# csespaxon - Show espa-x LOG");
     textOutln("# csespaxoff - Do not show espa-x LOG");
+    textOutln("# cespa444cbon - Enable callback number in display message");
+    textOutln("# cespa444cboff - Disable callback number in display message");
     textOutln("# ?/h - Show this help");
     textOutln("# Note: Commands are case-sensitive.");
   }
@@ -2038,7 +2041,37 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       textOutln("# ESPAX log display already disabled");
     }
   }
+  else if (cmd == "cespa444cbon")
+  { // Enable ESPA-444 callback number in display message
+    if (!espa444sendcb)
+    {
+      espa444sendcb = true;
 
+      textOutln("# ESPA-444 callback number in display message enabled");
+    }
+    else
+    {
+      textOutln("# ESPA-444 callback number in display message already enabled");
+    }
+  }
+  else if (cmd == "cespa444cboff")
+  { // Disable ESPA-444 callback number in display message
+    if (espa444sendcb)
+    {
+      espa444sendcb = false;
+      textOutln("# ESPA-444 callback number in display message disabled");
+    }
+    else
+    {
+      textOutln("# ESPA-444 callback number in display message already disabled");
+    }
+  }
+  else if (c == 'Y')
+  { // Set syslog server
+    syslog_ip = val;
+    textOutln("# syslog server set to: " + syslog_ip);
+    syslog.server(syslog_ip.c_str(), syslog_port); // aktualisiere Ziel-IP direkt
+  }
   else if (c == 'M')
   { // Set MQTT server
     mqttServer = val;

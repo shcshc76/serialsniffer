@@ -367,6 +367,10 @@
                                 onclick="sendCmd('csdon')">Enable SD Card</button>
                             <button class="btn btn-outline-success btn-sm command-button"
                                 onclick="sendCmd('csdoff')">Disable SD Card</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('cespa444cbon')">Enable Callback Number in ESPA MSG</button>
+                            <button class="btn btn-outline-success btn-sm command-button"
+                                onclick="sendCmd('cespa444cboff')">Disable Callback Number in ESPA MSG</button
                             <button class="btn btn-outline-danger btn-sm command-button" onclick="sendCmd('X')"><i
                                     class="bi bi-arrow-repeat"></i> Restart</button>
                             <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
@@ -591,6 +595,11 @@ a(ESPAX_PASS)  - Set ESPAX password (e.g., aMyESPAXPass)
 i|I|           - Disable or enable ESPAX connection
 csespaxon      - Show espa-x LOG
 csespaxoff     - Do not show espa-x LOG
+xcall          - Send ESPAX data
+cespa444cbon   - Enable callback number in display message
+cespa444cboff  - Disable callback number in display message
+csdon          - Use SD card
+csdoff         - Do not use SD card
 S|IR-8         - Save config
 z|Z|IR-1       - Disable or enable RX simulation
 v|V|IR-2       - Disable or enable display heartbeat
