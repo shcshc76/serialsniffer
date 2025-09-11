@@ -368,10 +368,14 @@
                             <button class="btn btn-outline-success btn-sm command-button"
                                 onclick="sendCmd('csdoff')">Disable SD Card</button>
                             <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('cespa444cbon')">Enable Callback Number in ESPA MSG</button>
+                                onclick="sendCmd('cespa444cbon')" data-bs-toggle="tooltip"
+                                title="There ist a callback number at the beginning of the ESPA 4.4.4 message">Enable
+                                Callback
+                            </button>
                             <button class="btn btn-outline-success btn-sm command-button"
                                 onclick="sendCmd('cespa444cboff')" data-bs-toggle="tooltip"
-                                title="There ist no callback number at the beginning of the message">Disable Callback
+                                title="There ist no callback number at the beginning of the ESPA 4.4.4 message">Disable
+                                Callback
                             </button>
                             <button class="btn btn-outline-danger btn-sm command-button" onclick="sendCmd('X')"><i
                                     class="bi bi-arrow-repeat"></i> Restart</button>
