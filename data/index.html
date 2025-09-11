@@ -415,6 +415,7 @@
     <!-- Bootstrap JS -->
     <script src="/bootstrap.bundle.min.js"></script>
     <script>
+        // WiFi Form Submission
         const form = document.getElementById('wifiForm');
         const responseMsg = document.getElementById('responseMsg');
         form.addEventListener('submit', function (e) {
@@ -592,13 +593,11 @@
         }
 
         function restartDevice() {
-            fetch('/get?input1=X')
-                .then(() => {
-                    alert("ESP32 wird neu gestartet...");
-                    // Warte 5 Sekunden, bevor wieder Status abgefragt wird
-                    setTimeout(fetchStatus, 5000);
-                });
+            sendCmd('X');
         }
+
+
+
 
 
         function sendBaudCommand() {
@@ -656,6 +655,9 @@
             }
             sendCmd('t' + val);
         }
+
+
+
 
         // Initial load
         fetchFileList();
