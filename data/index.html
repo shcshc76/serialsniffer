@@ -392,10 +392,12 @@
                             </div>
                             <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
                                 Config</button>
-                            <button class="btn btn-outline-danger btn-sm command-button" onclick="sendCmd('X')"><i
-                                    class="bi bi-arrow-repeat"></i> Restart</button>
-                            <button type="button" class="btn btn-outline-info btn-sm command-button" data-bs-toggle="modal"
-                                data-bs-target="#helpModal">
+                            <button class="btn btn-outline-danger btn-sm command-button" onclick="restartDevice()">
+                                <i class="bi bi-arrow-repeat"></i> Restart
+                            </button>
+
+                            <button type="button" class="btn btn-outline-info btn-sm command-button"
+                                data-bs-toggle="modal" data-bs-target="#helpModal">
                                 <i class="bi bi-question-circle"></i> Help
                             </button>
                         </div>
@@ -589,6 +591,14 @@
             sendCmd(isEnabled ? 'cespa444cbon' : 'cespa444cboff');
         }
 
+        function restartDevice() {
+            fetch('/get?input1=X')
+                .then(() => {
+                    alert("ESP32 wird neu gestartet...");
+                    // Warte 5 Sekunden, bevor wieder Status abgefragt wird
+                    setTimeout(fetchStatus, 5000);
+                });
+        }
 
 
         function sendBaudCommand() {
