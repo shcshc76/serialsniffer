@@ -351,10 +351,13 @@
                                 display heartbeat</button>
                             <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
                                 Config</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('J')">Enable
-                                mqtt</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('j')">Disable
-                                mqtt</button>
+                            <!-- MQTT Toggle -->
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="mqttToggle" data-bs-toggle="tooltip"
+                                    title="Connect to MQTT Broker?" onchange="toggleMqtt(this.checked)">
+                                <label class="form-check-label" for="mqttToggle">MQTT</label>
+                            </div>
+
                             <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('I')">Enable
                                 ESPAX</button>
                             <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('i')">Disable
@@ -426,46 +429,54 @@
                 .then(res => res.text())
                 .then(text => {
                     const lines = text.trim().split(/\r?\n/);
+                    const statusMap = {};
 
-                    let html = `
-                <div class="table-responsive">
-                    <table class="table table-dark table-striped table-sm align-middle mb-0">
-                        <tbody>
-            `;
-
+                    // Key:Value in ein Objekt schreiben
                     lines.forEach(line => {
-                        // Wenn deine Zeilen so aussehen: "Key: Value"
                         const parts = line.split(/:\s*/);
                         if (parts.length === 2) {
-                            html += `
-                        <tr>
-                            <td style="width:40%;"><strong>${parts[0]}</strong></td>
-                            <td>${parts[1]}</td>
-                        </tr>
-                    `;
-                        } else {
-                            // Falls mal kein Doppelpunkt vorhanden ist → ganze Zeile in einer Spalte
-                            html += `
-                        <tr>
-                            <td colspan="2">${line}</td>
-                        </tr>
-                    `;
+                            statusMap[parts[0].trim()] = parts[1].trim();
                         }
                     });
 
-                    html += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
+                    // Status-Tabelle anzeigen
+                    let html = `
+        <div class="table-responsive">
+          <table class="table table-dark table-striped table-sm align-middle mb-0">
+            <tbody>
+      `;
+                    lines.forEach(line => {
+                        const parts = line.split(/:\s*/);
+                        if (parts.length === 2) {
+                            html += `
+            <tr>
+              <td style="width:40%;"><strong>${parts[0]}</strong></td>
+              <td>${parts[1]}</td>
+            </tr>
+          `;
+                        } else {
+                            html += `<tr><td colspan="2">${line}</td></tr>`;
+                        }
+                    });
+                    html += `</tbody></table></div>`;
                     document.getElementById('status').innerHTML = html;
+
+                    // Switches anhand Status setzen (Beispiele → anpassen an deine ESP32-Ausgabe)
+                    if (statusMap["Use MQTT"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("mqttToggle").checked = true;
+                    } else {
+                        document.getElementById("mqttToggle").checked = false;
+                    }
+
+
+
                 })
                 .catch(() => {
                     document.getElementById('status').innerHTML =
                         '<span class="text-danger">Fehler beim Laden!</span>';
                 });
         }
+
 
 
         function fetchFileList() {
@@ -493,6 +504,15 @@
         function sendCmd(cmd) {
             fetch('/get?input1=' + encodeURIComponent(cmd)).then(fetchStatus);
         }
+
+        function toggleMqtt(isEnabled) {
+            if (isEnabled) {
+                sendCmd('J'); // Enable MQTT
+            } else {
+                sendCmd('j'); // Disable MQTT
+            }
+        }
+
 
         function sendBaudCommand() {
             const val = document.getElementById('baudRateInput').value;
