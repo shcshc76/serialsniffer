@@ -346,13 +346,15 @@
 
                             <div class="form-check form-switch my-2">
                                 <input class="form-check-input" type="checkbox" id="rxSimToggle"
-                                    onchange="toggleRxSim(this.checked)">
+                                    data-bs-toggle="tooltip" onchange="toggleRxSim(this.checked)"
+                                    title="Enable RX Simulation?">
                                 <label class="form-check-label" for="rxSimToggle">RX Simulation</label>
                             </div>
 
                             <div class="form-check form-switch my-2">
                                 <input class="form-check-input" type="checkbox" id="heartbeatToggle"
-                                    onchange="toggleHeartbeat(this.checked)">
+                                    data-bs-toggle="tooltip" onchange="toggleHeartbeat(this.checked)"
+                                    title="Display ESPA 4.4.4 Heartbeat?">
                                 <label class="form-check-label" for="heartbeatToggle">Display Heartbeat</label>
                             </div>
 
@@ -364,19 +366,21 @@
                             </div>
                             <div class="form-check form-switch my-2">
                                 <input class="form-check-input" type="checkbox" id="espaxToggle"
+                                    data-bs-toggle="tooltip" title="Connect to ESPAX Server?"
                                     onchange="toggleEspax(this.checked)">
                                 <label class="form-check-label" for="espaxToggle">ESPAX</label>
                             </div>
 
                             <div class="form-check form-switch my-2">
                                 <input class="form-check-input" type="checkbox" id="espaxLogToggle"
+                                    data-bs-toggle="tooltip" title="Show ESPAX LOGS?"
                                     onchange="toggleEspaxLog(this.checked)">
                                 <label class="form-check-label" for="espaxLogToggle">ESPAX Log</label>
                             </div>
 
                             <div class="form-check form-switch my-2">
-                                <input class="form-check-input" type="checkbox" id="sdToggle"
-                                    onchange="toggleSd(this.checked)">
+                                <input class="form-check-input" type="checkbox" id="sdToggle" data-bs-toggle="tooltip"
+                                    onchange="toggleSd(this.checked)" title="Use SD Card for logging?">
                                 <label class="form-check-label" for="sdToggle">SD Card</label>
                             </div>
                             <div class="form-check form-switch my-2">
