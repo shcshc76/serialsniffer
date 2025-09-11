@@ -337,49 +337,57 @@
                                         t(timeout)</button>
                                 </div>
                             </div>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('L')">Enable
-                                EOL</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('l')">Disable
-                                EOL</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('z')">Disable
-                                RX Sim</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('Z')">Enable
-                                RX Sim</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('v')">Disable
-                                display heartbeat</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('V')">Enable
-                                display heartbeat</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
-                                Config</button>
+                            <!-- Switches -->
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="eolToggle"
+                                    onchange="toggleEol(this.checked)">
+                                <label class="form-check-label" for="eolToggle">EOL Detection</label>
+                            </div>
+
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="rxSimToggle"
+                                    onchange="toggleRxSim(this.checked)">
+                                <label class="form-check-label" for="rxSimToggle">RX Simulation</label>
+                            </div>
+
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="heartbeatToggle"
+                                    onchange="toggleHeartbeat(this.checked)">
+                                <label class="form-check-label" for="heartbeatToggle">Display Heartbeat</label>
+                            </div>
+
                             <!-- MQTT Toggle -->
                             <div class="form-check form-switch my-2">
                                 <input class="form-check-input" type="checkbox" id="mqttToggle" data-bs-toggle="tooltip"
                                     title="Connect to MQTT Broker?" onchange="toggleMqtt(this.checked)">
                                 <label class="form-check-label" for="mqttToggle">MQTT</label>
                             </div>
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="espaxToggle"
+                                    onchange="toggleEspax(this.checked)">
+                                <label class="form-check-label" for="espaxToggle">ESPAX</label>
+                            </div>
 
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('I')">Enable
-                                ESPAX</button>
-                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('i')">Disable
-                                ESPAX</button>
-                            <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('csespaxon')">Enable ESPAX LOG</button>
-                            <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('csespaxoff')">Disable ESPAX LOG</button>
-                            <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('csdon')">Enable SD Card</button>
-                            <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('csdoff')">Disable SD Card</button>
-                            <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('cespa444cbon')" data-bs-toggle="tooltip"
-                                title="There ist a callback number at the beginning of the ESPA 4.4.4 message">Enable
-                                Callback
-                            </button>
-                            <button class="btn btn-outline-success btn-sm command-button"
-                                onclick="sendCmd('cespa444cboff')" data-bs-toggle="tooltip"
-                                title="There ist no callback number at the beginning of the ESPA 4.4.4 message">Disable
-                                Callback
-                            </button>
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="espaxLogToggle"
+                                    onchange="toggleEspaxLog(this.checked)">
+                                <label class="form-check-label" for="espaxLogToggle">ESPAX Log</label>
+                            </div>
+
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="sdToggle"
+                                    onchange="toggleSd(this.checked)">
+                                <label class="form-check-label" for="sdToggle">SD Card</label>
+                            </div>
+                            <div class="form-check form-switch my-2">
+                                <input class="form-check-input" type="checkbox" id="callbackToggle"
+                                    data-bs-toggle="tooltip" onchange="toggleCallback(this.checked)"
+                                    title="Is there a callback number at the beginning of the ESPA 4.4.4 message?">
+                                <label class="form-check-label" for="callbackToggle">Callback Number in ESPA
+                                    4.4.4</label>
+                            </div>
+                            <button class="btn btn-outline-success btn-sm command-button" onclick="sendCmd('S')">Save
+                                Config</button>
                             <button class="btn btn-outline-danger btn-sm command-button" onclick="sendCmd('X')"><i
                                     class="bi bi-arrow-repeat"></i> Restart</button>
                             <button type="button" class="btn btn-outline-info mt-3" data-bs-toggle="modal"
@@ -468,7 +476,47 @@
                         document.getElementById("mqttToggle").checked = false;
                     }
 
+                    if (statusMap["Send ESPAX"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("espaxToggle").checked = true;
+                    } else {
+                        document.getElementById("espaxToggle").checked = false;
+                    }
 
+                    if (statusMap["Display Heartbeat"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("heartbeatToggle").checked = true;
+                    } else {
+                        document.getElementById("heartbeatToggle").checked = false;
+                    }
+
+                    if (statusMap["Use SD Card"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("sdToggle").checked = true;
+                    } else {
+                        document.getElementById("sdToggle").checked = false;
+                    }
+
+                    if (statusMap["RX Simulation"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("rxSimToggle").checked = true;
+                    } else {
+                        document.getElementById("rxSimToggle").checked = false;
+                    }
+
+                    if (statusMap["EOL Detect"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("eolToggle").checked = true;
+                    } else {
+                        document.getElementById("eolToggle").checked = false;
+                    }
+
+                    if (statusMap["Show ESPAX LOG"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("espaxLogToggle").checked = true;
+                    } else {
+                        document.getElementById("espaxLogToggle").checked = false;
+                    }
+
+                    if (statusMap["Callback in ESPA MSG"]?.toLowerCase().includes("enabled")) {
+                        document.getElementById("callbackToggle").checked = true;
+                    } else {
+                        document.getElementById("callbackToggle").checked = false;
+                    }
 
                 })
                 .catch(() => {
@@ -505,13 +553,38 @@
             fetch('/get?input1=' + encodeURIComponent(cmd)).then(fetchStatus);
         }
 
-        function toggleMqtt(isEnabled) {
-            if (isEnabled) {
-                sendCmd('J'); // Enable MQTT
-            } else {
-                sendCmd('j'); // Disable MQTT
-            }
+        function toggleEol(isEnabled) {
+            sendCmd(isEnabled ? 'L' : 'l');
         }
+
+        function toggleRxSim(isEnabled) {
+            sendCmd(isEnabled ? 'Z' : 'z');
+        }
+
+        function toggleHeartbeat(isEnabled) {
+            sendCmd(isEnabled ? 'V' : 'v');
+        }
+
+        function toggleMqtt(isEnabled) {
+            sendCmd(isEnabled ? 'J' : 'j');
+        }
+
+        function toggleEspax(isEnabled) {
+            sendCmd(isEnabled ? 'I' : 'i');
+        }
+
+        function toggleEspaxLog(isEnabled) {
+            sendCmd(isEnabled ? 'csespaxon' : 'csespaxoff');
+        }
+
+        function toggleSd(isEnabled) {
+            sendCmd(isEnabled ? 'csdon' : 'csdoff');
+        }
+
+        function toggleCallback(isEnabled) {
+            sendCmd(isEnabled ? 'cespa444cbon' : 'cespa444cboff');
+        }
+
 
 
         function sendBaudCommand() {

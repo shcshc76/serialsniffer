@@ -1128,6 +1128,8 @@ void startWebserver() // Start the web server
   status += "\nRX Invert: " + String(rxInvert ? "Enabled" : "Disabled");
   status += ", TX Invert: " + String(txInvert ? "Enabled" : "Disabled");
   status += "\nCallback in ESPA MSG: " + String(espa444sendcb ? "Enabled" : "Disabled");
+  status += "\nRX Simulation: " + String(rxSimActive ? "Enabled" : "Disabled");
+  status += "\nDisplay Heartbeat: " + String(showHB ? "Enabled" : "Disabled");
   status += "\nSyslog IP: " + syslog_ip;
   status += ", Target URL: " + targetURL;
   status += "\nMQTT Server: " + mqttServer + ":" + String(mqttPort);
