@@ -415,264 +415,187 @@
     <!-- Bootstrap JS -->
     <script src="/bootstrap.bundle.min.js"></script>
     <script>
-        // WiFi Form Submission
-        const form = document.getElementById('wifiForm');
-        const responseMsg = document.getElementById('responseMsg');
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const ssid = document.getElementById('ssid').value.trim();
-            const password = document.getElementById('password').value.trim();
-            if (!ssid || !password) {
-                responseMsg.textContent = 'SSID and password must not be empty!';
+    // WiFi Form Submission
+    const form = document.getElementById('wifiForm');
+    const responseMsg = document.getElementById('responseMsg');
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const ssid = document.getElementById('ssid').value.trim();
+        const password = document.getElementById('password').value.trim();
+        if (!ssid || !password) {
+            responseMsg.textContent = 'SSID and password must not be empty!';
+            responseMsg.classList.add('text-danger');
+            return;
+        }
+        fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
+            .then(response => response.text())
+            .then(text => {
+                responseMsg.textContent = text;
+                responseMsg.classList.remove('text-danger');
+                showToast("WiFi connection attempt sent", "success");
+            })
+            .catch(err => {
+                responseMsg.textContent = 'Error connecting: ' + err;
                 responseMsg.classList.add('text-danger');
-                return;
-            }
-            fetch(`/connect?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`)
-                .then(response => response.text())
-                .then(text => {
-                    responseMsg.textContent = text;
-                    responseMsg.classList.remove('text-danger');
-                })
-                .catch(err => {
-                    responseMsg.textContent = 'Error connecting: ' + err;
-                    responseMsg.classList.add('text-danger');
+                showToast("Error connecting to WiFi", "danger");
+            });
+    });
+
+    // Toast Notification Function
+    function showToast(message, type = "info") {
+        const toast = document.createElement("div");
+        toast.className = `toast align-items-center text-bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
+        toast.role = "alert";
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>`;
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
+
+    // Fetch Status
+    function fetchStatus() {
+        fetch('/status')
+            .then(res => res.text())
+            .then(text => {
+                const lines = text.trim().split(/\r?\n/);
+                const statusMap = {};
+                lines.forEach(line => {
+                    const parts = line.split(/:\s*/);
+                    if (parts.length === 2) statusMap[parts[0].trim()] = parts[1].trim();
                 });
-        });
 
-        function fetchStatus() {
-            fetch('/status')
-                .then(res => res.text())
-                .then(text => {
-                    const lines = text.trim().split(/\r?\n/);
-                    const statusMap = {};
-
-                    // Key:Value in ein Objekt schreiben
-                    lines.forEach(line => {
-                        const parts = line.split(/:\s*/);
-                        if (parts.length === 2) {
-                            statusMap[parts[0].trim()] = parts[1].trim();
-                        }
-                    });
-
-                    // Status-Tabelle anzeigen
-                    let html = `
-        <div class="table-responsive">
-          <table class="table table-dark table-striped table-sm align-middle mb-0">
-            <tbody>
-      `;
-                    lines.forEach(line => {
-                        const parts = line.split(/:\s*/);
-                        if (parts.length === 2) {
-                            html += `
-            <tr>
-              <td style="width:40%;"><strong>${parts[0]}</strong></td>
-              <td>${parts[1]}</td>
-            </tr>
-          `;
-                        } else {
-                            html += `<tr><td colspan="2">${line}</td></tr>`;
-                        }
-                    });
-                    html += `</tbody></table></div>`;
-                    document.getElementById('status').innerHTML = html;
-
-                    // Switches anhand Status setzen (Beispiele → anpassen an deine ESP32-Ausgabe)
-                    if (statusMap["Use MQTT"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("mqttToggle").checked = true;
+                let html = `<div class="table-responsive">
+                    <table class="table table-dark table-striped table-sm align-middle mb-0">
+                    <tbody>`;
+                lines.forEach(line => {
+                    const parts = line.split(/:\s*/);
+                    if (parts.length === 2) {
+                        html += `<tr><td style="width:40%;"><strong>${parts[0]}</strong></td><td>${parts[1]}</td></tr>`;
                     } else {
-                        document.getElementById("mqttToggle").checked = false;
+                        html += `<tr><td colspan="2">${line}</td></tr>`;
                     }
-
-                    if (statusMap["Send ESPAX"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("espaxToggle").checked = true;
-                    } else {
-                        document.getElementById("espaxToggle").checked = false;
-                    }
-
-                    if (statusMap["Display Heartbeat"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("heartbeatToggle").checked = true;
-                    } else {
-                        document.getElementById("heartbeatToggle").checked = false;
-                    }
-
-                    if (statusMap["Use SD Card"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("sdToggle").checked = true;
-                    } else {
-                        document.getElementById("sdToggle").checked = false;
-                    }
-
-                    if (statusMap["RX Simulation"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("rxSimToggle").checked = true;
-                    } else {
-                        document.getElementById("rxSimToggle").checked = false;
-                    }
-
-                    if (statusMap["EOL Detect"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("eolToggle").checked = true;
-                    } else {
-                        document.getElementById("eolToggle").checked = false;
-                    }
-
-                    if (statusMap["Show ESPAX LOG"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("espaxLogToggle").checked = true;
-                    } else {
-                        document.getElementById("espaxLogToggle").checked = false;
-                    }
-
-                    if (statusMap["Callback in ESPA MSG"]?.toLowerCase().includes("enabled")) {
-                        document.getElementById("callbackToggle").checked = true;
-                    } else {
-                        document.getElementById("callbackToggle").checked = false;
-                    }
-
-                })
-                .catch(() => {
-                    document.getElementById('status').innerHTML =
-                        '<span class="text-danger">Fehler beim Laden!</span>';
                 });
-        }
+                html += `</tbody></table></div>`;
+                document.getElementById('status').innerHTML = html;
 
+                // Switches
+                document.getElementById("mqttToggle").checked = statusMap["Use MQTT"]?.toLowerCase().includes("enabled") ?? false;
+                document.getElementById("espaxToggle").checked = statusMap["Send ESPAX"]?.toLowerCase().includes("enabled") ?? false;
+                document.getElementById("heartbeatToggle").checked = statusMap["Display Heartbeat"]?.toLowerCase().includes("enabled") ?? false;
+                document.getElementById("sdToggle").checked = statusMap["Use SD Card"]?.toLowerCase().includes("enabled") ?? false;
+                document.getElementById("rxSimToggle").checked = statusMap["RX Simulation"]?.toLowerCase().includes("enabled") ?? false;
+                document.getElementById("eolToggle").checked = statusMap["EOL Detect"]?.toLowerCase().includes("enabled") ?? false;
+                document.getElementById("espaxLogToggle").checked = statusMap["Show ESPAX LOG"]?.toLowerCase().includes("enabled") ?? false;
+                document.getElementById("callbackToggle").checked = statusMap["Callback in ESPA MSG"]?.toLowerCase().includes("enabled") ?? false;
+            })
+            .catch(() => {
+                document.getElementById('status').innerHTML =
+                    '<span class="text-danger">Fehler beim Laden!</span>';
+            });
+    }
 
-
-        function fetchFileList() {
-            fetch('/filelist')
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById('fileList').innerHTML = html;
-                    document.querySelectorAll('#fileList a[data-delete]').forEach(link => {
-                        link.addEventListener('click', function (e) {
-                            if (!confirm('Really delete this file?')) e.preventDefault();
-                        });
+    // Fetch File List
+    function fetchFileList() {
+        fetch('/filelist')
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('fileList').innerHTML = html;
+                document.querySelectorAll('#fileList a[data-delete]').forEach(link => {
+                    link.addEventListener('click', function (e) {
+                        if (!confirm('Really delete this file?')) e.preventDefault();
                     });
                 });
-        }
+            });
+    }
 
-        function sendCommand() {
-            const cmd = document.getElementById('cmdInput').value;
-            if (!cmd) return;
-            fetch('/get?input1=' + encodeURIComponent(cmd)).then(() => {
+    // Send Command
+    function sendCommand() {
+        const cmd = document.getElementById('cmdInput').value;
+        if (!cmd) return;
+        fetch('/get?input1=' + encodeURIComponent(cmd))
+            .then(() => {
                 document.getElementById('cmdInput').value = '';
                 fetchStatus();
-            });
+                showToast("Command sent: " + cmd, "success");
+            })
+            .catch(() => showToast("Failed to send command: " + cmd, "danger"));
+    }
+
+    function sendCmd(cmd) {
+        fetch('/get?input1=' + encodeURIComponent(cmd))
+            .then(fetchStatus)
+            .then(() => showToast("Command sent: " + cmd, "success"))
+            .catch(() => showToast("Failed to send command: " + cmd, "danger"));
+    }
+
+    // Toggle Functions
+    function toggleEol(isEnabled) { sendCmd(isEnabled ? 'L' : 'l'); }
+    function toggleRxSim(isEnabled) { sendCmd(isEnabled ? 'Z' : 'z'); }
+    function toggleHeartbeat(isEnabled) { sendCmd(isEnabled ? 'V' : 'v'); }
+    function toggleMqtt(isEnabled) { sendCmd(isEnabled ? 'J' : 'j'); }
+    function toggleEspax(isEnabled) { sendCmd(isEnabled ? 'I' : 'i'); }
+    function toggleEspaxLog(isEnabled) { sendCmd(isEnabled ? 'csespaxon' : 'csespaxoff'); }
+    function toggleSd(isEnabled) { sendCmd(isEnabled ? 'csdon' : 'csdoff'); }
+    function toggleCallback(isEnabled) { sendCmd(isEnabled ? 'cespa444cbon' : 'cespa444cboff'); }
+    function restartDevice() { sendCmd('X'); }
+
+    // Serial & Network Commands
+    function sendBaudCommand() {
+        const val = document.getElementById('baudRateInput').value;
+        if (!val || isNaN(val)) { alert("Please enter a valid baud rate!"); return; }
+        sendCmd('b' + val);
+    }
+    function sendDataBits() {
+        const val = document.getElementById('dataBitsInput').value;
+        if (!val || isNaN(val) || val < 5 || val > 8) { alert("Please enter data bits between 5 and 8!"); return; }
+        sendCmd('B' + val);
+    }
+    function sendStopBits() {
+        const val = document.getElementById('stopBitsInput').value;
+        if (val !== '1' && val !== '2') { alert("Only 1 or 2 allowed as stop bit!"); return; }
+        sendCmd('s' + val);
+    }
+    function sendSyslog() {
+        const val = document.getElementById('syslogInput').value.trim();
+        if (val.length === 0) { alert("Please enter a valid address!"); return; }
+        sendCmd('Y' + val);
+    }
+    function sendUrl() {
+        const val = document.getElementById('urlInput').value.trim();
+        if (val.length > 0 && !val.startsWith('http')) { alert("Please enter a valid URL!"); return; }
+        sendCmd('U' + val);
+    }
+    function sendTimeout() {
+        const val = document.getElementById('timeoutInput').value;
+        if (!val || isNaN(val) || parseInt(val) < 0) { alert("Please enter a valid timeout in milliseconds!"); return; }
+        sendCmd('t' + val);
+    }
+
+    // Initial Load
+    fetchFileList();
+    fetchStatus();
+
+    // Auto-refresh every 5 seconds
+    setInterval(fetchStatus, 5000);
+    setInterval(fetchFileList, 10000);
+
+    document.addEventListener('click', function (e) {
+        if (e.target.matches('#fileList a[data-delete]')) {
+            setTimeout(fetchFileList, 500);
         }
+    });
 
-        function sendCmd(cmd) {
-            fetch('/get?input1=' + encodeURIComponent(cmd)).then(fetchStatus);
-        }
+    document.addEventListener("DOMContentLoaded", () => {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+    });
+</script>
 
-        function toggleEol(isEnabled) {
-            sendCmd(isEnabled ? 'L' : 'l');
-        }
-
-        function toggleRxSim(isEnabled) {
-            sendCmd(isEnabled ? 'Z' : 'z');
-        }
-
-        function toggleHeartbeat(isEnabled) {
-            sendCmd(isEnabled ? 'V' : 'v');
-        }
-
-        function toggleMqtt(isEnabled) {
-            sendCmd(isEnabled ? 'J' : 'j');
-        }
-
-        function toggleEspax(isEnabled) {
-            sendCmd(isEnabled ? 'I' : 'i');
-        }
-
-        function toggleEspaxLog(isEnabled) {
-            sendCmd(isEnabled ? 'csespaxon' : 'csespaxoff');
-        }
-
-        function toggleSd(isEnabled) {
-            sendCmd(isEnabled ? 'csdon' : 'csdoff');
-        }
-
-        function toggleCallback(isEnabled) {
-            sendCmd(isEnabled ? 'cespa444cbon' : 'cespa444cboff');
-        }
-
-        function restartDevice() {
-            sendCmd('X');
-        }
-
-
-
-
-
-        function sendBaudCommand() {
-            const val = document.getElementById('baudRateInput').value;
-            if (!val || isNaN(val)) {
-                alert("Please enter a valid baud rate!");
-                return;
-            }
-            sendCmd('b' + val);
-        }
-
-        function sendDataBits() {
-            const val = document.getElementById('dataBitsInput').value;
-            if (!val || isNaN(val) || val < 5 || val > 8) {
-                alert("Please enter data bits between 5 and 8!");
-                return;
-            }
-            sendCmd('B' + val);
-        }
-
-        function sendStopBits() {
-            const val = document.getElementById('stopBitsInput').value;
-            if (val !== '1' && val !== '2') {
-                alert("Only 1 or 2 allowed as stop bit!");
-                return;
-            }
-            sendCmd('s' + val);
-        }
-
-        function sendSyslog() {
-            const val = document.getElementById('syslogInput').value.trim();
-            if (val.length === 0) {
-                alert("Please enter a valid address!");
-                return;
-            }
-            sendCmd('Y' + val);
-        }
-
-        function sendUrl() {
-            const val = document.getElementById('urlInput').value.trim();
-            if (val.length > 0) {
-                if (!val.startsWith('http')) {
-                    alert("Please enter a valid URL!");
-                    return;
-                }
-            }
-            sendCmd('U' + val);
-        }
-
-        function sendTimeout() {
-            const val = document.getElementById('timeoutInput').value;
-            if (!val || isNaN(val) || parseInt(val) < 0) {
-                alert("Please enter a valid timeout in milliseconds!");
-                return;
-            }
-            sendCmd('t' + val);
-        }
-
-
-
-
-        // Initial load
-        fetchFileList();
-        document.addEventListener('click', function (e) {
-            if (e.target.matches('#fileList a[data-delete]')) {
-                setTimeout(fetchFileList, 500);
-            }
-        });
-        fetchStatus();
-        document.addEventListener("DOMContentLoaded", () => {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            tooltipTriggerList.map(el => new bootstrap.Tooltip(el))
-        });
-
-    </script>
 
     <!-- Help Modal -->
     <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
