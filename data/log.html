@@ -120,16 +120,24 @@
                 </div>
             </div>
 
-            <div class="mt-3 d-flex flex-wrap">
-                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('v')">Show no
-                    heartbeat</button>
-                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('V')">Show
-                    heartbeat</button>
-                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('q')">Disable
-                    TFT update</button>
-                <button type="button" class="btn btn-outline-success me-2 mb-2" onclick="sendQuickCommand('Q')">Enable
-                    TFT update</button>
+            <div class="mt-3 d-flex flex-wrap align-items-center">
+
+                <!-- Heartbeat Toggle -->
+                <div class="form-check form-switch me-4 mb-2">
+                    <input class="form-check-input" type="checkbox" id="heartbeatToggle"
+                        onchange="sendQuickCommand(this.checked ? 'V' : 'v')">
+                    <label class="form-check-label" for="heartbeatToggle">Show Heartbeat</label>
+                </div>
+
+                <!-- TFT Update Toggle -->
+                <div class="form-check form-switch me-4 mb-2">
+                    <input class="form-check-input" type="checkbox" id="tftToggle"
+                        onchange="sendQuickCommand(this.checked ? 'Q' : 'q')">
+                    <label class="form-check-label" for="tftToggle">TFT Update</label>
+                </div>
+
             </div>
+
         </div>
 
         <!-- JSON Output Card -->
@@ -324,7 +332,36 @@ Note: Commands are case-sensitive.
                 });
         }
 
+        function fetchStatus() {
+            fetch('/status')
+                .then(res => res.text())
+                .then(text => {
+                    const lines = text.trim().split(/\r?\n/);
+                    const statusMap = {};
+                    lines.forEach(line => {
+                        const parts = line.split(/:\s*/);
+                        if (parts.length === 2) statusMap[parts[0].trim()] = parts[1].trim();
+                    });
 
+                    // Heartbeat
+                    if (statusMap["Display Heartbeat"]) {
+                        document.getElementById("heartbeatToggle").checked =
+                            statusMap["Display Heartbeat"].toLowerCase().includes("enabled");
+                    }
+
+                    // TFT Update
+                    if (statusMap["TFT Update"]) {
+                        document.getElementById("tftToggle").checked =
+                            statusMap["TFT Update"].toLowerCase().includes("enabled");
+                    }
+                })
+                .catch(err => console.error("Status konnte nicht geladen werden:", err));
+        }
+
+        // Beim Start einmal laden
+        fetchStatus();
+        // Und alle 5 Sekunden automatisch aktualisieren
+        setInterval(fetchStatus, 5000);
         setInterval(fetchLog, 2000);
         setInterval(fetchespax, 2000);
         setInterval(fetchJson, 2000);

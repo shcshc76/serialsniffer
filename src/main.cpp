@@ -1143,6 +1143,7 @@ void startWebserver() // Start the web server
   status += "\nOutput Level: " + String(outputLevel);
   status += "\nEOL Detect: " + String(eolDetect ? "Enabled" : "Disabled");
   status += "\nTimeout: " + String(timeout) + " ms";
+  status += "\nTFT Update: " + String(updateDisplay ? "Enabled" : "Disabled");
  
   request->send(200, "text/plain", status); });
 
