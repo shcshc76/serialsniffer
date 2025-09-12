@@ -229,22 +229,24 @@ Note: Commands are case-sensitive.
 
 
 
+        const patterns = [
+            { regex: /^#/, cls: "log-info" },
+            { regex: /^NTP.*RX/, cls: "log-espa444-rx" },
+            { regex: /^NTP.*TX/, cls: "log-espa444-tx" }
+        ];
+
         function highlightLog(text) {
-            let safe = escapeHtml(text); // schützt vor HTML-Injection
-            // Jede Zeile einzeln verarbeiten
+            let safe = escapeHtml(text);
             return safe.split('\n').map(line => {
-                if (line.startsWith('#')) {
-                    return `<span class="log-info">${line}</span>`;
-                }
-                if (line.startsWith('NTP') && line.includes('RX')) {
-                    return `<span class="log-espa444-rx">${line}</span>`;
-                }
-                if (line.startsWith('NTP') && line.includes('TX')) {
-                    return `<span class="log-espa444-tx">${line}</span>`;
+                for (let p of patterns) {
+                    if (p.regex.test(line)) {
+                        return `<span class="${p.cls}">${line}</span>`;
+                    }
                 }
                 return line;
             }).join('\n');
         }
+
 
 
         function fetchLog() {
@@ -318,7 +320,7 @@ Note: Commands are case-sensitive.
                 .then(res => res.text())
                 .then(data => {
                     const logElem = document.getElementById('espaxOutput');
-                    logElem.innerHTML = highlightLog(data);                   
+                    logElem.innerHTML = highlightLog(data);
                 });
         }
 
