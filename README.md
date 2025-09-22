@@ -13,3 +13,9 @@ Monitor two UART lines (RX+TX) using an esp32-s3-devkitc-1. Serial parameters ca
 - Klemmstein von links: GND, GND, T1(A), R1(TX), T2(B), R2(RX)
 - Serial hinten links RX
 - Serial hinten rechts TX
+
+- 9pol Adapter:
+-   TX-> RS232 IN
+-   GND-> RS232 -
+
+
