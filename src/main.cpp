@@ -828,6 +828,20 @@ void saveSerialConfig() // Save alle Data
   prefs.putBool("useSD", useSD);
   prefs.putBool("showESPA", showESPA);
   prefs.putBool("espa444sendcb", espa444sendcb);
+  // --- Save SSID/password list as JSON ---
+  {
+    DynamicJsonDocument doc(4096);
+    JsonArray arr = doc.to<JsonArray>();
+    for (size_t i = 0; i < ssids.size(); ++i)
+    {
+      JsonObject o = arr.createNestedObject();
+      o["ssid"] = ssids[i];
+      o["pass"] = (passwords.size() > i) ? passwords[i] : "";
+    }
+    String json;
+    serializeJson(doc, json);
+    prefs.putString("wifi_list", json);
+  }
   prefs.end();
   textOutln("# Config saved");
 }
@@ -868,6 +882,29 @@ bool loadSerialConfig() // Load saved config
   useSD = prefs.getBool("useSD", false);
   showESPA = prefs.getBool("showESPA", false);
   espa444sendcb = prefs.getBool("espa444sendcb", true);
+  // --- Load SSID/password list from JSON if present ---
+  String wifi_list_json = prefs.getString("wifi_list", "");
+  if (wifi_list_json.length() > 0)
+  {
+    DynamicJsonDocument doc(4096);
+    DeserializationError err = deserializeJson(doc, wifi_list_json);
+    if (!err)
+    {
+      ssids.clear();
+      passwords.clear();
+      for (JsonObject o : doc.as<JsonArray>())
+      {
+        const char *s = o["ssid"] | "";
+        const char *p = o["pass"] | "";
+        ssids.push_back(String(s));
+        passwords.push_back(String(p));
+      }
+    }
+    else
+    {
+      textOutln("# Failed to parse wifi_list JSON", 2);
+    }
+  }
   prefs.end();
   textOutln("# Saved config restored");
   return true;
@@ -2009,6 +2046,12 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
       textOutln("# SD card already enabled");
     }
   }
+  else if (cmd == "cswlan")
+  {
+    ssids.push_back(wifiSSID);
+    passwords.push_back(wifiPass);
+    textOutln("# Saved current WLAN credentials");
+  }
   else if (cmd == "csdoff")
   { // Disable SD card usage
     if (useSD)
@@ -2482,7 +2525,7 @@ void setup()
   readWifiFromSD();
 
   // Beispiel: alle SSIDs auflisten
-  Serial.println("\n📶 Available networks from SD:");
+  Serial.println("\n📶 Available networks:");
   for (size_t i = 0; i < ssids.size(); i++)
   {
     Serial.printf("%d: %s / %s\n", i + 1, ssids[i].c_str(), passwords[i].c_str());
@@ -2564,27 +2607,34 @@ const char *helpPages[] = {
     " 9 enable mqtt",
 
     "# Seite 3\n"
+    " RADIO Save WLAN\n"
+    " \n"
+    " \n"
+    " ",
+
+    "# Seite 4\n"
     " ON Restart device\n"
-    " CH UP/DWN Display brightness\n"
-    " VOL- / VOL+ WLAN 1-3\n"
+    " CH+- Disp brightness\n"
+    " VOL+- WLAN 1-n\n"
     " Weitere Hilfe folgt..."};
 
 const uint8_t helpPageCount = sizeof(helpPages) / sizeof(helpPages[0]);
 uint8_t currentHelpPage = 0;
 
 IRCommandEntry irCommands[] = {
-    {0x1, true, "Z", "z", nullptr},          // RX simulation
-    {0x2, true, "V", "v", nullptr},          // Heartbeat
-    {0x3, true, "Q", "q", nullptr},          // TFT update
-    {0x4, true, "csdon", "csdoff", nullptr}, // Use SD card
-    {0x6, true, "I", "i", nullptr},          // ESPAX on/off
-    {0x7, false, "clr", nullptr, nullptr},   // Clear log
-    {0x20, false, "lup", nullptr, nullptr},  // Display Light Up
-    {0x21, false, "ldn", nullptr, nullptr},  // Display Light Down
-    {0x8, false, "S", nullptr, nullptr},     // Save config
-    {0x9, true, "J", "j", nullptr},          // MQTT
-    {0xC, false, "X", nullptr, nullptr},     // Restart
-    {0x0, false, nullptr, nullptr, "HELP"}   // Platzhalter
+    {0x1, true, "Z", "z", nullptr},            // RX simulation
+    {0x2, true, "V", "v", nullptr},            // Heartbeat
+    {0x3, true, "Q", "q", nullptr},            // TFT update
+    {0x4, true, "csdon", "csdoff", nullptr},   // Use SD card
+    {0x6, true, "I", "i", nullptr},            // ESPAX on/off
+    {0x7, false, "clr", nullptr, nullptr},     // Clear log
+    {0x20, false, "lup", nullptr, nullptr},    // Display Light Up
+    {0x21, false, "ldn", nullptr, nullptr},    // Display Light Down
+    {0x44, false, "cswlan", nullptr, nullptr}, // Save WiFi
+    {0x8, false, "S", nullptr, nullptr},       // Save config
+    {0x9, true, "J", "j", nullptr},            // MQTT
+    {0xC, false, "X", nullptr, nullptr},       // Restart
+    {0x0, false, nullptr, nullptr, "HELP"}     // Platzhalter
 };
 
 // =================== Wi-Fi ===================
