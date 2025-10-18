@@ -2020,6 +2020,7 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
     textOutln("# ldn - Decrease TFT backlight");
     textOutln("# csdon - Use SD");
     textOutln("# csdoff - Do not use SD");
+    textOutln("# cswlan - Save current WLAN credentials");
     textOutln("# csespaxon - Show espa-x LOG");
     textOutln("# csespaxoff - Do not show espa-x LOG");
     textOutln("# cespa444cbon - Enable callback number in display message");
