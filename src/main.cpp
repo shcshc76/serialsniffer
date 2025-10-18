@@ -2565,6 +2565,8 @@ const char *helpPages[] = {
 
     "# Seite 3\n"
     " ON Restart device\n"
+    " CH UP/DWN Display brightness\n"
+    " VOL- / VOL+ WLAN 1-3\n"
     " Weitere Hilfe folgt..."};
 
 const uint8_t helpPageCount = sizeof(helpPages) / sizeof(helpPages[0]);
