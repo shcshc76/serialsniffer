@@ -105,6 +105,8 @@ String wifiPass = "WLAN_PASSWORD";
 String targetURL = "";
 bool wifiConnected = false;
 IPAddress IP;
+std::vector<String> ssids;
+std::vector<String> passwords;
 
 // MQTT settings
 String mqttServer = "MQTT_SERVER"; // MQTT Server IP or hostname
@@ -2309,6 +2311,46 @@ void reconnectMQTT()
   mqttON = false;
 }
 
+void readWifiFromSD()
+{
+  if (!sdOk)
+    return;
+
+  File file = SD.open("/wifi.txt", FILE_READ);
+  if (!file)
+  {
+    Serial.println("❌ wifi.txt not found on SD!");
+    return;
+  }
+
+  Serial.println("📄 Reading WiFi credentials from SD...");
+
+  while (file.available())
+  {
+    String line = file.readStringUntil('\n');
+    line.trim();
+
+    if (line.length() == 0 || line.startsWith("#"))
+      continue; // Kommentare/Leerzeilen überspringen
+
+    int sep = line.indexOf(';');
+    if (sep > 0)
+    {
+      String ssid = line.substring(0, sep);
+      String pass = line.substring(sep + 1);
+      ssid.trim();
+      pass.trim();
+
+      ssids.push_back(ssid);
+      passwords.push_back(pass);
+
+      Serial.printf("✅ Found: SSID='%s', PASS='%s'\n", ssid.c_str(), pass.c_str());
+    }
+  }
+
+  file.close();
+}
+
 void setup()
 {
   Serial.begin(115200); // Initialize USB console
@@ -2434,6 +2476,16 @@ void setup()
         file.close();
       }
     }
+  }
+
+  // Datei lesen
+  readWifiFromSD();
+
+  // Beispiel: alle SSIDs auflisten
+  Serial.println("\n📶 Available networks from SD:");
+  for (size_t i = 0; i < ssids.size(); i++)
+  {
+    Serial.printf("%d: %s / %s\n", i + 1, ssids[i].c_str(), passwords[i].c_str());
   }
 
   // Starte den MQTT Task
