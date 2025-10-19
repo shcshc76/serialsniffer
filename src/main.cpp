@@ -2049,9 +2049,21 @@ void parseSerialCommand(String cmd) // Parse and execute serial commands
   }
   else if (cmd == "cswlan")
   {
+    // Entferne alle vorhandenen Einträge mit derselben SSID (doppelte Einträge löschen)
+    for (int i = (int)ssids.size() - 1; i >= 0; --i)
+    {
+      if (ssids[i] == wifiSSID)
+      {
+        ssids.erase(ssids.begin() + i);
+        if (passwords.size() > (size_t)i)
+          passwords.erase(passwords.begin() + i);
+      }
+    }
+
+    // Jetzt neuen Eintrag hinzufügen
     ssids.push_back(wifiSSID);
     passwords.push_back(wifiPass);
-    textOutln("# Saved current WLAN credentials");
+    textOutln("# Saved current WLAN credentials (duplicates removed)");
   }
   else if (cmd == "csdoff")
   { // Disable SD card usage
