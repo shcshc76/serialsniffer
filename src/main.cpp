@@ -2633,21 +2633,86 @@ const char *helpPages[] = {
 
 const uint8_t helpPageCount = sizeof(helpPages) / sizeof(helpPages[0]);
 uint8_t currentHelpPage = 0;
+// --- Variablen für WLAN-Auswahlmodus ---
+int selectedWifiIndex = 0;
+bool wifiSelectionMode = false;
+
+// --- Hilfsfunktionen für WLAN-Auswahl ---
+void showSelectedSSID()
+{
+  if (ssids.size() == 0)
+  {
+    textOutln("# Keine gespeicherten WLAN-Einträge", 1);
+    displayMessage("# Keine gespeicherten WLAN-Einträge", TFT_WHITE);
+    return;
+  }
+  if (selectedWifiIndex < 0)
+    selectedWifiIndex = 0;
+  if (selectedWifiIndex >= (int)ssids.size())
+    selectedWifiIndex = (int)ssids.size() - 1;
+
+  String msg = "# WLAN [" + String(selectedWifiIndex + 1) + "/" + String(ssids.size()) + "]: " + ssids[selectedWifiIndex];
+  textOutln(msg, 1);
+  displayMessage(msg, TFT_WHITE);
+}
+
+void wifiSelectNext()
+{
+  if (ssids.size() == 0)
+  {
+    showSelectedSSID();
+    return;
+  }
+  wifiSelectionMode = true;
+  selectedWifiIndex = (selectedWifiIndex + 1) % ssids.size();
+  showSelectedSSID();
+}
+
+void wifiSelectPrev()
+{
+  if (ssids.size() == 0)
+  {
+    showSelectedSSID();
+    return;
+  }
+  wifiSelectionMode = true;
+  selectedWifiIndex = (selectedWifiIndex - 1 + ssids.size()) % ssids.size();
+  showSelectedSSID();
+}
+
+void wifiSelectConfirm()
+{
+  if (ssids.size() == 0)
+  {
+    showSelectedSSID();
+    return;
+  }
+  wifiSelectionMode = false;
+  wifiSSID = ssids[selectedWifiIndex];
+  wifiPass = (passwords.size() > (size_t)selectedWifiIndex) ? passwords[selectedWifiIndex] : "";
+  textOutln("# Ausgewähltes WLAN übernommen: " + wifiSSID, 1);
+  displayMessage("Verbinde: " + wifiSSID, TFT_WHITE);
+  saveSerialConfig(); // optional speichern
+  tryWiFiConnect();
+}
 
 IRCommandEntry irCommands[] = {
-    {0x1, true, "Z", "z", nullptr},            // RX simulation
-    {0x2, true, "V", "v", nullptr},            // Heartbeat
-    {0x3, true, "Q", "q", nullptr},            // TFT update
-    {0x4, true, "csdon", "csdoff", nullptr},   // Use SD card
-    {0x6, true, "I", "i", nullptr},            // ESPAX on/off
-    {0x7, false, "clr", nullptr, nullptr},     // Clear log
-    {0x20, false, "lup", nullptr, nullptr},    // Display Light Up
-    {0x21, false, "ldn", nullptr, nullptr},    // Display Light Down
-    {0x44, false, "cswlan", nullptr, nullptr}, // Save WiFi
-    {0x8, false, "S", nullptr, nullptr},       // Save config
-    {0x9, true, "J", "j", nullptr},            // MQTT
-    {0xC, false, "X", nullptr, nullptr},       // Restart
-    {0x0, false, nullptr, nullptr, "HELP"}     // Platzhalter
+    {0x1, true, "Z", "z", nullptr},               // RX simulation
+    {0x2, true, "V", "v", nullptr},               // Heartbeat
+    {0x3, true, "Q", "q", nullptr},               // TFT update
+    {0x4, true, "csdon", "csdoff", nullptr},      // Use SD card
+    {0x6, true, "I", "i", nullptr},               // ESPAX on/off
+    {0x7, false, "clr", nullptr, nullptr},        // Clear log
+    {0x20, false, "lup", nullptr, nullptr},       // Display Light Up
+    {0x21, false, "ldn", nullptr, nullptr},       // Display Light Down
+    {0x44, false, "cswlan", nullptr, nullptr},    // Save WiFi
+    {0x8, false, "S", nullptr, nullptr},          // Save config
+    {0x9, true, "J", "j", nullptr},               // MQTT
+    {0xC, false, "X", nullptr, nullptr},          // Restart
+    {0x11, false, "WIFI_PREV", nullptr, nullptr}, // VOL-
+    {0x10, false, "WIFI_NEXT", nullptr, nullptr}, // VOL+
+    {0x57, false, "WIFI_OK", nullptr, nullptr},   // OK / Enter
+    {0x0, false, nullptr, nullptr, "HELP"}        // Platzhalter
 };
 
 // =================== Wi-Fi ===================
@@ -2712,6 +2777,22 @@ void processIRCommandTable(uint8_t command, uint8_t flags)
         return;
       }
 
+      // Spezielle WLAN-Auswahl-Befehle abfangen
+      if (entry.cmdOn && strcmp(entry.cmdOn, "WIFI_NEXT") == 0)
+      {
+        wifiSelectNext();
+        return;
+      }
+      if (entry.cmdOn && strcmp(entry.cmdOn, "WIFI_PREV") == 0)
+      {
+        wifiSelectPrev();
+        return;
+      }
+      if (entry.cmdOn && strcmp(entry.cmdOn, "WIFI_OK") == 0)
+      {
+        wifiSelectConfirm();
+        return;
+      }
       if (entry.message && strcmp(entry.message, "HELP") != 0)
       {
         displayMessage(entry.message, TFT_WHITE);
